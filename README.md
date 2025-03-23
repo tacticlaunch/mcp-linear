@@ -8,13 +8,14 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
 
 ## Features
 
-- Access to Linear's GraphQL API through MCP tools
-- Authentication via Linear API key
-- Retrieve and modify data related to users, teams, projects, and issues
-- Create, update and comment on issues
-- Add and remove labels
-- Create projects
-- Comprehensive documentation of available tools
+MCP Linear bridges the gap between AI assistant and Linear (project management tool) by implementing the MCP protocol. This allows to:
+
+- Retrieve issues, projects, teams, and other data from Linear
+- Create and update issues
+- Change issue status
+- Assign issues to team members
+- Add comments
+- Create projects and teams
 
 ## Example prompts
 
@@ -69,63 +70,11 @@ After installation, add the following to your MCP settings file:
 
 ### Manual Installation
 
-1. Clone the repository
-
-```bash
-git clone https://github.com/tacticlaunch/mcp-linear.git
-cd mcp-linear
-```
-
-2. Install dependencies
-
-```bash
-npm install
-```
-
-3. Build the project
-
-```bash
-npm run build
-```
-
-4. Create a `.env` file with your Linear API token
-
-```
-LINEAR_API_KEY=<YOUR_TOKEN>
-```
-
-5. Start the server
-
-```bash
-npm start
-```
-
-## Available Tools
-
-See [TOOLS.md](TOOLS.md) for a complete list of available tools and planned features.
-
-## Overview
-
-MCP Linear bridges the gap between Claude (AI assistant) and Linear (project management tool) by implementing the MCP protocol. This allows Claude to:
-
-- Retrieve issues, projects, teams, and other data from Linear
-- Create and update issues
-- Change issue status
-- Assign issues to team members
-- Add comments
-- Create projects and teams
-
-The server uses Linear's GraphQL API and authenticates via user tokens (not OAuth) for simplicity.
-
-## Getting Started
-
-### Prerequisites
+Prerequisites
 
 - Node.js (v18+)
 - NPM or Yarn
 - Linear API token
-
-### Installation
 
 ```bash
 # Install globally
@@ -138,7 +87,7 @@ npm install
 npm link  # Makes the package available globally
 ```
 
-### Running the Server
+#### Running the Server
 
 Run the server with your Linear API token:
 
@@ -152,6 +101,11 @@ Or set the token in your environment and run without arguments:
 export LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
 mcp-linear
 ```
+
+## Available Tools
+
+See [TOOLS.md](TOOLS.md) for a complete list of available tools and planned features.
+
 
 ## Development
 
