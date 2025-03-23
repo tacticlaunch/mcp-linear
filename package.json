@@ -1,0 +1,93 @@
+{
+  "name": "@beautyfree/mcp-linear",
+  "version": "1.0.1",
+  "description": "A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to interact with Linear project management systems.",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "mcp-linear": "./dist/index.js"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "dev": "nodemon --exec node --loader ts-node/esm src/index.ts",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "prepare": "npm run build",
+    "postinstall": "node -e \"try { require('fs').chmodSync('./dist/index.js', '755') } catch (e) {}\""
+  },
+  "smithery": {
+    "name": "linear",
+    "displayName": "Linear",
+    "description": "Interact with Linear project management through AI assistants",
+    "tools": [
+      "linear_getViewer",
+      "linear_getOrganization",
+      "linear_getUsers",
+      "linear_getLabels",
+      "linear_getTeams",
+      "linear_getProjects",
+      "linear_createProject",
+      "linear_getIssues",
+      "linear_getIssueById",
+      "linear_searchIssues",
+      "linear_createIssue",
+      "linear_updateIssue",
+      "linear_createComment",
+      "linear_addIssueLabel",
+      "linear_removeIssueLabel"
+    ]
+  },
+  "keywords": [
+    "mcp",
+    "linear",
+    "cursor",
+    "claude",
+    "ai",
+    "model-context-protocol",
+    "project-management",
+    "smithery"
+  ],
+  "author": "Alexey Elizarov <alex.elizarov1@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beautyfree/mcp-linear"
+  },
+  "dependencies": {
+    "@linear/sdk": "^38.0.0",
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2",
+    "helmet": "^8.0.0",
+    "yargs": "^17.7.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.5",
+    "@types/yargs": "^17.0.33",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.2",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
