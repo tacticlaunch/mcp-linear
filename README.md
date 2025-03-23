@@ -42,14 +42,12 @@ Once connected, you can use prompts like:
 To use MCP Linear, you'll need a Linear API token. Here's how to get one:
 
 1. Log in to your Linear account at [linear.app](https://linear.app)
-2. Click on organization avatar (in the bottom-left corner)
+2. Click on organization avatar (in the top-left corner)
 3. Select **Settings**
 4. Navigate to **Security & access** in the left sidebar
-5. Under **Personal API Keys** Click **New API Key**
+5. Under **Personal API Keys** click **New API Key**
 6. Give your key a name (e.g., `MCP Linear Integration`)
 7. Copy the generated API token and store it securely - you won't be able to see it again!
-
-**Important**: Keep your API token secure and never share it publicly. The token has access to your Linear workspace and should be treated like a password.
 
 ### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear) (Recommended)
 
@@ -67,7 +65,7 @@ npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
 
 ### Manual Configuration
 
-After installation, add the following to your MCP settings file:
+Add the following to your MCP settings file:
 
 ```json
 {
@@ -83,14 +81,14 @@ After installation, add the following to your MCP settings file:
 }
 ```
 
-### Client-Specific Configuration Locations
+#### Client-Specific Configuration Locations
 
 - Cursor: `~/.cursor/mcp.json`
 - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Claude VSCode Extension: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
 - GoMCP: `~/.config/gomcp/config.yaml`
 
-### Manual Installation
+### Manual run
 
 Prerequisites
 
