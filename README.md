@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/linear-app-icon.png" alt="Linear App Icon" width="250" height="250">
+  <img src="https://github.com/tacticlaunch/mcp-linear/blob/main/docs/linear-app-icon.png?raw=true" alt="Linear App Icon" width="250" height="250">
 </p>
 
 # MCP Linear
@@ -126,11 +126,11 @@ mcp-linear
 
 ## Available Tools
 
-See [TOOLS.md](TOOLS.md) for a complete list of available tools and planned features.
+See [TOOLS.md](https://github.com/tacticlaunch/mcp-linear/blob/main/TOOLS.md) for a complete list of available tools and planned features.
 
 ## Development
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for more information on how to develop locally.
+See [DEVELOPMENT.md](https://github.com/tacticlaunch/mcp-linear/blob/main/DEVELOPMENT.md) for more information on how to develop locally.
 
 ## License
 
