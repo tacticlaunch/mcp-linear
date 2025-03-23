@@ -5,6 +5,7 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
 [![npm version](https://img.shields.io/npm/v/@beautyfree/mcp-linear.svg)](https://www.npmjs.com/package/@beautyfree/mcp-linear)
 [![Smithery](https://img.shields.io/badge/Smithery-Compatible-brightgreen)](https://smithery.ai/server/@emmett-deen/mcp-linear)
+[![smithery badge](https://smithery.ai/badge/@tacticlaunch/mcp-linear)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
 ## Features
 
@@ -40,6 +41,14 @@ npx -y @smithery/cli install @beautyfree/mcp-linear --client cursor
 
 ```bash
 npx -y @smithery/cli install @beautyfree/mcp-linear --client claude
+```
+
+### Installing via Smithery
+
+To install mcp-linear for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear):
+
+```bash
+npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
 ```
 
 ### Manual Configuration
