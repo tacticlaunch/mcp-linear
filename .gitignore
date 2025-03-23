@@ -1,7 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
-yarn.lock
 
 # Build
 /dist
@@ -23,7 +21,6 @@ yarn-error.log*
 
 # Editor directories and files
 .idea
-.vscode
 *.suo
 *.ntvs*
 *.njsproj
@@ -37,4 +34,4 @@ yarn-error.log*
 /coverage
 
 # Temporary files
-/tmp 
+/tmp
