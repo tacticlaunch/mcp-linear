@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/linear-app-icon.png" alt="Linear App Icon" width="250" height="250">
+</p>
+
 # MCP Linear
 
 A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to interact with Linear project management systems.
