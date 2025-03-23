@@ -62,7 +62,7 @@ After installation, add the following to your MCP settings file:
       "command": "npx",
       "args": ["-y", "@tacticlaunch/mcp-linear"],
       "env": {
-        "LINEAR_API_KEY": "<YOUR_TOKEN>"
+        "LINEAR_API_TOKEN": "<YOUR_TOKEN>"
       }
     }
   }
