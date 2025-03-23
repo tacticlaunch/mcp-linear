@@ -37,6 +37,20 @@ Once connected, you can use prompts like:
 
 ## Installation
 
+### Getting Your Linear API Token
+
+To use MCP Linear, you'll need a Linear API token. Here's how to get one:
+
+1. Log in to your Linear account at [linear.app](https://linear.app)
+2. Click on organization avatar (in the bottom-left corner)
+3. Select **Settings**
+4. Navigate to **Security & access** in the left sidebar
+5. Under **Personal API Keys** Click **New API Key**
+6. Give your key a name (e.g., `MCP Linear Integration`)
+7. Copy the generated API token and store it securely - you won't be able to see it again!
+
+**Important**: Keep your API token secure and never share it publicly. The token has access to your Linear workspace and should be treated like a password.
+
 ### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear) (Recommended)
 
 - To install MCP Linear for Cursor:
