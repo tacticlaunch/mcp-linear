@@ -53,7 +53,7 @@ After installation, add the following to your MCP settings file:
       "command": "npx",
       "args": ["-y", "@tacticlaunch/mcp-linear"],
       "env": {
-        "LINEAR_API_KEY": "your_linear_api_key_here"
+        "LINEAR_API_KEY": "<YOUR_TOKEN>"
       }
     }
   }
@@ -91,7 +91,7 @@ npm run build
 4. Create a `.env` file with your Linear API token
 
 ```
-LINEAR_API_KEY=your_linear_api_key_here
+LINEAR_API_KEY=<YOUR_TOKEN>
 ```
 
 5. Start the server
