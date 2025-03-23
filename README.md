@@ -10,6 +10,10 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
 [![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
 [![Smithery](https://img.shields.io/badge/Smithery-Compatible-brightgreen)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
+<a href="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear/badge" />
+</a>
+
 ## Features
 
 MCP Linear bridges the gap between AI assistant and Linear (project management tool) by implementing the MCP protocol. This allows to:
@@ -109,7 +113,6 @@ mcp-linear
 ## Available Tools
 
 See [TOOLS.md](TOOLS.md) for a complete list of available tools and planned features.
-
 
 ## Development
 
