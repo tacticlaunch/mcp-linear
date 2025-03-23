@@ -33,7 +33,7 @@ Once connected, you can use prompts like:
 
 ## Installation
 
-### Installing via Smithery (Recommended)
+### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear) (Recommended)
 
 - To install MCP Linear for Cursor:
 
