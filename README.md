@@ -3,7 +3,7 @@
 A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to interact with Linear project management systems.
 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
-[![npm version](https://img.shields.io/npm/v/@beautyfree/mcp-linear.svg)](https://www.npmjs.com/package/@beautyfree/mcp-linear)
+[![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
 [![Smithery](https://img.shields.io/badge/Smithery-Compatible-brightgreen)](https://smithery.ai/server/@emmett-deen/mcp-linear)
 
 ## Features
@@ -30,16 +30,16 @@ Once connected, you can use prompts like:
 
 ### Installing via Smithery (Recommended)
 
-- To install MCP Linear  for Cursor:
+- To install MCP Linear for Cursor:
 
 ```bash
-npx -y @smithery/cli install @beautyfree/mcp-linear --client cursor
+npx -y @smithery/cli install @tacticlaunch/mcp-linear --client cursor
 ```
 
 - To install MCP Linear for Claude Desktop:
 
 ```bash
-npx -y @smithery/cli install @beautyfree/mcp-linear --client claude
+npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
 ```
 
 ### Manual Configuration
@@ -51,7 +51,7 @@ After installation, add the following to your MCP settings file:
   "mcpServers": {
     "linear": {
       "command": "npx",
-      "args": ["-y", "@beautyfree/mcp-linear"],
+      "args": ["-y", "@tacticlaunch/mcp-linear"],
       "env": {
         "LINEAR_API_KEY": "your_linear_api_key_here"
       }
@@ -72,7 +72,7 @@ After installation, add the following to your MCP settings file:
 1. Clone the repository
 
 ```bash
-git clone https://github.com/beautyfree/mcp-linear.git
+git clone https://github.com/tacticlaunch/mcp-linear.git
 cd mcp-linear
 ```
 
@@ -129,10 +129,10 @@ The server uses Linear's GraphQL API and authenticates via user tokens (not OAut
 
 ```bash
 # Install globally
-npm install -g @beautyfree/mcp-linear
+npm install -g @tacticlaunch/mcp-linear
 
 # Or clone and install locally
-git clone https://github.com/beautyfree/mcp-linear.git
+git clone https://github.com/tacticlaunch/mcp-linear.git
 cd mcp-linear
 npm install
 npm link  # Makes the package available globally
