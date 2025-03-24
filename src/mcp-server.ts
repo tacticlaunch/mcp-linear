@@ -6,6 +6,7 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCPToolDefinition } from './types.js';
+import pkg from '../package.json' with { type: 'json' };
 
 /**
  * Interface for the MCP server handler functions
@@ -45,8 +46,8 @@ function convertToolDefinition(toolDef: MCPToolDefinition): Tool {
 export async function runMCPServer(config: MCPServerConfig) {
   const server = new Server(
     {
-      name: 'mcp-linear',
-      version: '1.0.0',
+      name: 'linear',
+      version: pkg.version,
     },
     {
       capabilities: {
