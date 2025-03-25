@@ -537,6 +537,7 @@ export class LinearService {
   async createProject(args: {
     name: string;
     description?: string;
+    content?: string;
     teamIds: string[] | string;
     state?: string;
     startDate?: string;
@@ -557,6 +558,7 @@ export class LinearService {
     const createdProject = await this.client.createProject({
       name: args.name,
       description: args.description,
+      content: args.content,
       teamIds: teamIds,
       state: args.state,
       startDate: args.startDate ? new Date(args.startDate) : undefined,
@@ -576,6 +578,7 @@ export class LinearService {
         id: projectData.id,
         name: projectData.name,
         description: projectData.description,
+        content: projectData.content,
         state: projectData.state,
         startDate: projectData.startDate,
         targetDate: projectData.targetDate,

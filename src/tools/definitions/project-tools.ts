@@ -18,6 +18,7 @@ export const getProjectsToolDefinition: MCPToolDefinition = {
         id: { type: 'string' },
         name: { type: 'string' },
         description: { type: 'string' },
+        content: { type: 'string' },
         state: { type: 'string' },
         teams: {
           type: 'array',
@@ -50,7 +51,11 @@ export const createProjectToolDefinition: MCPToolDefinition = {
       },
       description: {
         type: 'string',
-        description: 'Description of the project (Markdown supported)',
+        description: 'Short summary of the project',
+      },
+      content: {
+        type: 'string',
+        description: 'Content of the project (Markdown supported)',
       },
       teamIds: {
         type: 'array',
@@ -94,7 +99,11 @@ export const updateProjectToolDefinition: MCPToolDefinition = {
       },
       description: {
         type: 'string',
-        description: 'New description of the project (Markdown supported)',
+        description: 'New short summary of the project',
+      },
+      content: {
+        type: 'string',
+        description: 'New content of the project (Markdown supported)',
       },
       state: {
         type: 'string',

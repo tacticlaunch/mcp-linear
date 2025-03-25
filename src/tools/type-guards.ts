@@ -204,6 +204,7 @@ export function isCreateCommentArgs(args: unknown): args is {
 export function isCreateProjectArgs(args: unknown): args is {
   name: string;
   description?: string;
+  content?: string;
   teamIds: string[];
   state?: string;
 } {
@@ -424,6 +425,7 @@ export function isUpdateProjectArgs(args: unknown): args is {
   id: string;
   name?: string;
   description?: string;
+  content?: string;
   state?: string;
 } {
   return (
@@ -434,6 +436,7 @@ export function isUpdateProjectArgs(args: unknown): args is {
     (!('name' in args) || typeof (args as { name: string }).name === 'string') &&
     (!('description' in args) ||
       typeof (args as { description: string }).description === 'string') &&
+    (!('content' in args) || typeof (args as { content: string }).content === 'string') &&
     (!('state' in args) || typeof (args as { state: string }).state === 'string')
   );
 }
