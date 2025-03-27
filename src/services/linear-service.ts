@@ -1078,6 +1078,7 @@ export class LinearService {
     id: string;
     name?: string;
     description?: string;
+    content?: string;
     state?: string;
     startDate?: string;
     targetDate?: string;
@@ -1105,6 +1106,7 @@ export class LinearService {
       const updatePayload = await this.client.updateProject(args.id, {
         name: args.name,
         description: args.description,
+        content: args.content,
         state: args.state as any,
         startDate: args.startDate ? new Date(args.startDate) : undefined,
         targetDate: args.targetDate ? new Date(args.targetDate) : undefined,
@@ -1125,6 +1127,7 @@ export class LinearService {
           id: updatedProject.id,
           name: updatedProject.name,
           description: updatedProject.description,
+          content: updatedProject.content,
           state: updatedProject.state,
           startDate: updatedProject.startDate,
           targetDate: updatedProject.targetDate,
