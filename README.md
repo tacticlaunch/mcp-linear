@@ -130,6 +130,11 @@ See [TOOLS.md](https://github.com/tacticlaunch/mcp-linear/blob/main/TOOLS.md) fo
 
 See [DEVELOPMENT.md](https://github.com/tacticlaunch/mcp-linear/blob/main/DEVELOPMENT.md) for more information on how to develop locally.
 
+## Links
+
+[tacticlaunch/cursor-memory-bank](https://github.com/tacticlaunch/cursor-memory-bank) - If you are a developer seeking to enhance your workflow with Cursor, consider giving it a try.
+
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
