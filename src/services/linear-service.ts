@@ -86,6 +86,7 @@ export class LinearService {
           id: project.id,
           name: project.name,
           description: project.description,
+          content: project.content,
           state: project.state,
           teams: teams.nodes.map((team) => ({
             id: team.id,

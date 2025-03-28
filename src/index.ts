@@ -7,12 +7,16 @@ import { LinearService } from './services/linear-service.js';
 import { allToolDefinitions } from './tools/definitions/index.js';
 import { registerToolHandlers } from './tools/handlers/index.js';
 import { getLinearApiToken, logInfo, logError } from './utils/config.js';
+import pkg from '../package.json' with { type: 'json' }; // Import package.json to access version
 
 /**
  * Main function to run the MCP Linear
  */
 async function runServer() {
   try {
+    // Log package version
+    logInfo(`MCP Linear version: ${pkg.version}`);
+
     // Get Linear API token
     const linearApiToken = getLinearApiToken();
 
