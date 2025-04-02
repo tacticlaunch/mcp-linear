@@ -67,11 +67,7 @@ export async function runMCPServer(config: MCPServerConfig) {
   // Handle call tool request
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
-      const { name, arguments: args } = request.params;
-
-      if (!args) {
-        throw new Error('No arguments provided');
-      }
+      const { name, arguments: args = null } = request.params;
 
       // Call the handler
       const result = await config.handleRequest({ name, args });
