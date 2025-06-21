@@ -77,6 +77,21 @@ The following tools are currently implemented and available in the MCP Linear:
 | `linear_getActiveCycle`  | Get the currently active cycle for a team | ✅ Implemented |
 | `linear_addIssueToCycle` | Add an issue to a cycle                   | ✅ Implemented |
 
+### Initiative Management Tools
+
+| Tool Name                            | Description                                                         | Status         |
+| ------------------------------------ | ------------------------------------------------------------------- | -------------- |
+| `linear_getInitiatives`              | Get a list of initiatives from Linear                               | ✅ Implemented |
+| `linear_getInitiativeById`           | Get details of a specific initiative                                | ✅ Implemented |
+| `linear_createInitiative`            | Create a new initiative                                             | ✅ Implemented |
+| `linear_updateInitiative`            | Update an existing initiative                                       | ✅ Implemented |
+| `linear_archiveInitiative`           | Archive an initiative                                               | ✅ Implemented |
+| `linear_unarchiveInitiative`         | Unarchive an initiative                                             | ✅ Implemented |
+| `linear_deleteInitiative`            | Delete an initiative (move to trash)                                | ✅ Implemented |
+| `linear_getInitiativeProjects`       | Get all projects in an initiative                                   | ✅ Implemented |
+| `linear_addProjectToInitiative`      | Add a project to an initiative                                      | ✅ Implemented |
+| `linear_removeProjectFromInitiative` | Remove a project from an initiative                                 | ✅ Implemented |
+
 ## Recommended Future Tools
 
 The following tools are recommended for future implementation to enhance the capabilities of the MCP Linear:
@@ -98,19 +113,6 @@ The following tools are recommended for future implementation to enhance the cap
 | `linear_getProjectMembers`      | Get members assigned to a project | Medium   | 📝 Planned |
 | `linear_addProjectMember`       | Add a member to a project         | Medium   | 📝 Planned |
 | `linear_removeProjectMember`    | Remove a member from a project    | Medium   | 📝 Planned |
-
-### Initiative Management
-
-| Tool Name                            | Description                           | Priority | Status     |
-| ------------------------------------ | ------------------------------------- | -------- | ---------- |
-| `linear_getInitiatives`              | Get a list of initiatives from Linear | High     | 📝 Planned |
-| `linear_getInitiativeById`           | Get details of a specific initiative  | High     | 📝 Planned |
-| `linear_createInitiative`            | Create a new initiative               | High     | 📝 Planned |
-| `linear_updateInitiative`            | Update an existing initiative         | Medium   | 📝 Planned |
-| `linear_archiveInitiative`           | Archive an initiative                 | Medium   | 📝 Planned |
-| `linear_addProjectToInitiative`      | Add a project to an initiative        | High     | 📝 Planned |
-| `linear_removeProjectFromInitiative` | Remove a project from an initiative   | Medium   | 📝 Planned |
-| `linear_getInitiativeProjects`       | Get all projects in an initiative     | High     | 📝 Planned |
 
 ### Cycle Management
 

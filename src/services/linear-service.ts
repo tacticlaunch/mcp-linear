@@ -1662,4 +1662,455 @@ export class LinearService {
       throw error;
     }
   }
+
+  /**
+   * Get all initiatives
+   * @returns List of all initiatives
+   */
+  async getInitiatives(args: { includeArchived?: boolean; limit?: number } = {}) {
+    try {
+      const initiatives = await this.client.initiatives({
+        first: args.limit || 50,
+        includeArchived: args.includeArchived || false,
+      });
+      return Promise.all(
+        initiatives.nodes.map(async (initiative) => {
+          // Fetch owner data if available
+          const ownerData = initiative.owner ? await initiative.owner : null;
+
+          return {
+            id: initiative.id,
+            name: initiative.name,
+            description: initiative.description,
+            content: initiative.content,
+            icon: initiative.icon,
+            color: initiative.color,
+            status: initiative.status,
+            targetDate: initiative.targetDate,
+            sortOrder: initiative.sortOrder,
+            owner: ownerData
+              ? {
+                  id: ownerData.id,
+                  name: ownerData.name,
+                  email: ownerData.email,
+                }
+              : null,
+            url: initiative.url,
+          };
+        }),
+      );
+    } catch (error) {
+      console.error('Error getting initiatives:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a specific initiative by ID
+   * @param id Initiative ID
+   * @param includeProjects Whether to include associated projects
+   * @returns Initiative details with optional projects
+   */
+  async getInitiativeById(id: string, includeProjects = true) {
+    try {
+      const initiative = await this.client.initiative(id);
+      if (!initiative) {
+        throw new Error(`Initiative with ID ${id} not found`);
+      }
+
+      // Fetch owner data if available
+      const ownerData = initiative.owner ? await initiative.owner : null;
+
+      // Fetch associated projects if requested
+      let projectsData = undefined;
+      if (includeProjects) {
+        const projects = await initiative.projects();
+        projectsData = await Promise.all(
+          projects.nodes.map(async (project) => ({
+            id: project.id,
+            name: project.name,
+            state: project.state,
+          })),
+        );
+      }
+
+      return {
+        id: initiative.id,
+        name: initiative.name,
+        description: initiative.description,
+        content: initiative.content,
+        icon: initiative.icon,
+        color: initiative.color,
+        status: initiative.status,
+        targetDate: initiative.targetDate,
+        sortOrder: initiative.sortOrder,
+        owner: ownerData
+          ? {
+              id: ownerData.id,
+              name: ownerData.name,
+              email: ownerData.email,
+            }
+          : null,
+        ...(includeProjects && { projects: projectsData }),
+        url: initiative.url,
+      };
+    } catch (error) {
+      console.error('Error getting initiative by ID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new initiative
+   * @param args Initiative creation arguments
+   * @returns Created initiative details
+   */
+  async createInitiative(args: {
+    name: string;
+    description?: string;
+    content?: string;
+    icon?: string;
+    color?: string;
+    status?: string;
+    targetDate?: string;
+    ownerId?: string;
+    sortOrder?: number;
+  }) {
+    try {
+      const createPayload = await this.client.createInitiative({
+        name: args.name,
+        description: args.description,
+        content: args.content,
+        icon: args.icon,
+        color: args.color,
+        status: args.status as any,
+        targetDate: args.targetDate,
+        ownerId: args.ownerId,
+        sortOrder: args.sortOrder,
+      });
+
+      if (createPayload.success && createPayload.initiative) {
+        const initiative = await createPayload.initiative;
+        return {
+          id: initiative.id,
+          name: initiative.name,
+          description: initiative.description,
+          status: initiative.status,
+          url: initiative.url,
+        };
+      } else {
+        throw new Error('Failed to create initiative');
+      }
+    } catch (error) {
+      console.error('Error creating initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing initiative
+   * @param initiativeId Initiative ID to update
+   * @param updateData Update data
+   * @returns Updated initiative details
+   */
+  async updateInitiative(
+    initiativeId: string,
+    updateData: {
+      name?: string;
+      description?: string;
+      content?: string;
+      icon?: string;
+      color?: string;
+      status?: string;
+      targetDate?: string;
+      ownerId?: string;
+      sortOrder?: number;
+    },
+  ) {
+    try {
+      const updatePayload = await this.client.updateInitiative(initiativeId, {
+        name: updateData.name,
+        description: updateData.description,
+        content: updateData.content,
+        icon: updateData.icon,
+        color: updateData.color,
+        status: updateData.status as any,
+        targetDate: updateData.targetDate,
+        ownerId: updateData.ownerId,
+        sortOrder: updateData.sortOrder,
+      });
+
+      if (updatePayload.success && updatePayload.initiative) {
+        const initiative = await updatePayload.initiative;
+        return {
+          id: initiative.id,
+          name: initiative.name,
+          description: initiative.description,
+          status: initiative.status,
+          url: initiative.url,
+        };
+      } else {
+        throw new Error('Failed to update initiative');
+      }
+    } catch (error) {
+      console.error('Error updating initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Archive an initiative
+   * @param id Initiative ID to archive
+   * @returns Success status and archived initiative info
+   */
+  async archiveInitiative(id: string) {
+    try {
+      const archivePayload = await this.client.archiveInitiative(id);
+
+      if (archivePayload.success) {
+        const entity = archivePayload.entity ? await archivePayload.entity : null;
+        return {
+          success: true,
+          entity: entity
+            ? {
+                id: entity.id,
+                name: entity.name,
+              }
+            : null,
+        };
+      } else {
+        throw new Error('Failed to archive initiative');
+      }
+    } catch (error) {
+      console.error('Error archiving initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unarchive an initiative
+   * @param id Initiative ID to unarchive
+   * @returns Success status and unarchived initiative info
+   */
+  async unarchiveInitiative(id: string) {
+    try {
+      const unarchivePayload = await this.client.unarchiveInitiative(id);
+
+      if (unarchivePayload.success) {
+        const entity = unarchivePayload.entity ? await unarchivePayload.entity : null;
+        return {
+          success: true,
+          entity: entity
+            ? {
+                id: entity.id,
+                name: entity.name,
+              }
+            : null,
+        };
+      } else {
+        throw new Error('Failed to unarchive initiative');
+      }
+    } catch (error) {
+      console.error('Error unarchiving initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete (trash) an initiative
+   * @param id Initiative ID to delete
+   * @returns Success status
+   */
+  async deleteInitiative(id: string) {
+    try {
+      const deletePayload = await this.client.deleteInitiative(id);
+
+      return {
+        success: deletePayload.success,
+      };
+    } catch (error) {
+      console.error('Error deleting initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all projects associated with an initiative
+   * @param initiativeId Initiative ID
+   * @param includeArchived Whether to include archived projects
+   * @returns List of projects in the initiative
+   */
+  async getInitiativeProjects(initiativeId: string, includeArchived = false) {
+    try {
+      const initiative = await this.client.initiative(initiativeId);
+      if (!initiative) {
+        throw new Error(`Initiative with ID ${initiativeId} not found`);
+      }
+
+      const projects = await initiative.projects({
+        first: 50,
+        includeArchived: includeArchived,
+      });
+      return Promise.all(
+        projects.nodes.map(async (project) => {
+          // Fetch teams data
+          const teams = await project.teams();
+          const teamsData = teams.nodes.map((team) => ({
+            id: team.id,
+            name: team.name,
+          }));
+
+          return {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+            state: project.state,
+            progress: project.progress,
+            startDate: project.startDate,
+            targetDate: project.targetDate,
+            teams: teamsData,
+            url: project.url,
+          };
+        }),
+      );
+    } catch (error) {
+      console.error('Error getting initiative projects:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add a project to an initiative
+   * @param initiativeId Initiative ID
+   * @param projectId Project ID
+   * @param sortOrder Sort order within the initiative
+   * @returns Success status and project details
+   */
+  async addProjectToInitiative(initiativeId: string, projectId: string, sortOrder?: number) {
+    try {
+      // First, get the project to update it
+      const project = await this.client.project(projectId);
+      if (!project) {
+        throw new Error(`Project with ID ${projectId} not found`);
+      }
+
+      // Get the initiative to verify it exists
+      const initiative = await this.client.initiative(initiativeId);
+      if (!initiative) {
+        throw new Error(`Initiative with ID ${initiativeId} not found`);
+      }
+
+      // Create an InitiativeToProject relation
+      const createPayload = await this.client.createInitiativeToProject({
+        projectId: projectId,
+        initiativeId: initiativeId,
+        sortOrder: sortOrder,
+      });
+
+      if (createPayload.success) {
+        return {
+          success: true,
+          project: {
+            id: project.id,
+            name: project.name,
+            initiative: {
+              id: initiative.id,
+              name: initiative.name,
+            },
+          },
+        };
+      } else {
+        throw new Error('Failed to add project to initiative');
+      }
+    } catch (error) {
+      console.error('Error adding project to initiative:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a project from an initiative
+   * @param initiativeId Initiative ID
+   * @param projectId Project ID
+   * @returns Success status and project details
+   */
+  async removeProjectFromInitiative(initiativeId: string, projectId: string) {
+    try {
+      // Get the project
+      const project = await this.client.project(projectId);
+      if (!project) {
+        throw new Error(`Project with ID ${projectId} not found`);
+      }
+
+      // Get the initiative to verify it exists
+      const initiative = await this.client.initiative(initiativeId);
+      if (!initiative) {
+        throw new Error(`Initiative with ID ${initiativeId} not found`);
+      }
+
+      // First, verify the project belongs to this initiative
+      const projectInitiatives = await project.initiatives();
+      const belongsToInitiative = projectInitiatives.nodes.some((init) => init.id === initiativeId);
+      
+      if (!belongsToInitiative) {
+        throw new Error(`Project ${projectId} is not associated with initiative ${initiativeId}`);
+      }
+
+      // Query for InitiativeToProject relationships
+      // Note: The API doesn't support filtering by initiative/project, so we need to search through all
+      let targetRelationId: string | null = null;
+      let hasMore = true;
+      let cursor: string | undefined = undefined;
+      
+      // Paginate through all InitiativeToProject relationships to find the one we need
+      while (hasMore && !targetRelationId) {
+        const initiativeToProjects = await this.client.initiativeToProjects({
+          first: 100,
+          after: cursor,
+          includeArchived: false,
+        });
+
+        // Search through this page of results
+        for (const relation of initiativeToProjects.nodes) {
+          const relInitiative = await relation.initiative;
+          const relProject = await relation.project;
+          if (relInitiative?.id === initiativeId && relProject?.id === projectId) {
+            targetRelationId = relation.id;
+            break;
+          }
+        }
+
+        // Check if there are more pages
+        hasMore = initiativeToProjects.pageInfo.hasNextPage;
+        cursor = initiativeToProjects.pageInfo.endCursor || undefined;
+      }
+
+      if (!targetRelationId) {
+        // This shouldn't happen if belongsToInitiative is true, but let's be defensive
+        throw new Error(`Could not find InitiativeToProject relationship between initiative ${initiativeId} and project ${projectId}`);
+      }
+
+      // Delete the InitiativeToProject relationship
+      const deletePayload = await this.client.deleteInitiativeToProject(targetRelationId);
+
+      if (deletePayload.success) {
+        return {
+          success: true,
+          project: {
+            id: project.id,
+            name: project.name,
+          },
+          initiative: {
+            id: initiative.id,
+            name: initiative.name,
+          },
+        };
+      } else {
+        throw new Error('Failed to remove project from initiative');
+      }
+    } catch (error) {
+      console.error('Error removing project from initiative:', error);
+      throw error;
+    }
+  }
 }
