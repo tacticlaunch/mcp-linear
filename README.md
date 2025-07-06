@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/tacticlaunch-mcp-linear-badge.png)](https://mseep.ai/app/tacticlaunch-mcp-linear)
+
 <p align="center">
   <img src="https://github.com/tacticlaunch/mcp-linear/blob/main/docs/linear-app-icon.png?raw=true" alt="Linear App Icon" width="250" height="250">
 </p>
