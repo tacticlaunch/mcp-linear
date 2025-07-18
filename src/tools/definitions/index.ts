@@ -42,6 +42,7 @@ import {
   getActiveCycleToolDefinition,
   addIssueToCycleToolDefinition,
 } from './cycle-tools.js';
+import { initiativeToolDefinitions } from './initiative-tools.js';
 
 // All tool definitions
 export const allToolDefinitions: MCPToolDefinition[] = [
@@ -68,6 +69,9 @@ export const allToolDefinitions: MCPToolDefinition[] = [
   getCyclesToolDefinition,
   getActiveCycleToolDefinition,
   addIssueToCycleToolDefinition,
+
+  // Initiative Management tools
+  ...initiativeToolDefinitions,
 
   // Issue tools
   getIssuesToolDefinition,

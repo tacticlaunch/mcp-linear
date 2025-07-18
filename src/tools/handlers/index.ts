@@ -42,6 +42,19 @@ import {
   handleGetActiveCycle,
   handleAddIssueToCycle,
 } from './cycle-handlers.js';
+import {
+  // Initiative Management handlers
+  getInitiativesHandler,
+  getInitiativeByIdHandler,
+  createInitiativeHandler,
+  updateInitiativeHandler,
+  archiveInitiativeHandler,
+  unarchiveInitiativeHandler,
+  deleteInitiativeHandler,
+  getInitiativeProjectsHandler,
+  addProjectToInitiativeHandler,
+  removeProjectFromInitiativeHandler,
+} from './initiative-handlers.js';
 
 /**
  * Registers all tool handlers for the MCP Linear
@@ -73,6 +86,18 @@ export function registerToolHandlers(linearService: LinearService) {
     linear_getCycles: handleGetCycles(linearService),
     linear_getActiveCycle: handleGetActiveCycle(linearService),
     linear_addIssueToCycle: handleAddIssueToCycle(linearService),
+
+    // Initiative Management tools
+    linear_getInitiatives: getInitiativesHandler(linearService),
+    linear_getInitiativeById: getInitiativeByIdHandler(linearService),
+    linear_createInitiative: createInitiativeHandler(linearService),
+    linear_updateInitiative: updateInitiativeHandler(linearService),
+    linear_archiveInitiative: archiveInitiativeHandler(linearService),
+    linear_unarchiveInitiative: unarchiveInitiativeHandler(linearService),
+    linear_deleteInitiative: deleteInitiativeHandler(linearService),
+    linear_getInitiativeProjects: getInitiativeProjectsHandler(linearService),
+    linear_addProjectToInitiative: addProjectToInitiativeHandler(linearService),
+    linear_removeProjectFromInitiative: removeProjectFromInitiativeHandler(linearService),
 
     // Issue tools
     linear_getIssues: handleGetIssues(linearService),
@@ -142,4 +167,16 @@ export {
   handleGetCycles,
   handleGetActiveCycle,
   handleAddIssueToCycle,
+
+  // Initiative Management handlers
+  getInitiativesHandler,
+  getInitiativeByIdHandler,
+  createInitiativeHandler,
+  updateInitiativeHandler,
+  archiveInitiativeHandler,
+  unarchiveInitiativeHandler,
+  deleteInitiativeHandler,
+  getInitiativeProjectsHandler,
+  addProjectToInitiativeHandler,
+  removeProjectFromInitiativeHandler,
 };

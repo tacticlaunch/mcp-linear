@@ -475,6 +475,175 @@ export function isGetProjectIssuesArgs(args: unknown): args is {
 }
 
 /**
+ * Type guard for linear_getInitiativeById tool arguments
+ */
+export function isGetInitiativeByIdArgs(args: unknown): args is {
+  id: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'id' in args &&
+    typeof (args as { id: string }).id === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_createInitiative tool arguments
+ */
+export function isCreateInitiativeArgs(args: unknown): args is {
+  name: string;
+  description?: string;
+  content?: string;
+  icon?: string;
+  color?: string;
+  status?: string;
+  targetDate?: string;
+  ownerId?: string;
+  sortOrder?: number;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'name' in args &&
+    typeof (args as { name: string }).name === 'string' &&
+    (!('description' in args) ||
+      typeof (args as { description: string }).description === 'string') &&
+    (!('content' in args) || typeof (args as { content: string }).content === 'string') &&
+    (!('icon' in args) || typeof (args as { icon: string }).icon === 'string') &&
+    (!('color' in args) || typeof (args as { color: string }).color === 'string') &&
+    (!('status' in args) || typeof (args as { status: string }).status === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: string }).targetDate === 'string') &&
+    (!('ownerId' in args) || typeof (args as { ownerId: string }).ownerId === 'string') &&
+    (!('sortOrder' in args) || typeof (args as { sortOrder: number }).sortOrder === 'number')
+  );
+}
+
+/**
+ * Type guard for linear_updateInitiative tool arguments
+ */
+export function isUpdateInitiativeArgs(args: unknown): args is {
+  id: string;
+  name?: string;
+  description?: string;
+  content?: string;
+  icon?: string;
+  color?: string;
+  status?: string;
+  targetDate?: string;
+  ownerId?: string;
+  sortOrder?: number;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'id' in args &&
+    typeof (args as { id: string }).id === 'string' &&
+    (!('name' in args) || typeof (args as { name: string }).name === 'string') &&
+    (!('description' in args) ||
+      typeof (args as { description: string }).description === 'string') &&
+    (!('content' in args) || typeof (args as { content: string }).content === 'string') &&
+    (!('icon' in args) || typeof (args as { icon: string }).icon === 'string') &&
+    (!('color' in args) || typeof (args as { color: string }).color === 'string') &&
+    (!('status' in args) || typeof (args as { status: string }).status === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: string }).targetDate === 'string') &&
+    (!('ownerId' in args) || typeof (args as { ownerId: string }).ownerId === 'string') &&
+    (!('sortOrder' in args) || typeof (args as { sortOrder: number }).sortOrder === 'number')
+  );
+}
+
+/**
+ * Type guard for linear_archiveInitiative tool arguments
+ */
+export function isArchiveInitiativeArgs(args: unknown): args is {
+  id: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'id' in args &&
+    typeof (args as { id: string }).id === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_unarchiveInitiative tool arguments
+ */
+export function isUnarchiveInitiativeArgs(args: unknown): args is {
+  id: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'id' in args &&
+    typeof (args as { id: string }).id === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_deleteInitiative tool arguments
+ */
+export function isDeleteInitiativeArgs(args: unknown): args is {
+  id: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'id' in args &&
+    typeof (args as { id: string }).id === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_getInitiativeProjects tool arguments
+ */
+export function isGetInitiativeProjectsArgs(args: unknown): args is {
+  initiativeId: string;
+  limit?: number;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    (!('limit' in args) || typeof (args as { limit: number }).limit === 'number')
+  );
+}
+
+/**
+ * Type guard for linear_addProjectToInitiative tool arguments
+ */
+export function isAddProjectToInitiativeArgs(args: unknown): args is {
+  projectId: string;
+  initiativeId: string;
+  sortOrder?: number;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'projectId' in args &&
+    typeof (args as { projectId: string }).projectId === 'string' &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    (!('sortOrder' in args) || typeof (args as { sortOrder: number }).sortOrder === 'number')
+  );
+}
+
+/**
+ * Type guard for linear_removeProjectFromInitiative tool arguments
+ */
+export function isRemoveProjectFromInitiativeArgs(args: unknown): args is {
+  projectId: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'projectId' in args &&
+    typeof (args as { projectId: string }).projectId === 'string'
+  );
+}
+
+/**
  * Type guard for linear_getCycles tool arguments
  */
 export function isGetCyclesArgs(args: unknown): args is {
@@ -544,4 +713,176 @@ export function isGetWorkflowStatesArgs(args: unknown): args is {
   }
 
   return true;
+}
+
+/**
+ * Type guard for linear_getInitiatives tool arguments
+ */
+export function isGetInitiativesInput(args: unknown): args is {
+  includeArchived?: boolean;
+  limit?: number;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: boolean }).includeArchived === 'boolean') &&
+    (!('limit' in args) || typeof (args as { limit: number }).limit === 'number')
+  );
+}
+
+/**
+ * Type guard for linear_getInitiativeById tool arguments
+ */
+export function isGetInitiativeByIdInput(args: unknown): args is {
+  initiativeId: string;
+  includeProjects?: boolean;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    (!('includeProjects' in args) ||
+      typeof (args as { includeProjects: boolean }).includeProjects === 'boolean')
+  );
+}
+
+/**
+ * Type guard for linear_createInitiative tool arguments
+ */
+export function isCreateInitiativeInput(args: unknown): args is {
+  name: string;
+  description?: string;
+  content?: string;
+  ownerId?: string;
+  targetDate?: string;
+  status?: string;
+  icon?: string;
+  color?: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'name' in args &&
+    typeof (args as { name: string }).name === 'string' &&
+    (!('description' in args) ||
+      typeof (args as { description: string }).description === 'string') &&
+    (!('content' in args) || typeof (args as { content: string }).content === 'string') &&
+    (!('ownerId' in args) || typeof (args as { ownerId: string }).ownerId === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: string }).targetDate === 'string') &&
+    (!('status' in args) || typeof (args as { status: string }).status === 'string') &&
+    (!('icon' in args) || typeof (args as { icon: string }).icon === 'string') &&
+    (!('color' in args) || typeof (args as { color: string }).color === 'string')
+  );
+}
+
+/**
+ * Type guard for linear_updateInitiative tool arguments
+ */
+export function isUpdateInitiativeInput(args: unknown): args is {
+  initiativeId: string;
+  name?: string;
+  description?: string;
+  content?: string;
+  ownerId?: string;
+  targetDate?: string;
+  status?: string;
+  icon?: string;
+  color?: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    (!('name' in args) || typeof (args as { name: string }).name === 'string') &&
+    (!('description' in args) ||
+      typeof (args as { description: string }).description === 'string') &&
+    (!('content' in args) || typeof (args as { content: string }).content === 'string') &&
+    (!('ownerId' in args) || typeof (args as { ownerId: string }).ownerId === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: string }).targetDate === 'string') &&
+    (!('status' in args) || typeof (args as { status: string }).status === 'string') &&
+    (!('icon' in args) || typeof (args as { icon: string }).icon === 'string') &&
+    (!('color' in args) || typeof (args as { color: string }).color === 'string')
+  );
+}
+
+/**
+ * Type guard for linear_archiveInitiative tool arguments
+ */
+export function isArchiveInitiativeInput(args: unknown): args is {
+  initiativeId: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_deleteInitiative tool arguments
+ */
+export function isDeleteInitiativeInput(args: unknown): args is {
+  initiativeId: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_getInitiativeProjects tool arguments
+ */
+export function isGetInitiativeProjectsInput(args: unknown): args is {
+  initiativeId: string;
+  includeArchived?: boolean;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: boolean }).includeArchived === 'boolean')
+  );
+}
+
+/**
+ * Type guard for linear_addProjectToInitiative tool arguments
+ */
+export function isAddProjectToInitiativeInput(args: unknown): args is {
+  initiativeId: string;
+  projectId: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    'projectId' in args &&
+    typeof (args as { projectId: string }).projectId === 'string'
+  );
+}
+
+/**
+ * Type guard for linear_removeProjectFromInitiative tool arguments
+ */
+export function isRemoveProjectFromInitiativeInput(args: unknown): args is {
+  initiativeId: string;
+  projectId: string;
+} {
+  return (
+    typeof args === 'object' &&
+    args !== null &&
+    'initiativeId' in args &&
+    typeof (args as { initiativeId: string }).initiativeId === 'string' &&
+    'projectId' in args &&
+    typeof (args as { projectId: string }).projectId === 'string'
+  );
 }
