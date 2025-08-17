@@ -8,6 +8,8 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
 [![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
+
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/tacticlaunch/mcp-linear)](https://archestra.ai/mcp-catalog/tacticlaunch__mcp-linear)
 [![smithery badge](https://smithery.ai/badge/@tacticlaunch/mcp-linear)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
 <a href="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear">
