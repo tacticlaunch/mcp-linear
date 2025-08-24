@@ -517,18 +517,21 @@ export class LinearService {
     }
   }
 
-  async createComment(args: { issueId: string; body: string }) {
+  async createComment(args: { issueId: string; body: string; parentId?: string }) {
     const createdComment = await this.client.createComment({
       issueId: args.issueId,
       body: args.body,
+      parentId: args.parentId,
     });
 
     if (createdComment.success && createdComment.comment) {
       const commentData = await createdComment.comment;
+      const parent = commentData.parent ? await commentData.parent : null;
       return {
         id: commentData.id,
         body: commentData.body,
         url: commentData.url,
+        parentId: parent?.id,
       };
     } else {
       throw new Error('Failed to create comment');

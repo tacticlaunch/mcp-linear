@@ -187,6 +187,7 @@ export function isUpdateIssueArgs(args: unknown): args is {
 export function isCreateCommentArgs(args: unknown): args is {
   issueId: string;
   body: string;
+  parentId?: string;
 } {
   return (
     typeof args === 'object' &&
@@ -194,7 +195,8 @@ export function isCreateCommentArgs(args: unknown): args is {
     'issueId' in args &&
     typeof (args as { issueId: string }).issueId === 'string' &&
     'body' in args &&
-    typeof (args as { body: string }).body === 'string'
+    typeof (args as { body: string }).body === 'string' &&
+    (!('parentId' in args) || typeof (args as { parentId: string }).parentId === 'string')
   );
 }
 

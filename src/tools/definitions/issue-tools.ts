@@ -367,7 +367,7 @@ export const updateIssueToolDefinition: MCPToolDefinition = {
  */
 export const createCommentToolDefinition: MCPToolDefinition = {
   name: 'linear_createComment',
-  description: 'Add a comment to an issue in Linear',
+  description: 'Add a comment to an issue in Linear (supports threaded replies)',
   input_schema: {
     type: 'object',
     properties: {
@@ -379,6 +379,10 @@ export const createCommentToolDefinition: MCPToolDefinition = {
         type: 'string',
         description: 'Text of the comment (Markdown supported)',
       },
+      parentId: {
+        type: 'string',
+        description: 'ID of the parent comment to reply to (for threaded comments)',
+      },
     },
     required: ['issueId', 'body'],
   },
@@ -388,6 +392,7 @@ export const createCommentToolDefinition: MCPToolDefinition = {
       id: { type: 'string' },
       body: { type: 'string' },
       url: { type: 'string' },
+      parentId: { type: 'string' },
     },
   },
 };
