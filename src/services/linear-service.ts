@@ -1,5 +1,4 @@
 import { LinearClient } from '@linear/sdk';
-import { IssueRelationType } from '@linear/sdk/dist/_generated_documents.js';
 
 // Define Linear API service
 export class LinearService {
@@ -807,14 +806,17 @@ export class LinearService {
         throw new Error(`Related issue with ID ${relatedIssueId} not found`);
       }
 
-      if (!(relationType in IssueRelationType)) {
+      const validTypes = ["blocks", "duplicate", "related"];
+      
+      if (!validTypes.includes(relationType)) {
         throw new Error(`${relationType} is not a valid relation type`)
       }
 
       const relation = await this.client.createIssueRelation({
         issueId,
         relatedIssueId,
-        type: IssueRelationType[relationType as keyof typeof IssueRelationType]
+        // @ts-ignore
+        type: relationType, 
       })
 
       // For now, we'll just acknowledge the request with a success message
