@@ -793,7 +793,7 @@ export class LinearService {
   /**
    * Creates a relation between two issues
    */
-  async createIssueRelation(issueId: string, relatedIssueId: string, type: string) {
+  async createIssueRelation(issueId: string, relatedIssueId: string, relationType: string) {
     try {
       // Get both issues
       const issue = await this.client.issue(issueId);
@@ -806,18 +806,26 @@ export class LinearService {
         throw new Error(`Related issue with ID ${relatedIssueId} not found`);
       }
 
+      const validTypes = ["blocks", "duplicate", "related"];
+      
+      if (!validTypes.includes(relationType)) {
+        throw new Error(`${relationType} is not a valid relation type`)
+      }
+
+      const relation = await this.client.createIssueRelation({
+        issueId,
+        relatedIssueId,
+        // @ts-ignore
+        type: relationType, 
+      })
+
       // For now, we'll just acknowledge the request with a success message
       // The actual relation creation logic would need to be implemented based on the Linear SDK specifics
       // In a production environment, we should check the SDK documentation for the correct method
 
       return {
         success: true,
-        relation: {
-          id: 'relation-id-would-go-here',
-          type: type,
-          issueIdentifier: issue.identifier,
-          relatedIssueIdentifier: relatedIssue.identifier,
-        },
+        relation,
       };
     } catch (error) {
       console.error('Error creating issue relation:', error);
