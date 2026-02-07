@@ -3,9 +3,11 @@
 import { LinearClient } from '@linear/sdk';
 import { runMCPServer } from './mcp-server.js';
 
-import { LinearService } from './services/linear-service.js';
+import { CachedLinearService } from './services/cached-linear-service.js';
 import { allToolDefinitions } from './tools/definitions/index.js';
+import { cacheToolDefinitions } from './tools/definitions/cache-tools.js';
 import { registerToolHandlers } from './tools/handlers/index.js';
+import { registerCacheHandlers } from './tools/handlers/cache-handlers.js';
 import { getLinearApiToken, logInfo, logError } from './utils/config.js';
 import pkg from '../package.json' with { type: 'json' }; // Import package.json to access version
 
@@ -26,22 +28,37 @@ async function runServer() {
       );
     }
 
-    logInfo(`Starting MCP Linear...`);
+    // Cache config from env (opt-out: enabled by default)
+    const cacheEnabled = process.env.LINEAR_CACHE_ENABLED !== 'false';
+    const cacheMaxSize = parseInt(process.env.LINEAR_CACHE_MAX_SIZE || '500', 10);
 
-    // Initialize Linear client and service
+    logInfo(`Starting MCP Linear... (cache: ${cacheEnabled ? 'on' : 'off'}, max: ${cacheMaxSize})`);
+
+    // Initialize Linear client and cached service
     const linearClient = new LinearClient({ apiKey: linearApiToken });
-    const linearService = new LinearService(linearClient);
+    const linearService = new CachedLinearService(linearClient, cacheEnabled, cacheMaxSize);
+
+    // Merge tool definitions: original + cache management tools
+    const allTools = [...allToolDefinitions, ...cacheToolDefinitions];
 
     // Start the MCP server
     const server = await runMCPServer({
-      tools: allToolDefinitions,
+      tools: allTools,
       handleInitialize: async () => {
         logInfo('MCP Linear initialized successfully.');
         return {
-          tools: allToolDefinitions,
+          tools: allTools,
         };
       },
       handleRequest: async (req: { name: string; args: unknown }) => {
+        // Check cache handlers first
+        const cacheHandlers = registerCacheHandlers(linearService);
+        if (req.name in cacheHandlers) {
+          const handler = cacheHandlers[req.name as keyof typeof cacheHandlers];
+          return await handler(req.args);
+        }
+
+        // Then check regular handlers
         const handlers = registerToolHandlers(linearService);
         const toolName = req.name;
 
