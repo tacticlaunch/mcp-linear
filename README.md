@@ -14,6 +14,10 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear/badge" />
 </a>
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/tacticlaunch-mcp-linear).
+
 ## Features
 
 MCP Linear bridges the gap between AI assistant and Linear (project management tool) by implementing the MCP protocol. This allows to:
