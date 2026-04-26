@@ -63,14 +63,14 @@ export function handleGetIssueById(linearService: LinearService) {
 export function handleSearchIssues(linearService: LinearService) {
   return async (args: unknown) => {
     try {
-      console.log('searchIssues args:', JSON.stringify(args, null, 2));
+      console.error('searchIssues args:', JSON.stringify(args, null, 2));
 
       if (!isSearchIssuesArgs(args)) {
         console.error('Invalid arguments for searchIssues');
         throw new Error('Invalid arguments for searchIssues');
       }
 
-      console.log('Arguments validated successfully');
+      console.error('Arguments validated successfully');
       return await linearService.searchIssues(args);
     } catch (error) {
       logError('Error searching issues', error);
