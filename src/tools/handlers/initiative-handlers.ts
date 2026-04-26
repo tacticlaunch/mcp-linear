@@ -17,9 +17,9 @@ export function getInitiativesHandler(linearService: LinearService) {
       throw new Error('Invalid input for getInitiatives');
     }
 
-    console.log('[getInitiatives] Fetching initiatives with options:', args);
+    console.error('[getInitiatives] Fetching initiatives with options:', args);
     const initiatives = await linearService.getInitiatives(args);
-    console.log(`[getInitiatives] Retrieved ${initiatives.length} initiatives`);
+    console.error(`[getInitiatives] Retrieved ${initiatives.length} initiatives`);
     return initiatives;
   };
 }
@@ -30,12 +30,12 @@ export function getInitiativeByIdHandler(linearService: LinearService) {
       throw new Error('Invalid input for getInitiativeById');
     }
 
-    console.log(`[getInitiativeById] Fetching initiative: ${args.initiativeId}`);
+    console.error(`[getInitiativeById] Fetching initiative: ${args.initiativeId}`);
     const initiative = await linearService.getInitiativeById(
       args.initiativeId,
       args.includeProjects,
     );
-    console.log(`[getInitiativeById] Retrieved initiative: ${initiative.name}`);
+    console.error(`[getInitiativeById] Retrieved initiative: ${initiative.name}`);
     return initiative;
   };
 }
@@ -46,9 +46,9 @@ export function createInitiativeHandler(linearService: LinearService) {
       throw new Error('Invalid input for createInitiative');
     }
 
-    console.log('[createInitiative] Creating new initiative:', args.name);
+    console.error('[createInitiative] Creating new initiative:', args.name);
     const result = await linearService.createInitiative(args);
-    console.log(`[createInitiative] Initiative created successfully`);
+    console.error(`[createInitiative] Initiative created successfully`);
     return result;
   };
 }
@@ -60,9 +60,9 @@ export function updateInitiativeHandler(linearService: LinearService) {
     }
 
     const { initiativeId, ...updateData } = args;
-    console.log(`[updateInitiative] Updating initiative: ${initiativeId}`);
+    console.error(`[updateInitiative] Updating initiative: ${initiativeId}`);
     const result = await linearService.updateInitiative(initiativeId, updateData);
-    console.log(`[updateInitiative] Initiative updated successfully`);
+    console.error(`[updateInitiative] Initiative updated successfully`);
     return result;
   };
 }
@@ -73,9 +73,9 @@ export function archiveInitiativeHandler(linearService: LinearService) {
       throw new Error('Invalid input for archiveInitiative');
     }
 
-    console.log(`[archiveInitiative] Archiving initiative: ${args.initiativeId}`);
+    console.error(`[archiveInitiative] Archiving initiative: ${args.initiativeId}`);
     const result = await linearService.archiveInitiative(args.initiativeId);
-    console.log(`[archiveInitiative] Initiative archived successfully`);
+    console.error(`[archiveInitiative] Initiative archived successfully`);
     return result;
   };
 }
@@ -86,9 +86,9 @@ export function unarchiveInitiativeHandler(linearService: LinearService) {
       throw new Error('Invalid input for unarchiveInitiative');
     }
 
-    console.log(`[unarchiveInitiative] Unarchiving initiative: ${args.initiativeId}`);
+    console.error(`[unarchiveInitiative] Unarchiving initiative: ${args.initiativeId}`);
     const result = await linearService.unarchiveInitiative(args.initiativeId);
-    console.log(`[unarchiveInitiative] Initiative unarchived successfully`);
+    console.error(`[unarchiveInitiative] Initiative unarchived successfully`);
     return result;
   };
 }
@@ -99,9 +99,9 @@ export function deleteInitiativeHandler(linearService: LinearService) {
       throw new Error('Invalid input for deleteInitiative');
     }
 
-    console.log(`[deleteInitiative] Deleting initiative: ${args.initiativeId}`);
+    console.error(`[deleteInitiative] Deleting initiative: ${args.initiativeId}`);
     const result = await linearService.deleteInitiative(args.initiativeId);
-    console.log(`[deleteInitiative] Initiative deleted successfully`);
+    console.error(`[deleteInitiative] Initiative deleted successfully`);
     return result;
   };
 }
@@ -112,12 +112,12 @@ export function getInitiativeProjectsHandler(linearService: LinearService) {
       throw new Error('Invalid input for getInitiativeProjects');
     }
 
-    console.log(`[getInitiativeProjects] Fetching projects for initiative: ${args.initiativeId}`);
+    console.error(`[getInitiativeProjects] Fetching projects for initiative: ${args.initiativeId}`);
     const projects = await linearService.getInitiativeProjects(
       args.initiativeId,
       args.includeArchived,
     );
-    console.log(`[getInitiativeProjects] Retrieved ${projects.length} projects`);
+    console.error(`[getInitiativeProjects] Retrieved ${projects.length} projects`);
     return projects;
   };
 }
@@ -128,11 +128,11 @@ export function addProjectToInitiativeHandler(linearService: LinearService) {
       throw new Error('Invalid input for addProjectToInitiative');
     }
 
-    console.log(
+    console.error(
       `[addProjectToInitiative] Adding project ${args.projectId} to initiative ${args.initiativeId}`,
     );
     const result = await linearService.addProjectToInitiative(args.initiativeId, args.projectId);
-    console.log(`[addProjectToInitiative] Project added successfully`);
+    console.error(`[addProjectToInitiative] Project added successfully`);
     return result;
   };
 }
@@ -143,14 +143,14 @@ export function removeProjectFromInitiativeHandler(linearService: LinearService)
       throw new Error('Invalid input for removeProjectFromInitiative');
     }
 
-    console.log(
+    console.error(
       `[removeProjectFromInitiative] Removing project ${args.projectId} from initiative ${args.initiativeId}`,
     );
     const result = await linearService.removeProjectFromInitiative(
       args.initiativeId,
       args.projectId,
     );
-    console.log(`[removeProjectFromInitiative] Project removed successfully`);
+    console.error(`[removeProjectFromInitiative] Project removed successfully`);
     return result;
   };
 }
