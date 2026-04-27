@@ -107,6 +107,7 @@ export class LinearService {
         const projectData = issue.project ? await issue.project : null;
         const cycleData = issue.cycle ? await issue.cycle : null;
         const parentData = issue.parent ? await issue.parent : null;
+        const stateData = issue.state ? await issue.state : null;
 
         // Get labels
         const labels = await issue.labels();
@@ -120,7 +121,14 @@ export class LinearService {
           id: issue.id,
           title: issue.title,
           description: issue.description,
-          state: issue.state,
+          state: stateData
+            ? {
+                id: stateData.id,
+                name: stateData.name,
+                color: stateData.color,
+                type: stateData.type,
+              }
+            : null,
           priority: issue.priority,
           estimate: issue.estimate,
           dueDate: issue.dueDate,
@@ -177,6 +185,7 @@ export class LinearService {
     const projectData = issue.project ? await issue.project : null;
     const cycleData = issue.cycle ? await issue.cycle : null;
     const parentData = issue.parent ? await issue.parent : null;
+    const stateData = issue.state ? await issue.state : null;
 
     // Get comments
     const comments = await issue.comments();
@@ -210,7 +219,14 @@ export class LinearService {
       id: issue.id,
       title: issue.title,
       description: issue.description,
-      state: issue.state,
+      state: stateData
+        ? {
+            id: stateData.id,
+            name: stateData.name,
+            color: stateData.color,
+            type: stateData.type,
+          }
+        : null,
       priority: issue.priority,
       estimate: issue.estimate,
       dueDate: issue.dueDate,
@@ -1240,13 +1256,21 @@ export class LinearService {
         issues.nodes.map(async (issue) => {
           const teamData = issue.team ? await issue.team : null;
           const assigneeData = issue.assignee ? await issue.assignee : null;
+          const stateData = issue.state ? await issue.state : null;
 
           return {
             id: issue.id,
             identifier: issue.identifier,
             title: issue.title,
             description: issue.description,
-            state: issue.state,
+            state: stateData
+              ? {
+                  id: stateData.id,
+                  name: stateData.name,
+                  color: stateData.color,
+                  type: stateData.type,
+                }
+              : null,
             priority: issue.priority,
             team: teamData
               ? {
