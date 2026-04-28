@@ -197,7 +197,15 @@ export const getProjectIssuesToolDefinition: MCPToolDefinition = {
         identifier: { type: 'string' },
         title: { type: 'string' },
         description: { type: 'string' },
-        state: { type: 'string' },
+        state: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            color: { type: 'string' },
+            type: { type: 'string' },
+          },
+        },
         priority: { type: 'number' },
         team: { type: 'object' },
         assignee: { type: 'object' },
