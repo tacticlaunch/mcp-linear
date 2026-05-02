@@ -3270,8 +3270,8 @@ export class LinearService {
         const projectData = issue.project ? await issue.project : null;
         const cycleData = issue.cycle ? await issue.cycle : null;
         const projectMilestoneData = issue.projectMilestone ? await issue.projectMilestone : null;
-        const stateData = issue.state ? await issue.state : null;
         const parentData = issue.parent ? await issue.parent : null;
+        const stateData = issue.state ? await issue.state : null;
 
         // Get labels
         const labels = await issue.labels();
@@ -3355,8 +3355,8 @@ export class LinearService {
     const projectData = issue.project ? await issue.project : null;
     const cycleData = issue.cycle ? await issue.cycle : null;
     const projectMilestoneData = issue.projectMilestone ? await issue.projectMilestone : null;
-    const stateData = issue.state ? await issue.state : null;
     const parentData = issue.parent ? await issue.parent : null;
+    const stateData = issue.state ? await issue.state : null;
 
     // Get comments
     const comments = await issue.comments();
