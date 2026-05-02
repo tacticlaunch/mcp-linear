@@ -838,6 +838,408 @@ export function isArchiveRoadmapArgs(args: unknown): args is { roadmapId: string
   );
 }
 
+function hasReleaseRangeShape(args: Record<string, unknown>): boolean {
+  const hasFrom = typeof args.rangeFromReleaseId === 'string';
+  const hasTo = typeof args.rangeToReleaseId === 'string';
+  return hasFrom && hasTo;
+}
+
+function hasReleaseIdsShape(args: Record<string, unknown>): boolean {
+  return isStringArray(args.releaseIds) && args.releaseIds.length > 0;
+}
+
+function hasExclusiveReleaseSelection(args: Record<string, unknown>): boolean {
+  const hasIds = hasReleaseIdsShape(args);
+  const hasRange = hasReleaseRangeShape(args);
+  return (hasIds || hasRange) && !(hasIds && hasRange);
+}
+
+export function isGetReleasePipelinesArgs(args: unknown): args is {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: 'createdAt' | 'updatedAt';
+} {
+  return (
+    isJsonObject(args) &&
+    (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
+    (!('orderBy' in args) || isPaginationOrderBy((args as { orderBy: unknown }).orderBy))
+  );
+}
+
+export function isGetReleasePipelineByIdArgs(args: unknown): args is { id: string } {
+  return isJsonObject(args) && 'id' in args && typeof (args as { id: unknown }).id === 'string';
+}
+
+export function isCreateReleasePipelineArgs(args: unknown): args is {
+  name: string;
+  teamIds: string[];
+  type?: 'continuous' | 'scheduled';
+  slugId?: string;
+  isProduction?: boolean;
+  includePathPatterns?: string[];
+} {
+  return (
+    isJsonObject(args) &&
+    'name' in args &&
+    isNonEmptyString((args as { name: unknown }).name) &&
+    'teamIds' in args &&
+    isStringArray((args as { teamIds: unknown }).teamIds) &&
+    (!('type' in args) || isReleasePipelineType((args as { type: unknown }).type)) &&
+    (!('slugId' in args) || typeof (args as { slugId: unknown }).slugId === 'string') &&
+    (!('isProduction' in args) || typeof (args as { isProduction: unknown }).isProduction === 'boolean') &&
+    (!('includePathPatterns' in args) ||
+      isStringArray((args as { includePathPatterns: unknown }).includePathPatterns))
+  );
+}
+
+export function isUpdateReleasePipelineArgs(args: unknown): args is {
+  id: string;
+  name?: string;
+  teamIds?: string[];
+  type?: 'continuous' | 'scheduled';
+  slugId?: string;
+  isProduction?: boolean;
+  includePathPatterns?: string[];
+} {
+  if (!isJsonObject(args)) {
+    return false;
+  }
+
+  const hasUpdateField = ['name', 'teamIds', 'type', 'slugId', 'isProduction', 'includePathPatterns']
+    .some((key) => key in args && (args as Record<string, unknown>)[key] !== undefined);
+
+  return (
+    'id' in args &&
+    typeof (args as { id: unknown }).id === 'string' &&
+    hasUpdateField &&
+    (!('name' in args) || typeof (args as { name: unknown }).name === 'string') &&
+    (!('teamIds' in args) || isStringArray((args as { teamIds: unknown }).teamIds)) &&
+    (!('type' in args) || isReleasePipelineType((args as { type: unknown }).type)) &&
+    (!('slugId' in args) || typeof (args as { slugId: unknown }).slugId === 'string') &&
+    (!('isProduction' in args) || typeof (args as { isProduction: unknown }).isProduction === 'boolean') &&
+    (!('includePathPatterns' in args) ||
+      isStringArray((args as { includePathPatterns: unknown }).includePathPatterns))
+  );
+}
+
+export function isArchiveReleasePipelineArgs(args: unknown): args is { pipelineId: string } {
+  return (
+    isJsonObject(args) &&
+    'pipelineId' in args &&
+    typeof (args as { pipelineId: unknown }).pipelineId === 'string'
+  );
+}
+
+export function isUnarchiveReleasePipelineArgs(args: unknown): args is { pipelineId: string } {
+  return isArchiveReleasePipelineArgs(args);
+}
+
+export function isDeleteReleasePipelineArgs(args: unknown): args is { pipelineId: string } {
+  return isArchiveReleasePipelineArgs(args);
+}
+
+export function isGetReleasesArgs(args: unknown): args is {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: 'createdAt' | 'updatedAt';
+  pipelineId?: string;
+  stageId?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
+    (!('orderBy' in args) || isPaginationOrderBy((args as { orderBy: unknown }).orderBy)) &&
+    (!('pipelineId' in args) || typeof (args as { pipelineId: unknown }).pipelineId === 'string') &&
+    (!('stageId' in args) || typeof (args as { stageId: unknown }).stageId === 'string')
+  );
+}
+
+export function isGetReleaseByIdArgs(args: unknown): args is { id: string } {
+  return isJsonObject(args) && 'id' in args && typeof (args as { id: unknown }).id === 'string';
+}
+
+export function isSearchReleasesArgs(args: unknown): args is {
+  term?: string;
+  limit?: number;
+  includeArchived?: boolean;
+  pipelineId?: string;
+  stageId?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    (!('term' in args) || typeof (args as { term: unknown }).term === 'string') &&
+    (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
+    (!('pipelineId' in args) || typeof (args as { pipelineId: unknown }).pipelineId === 'string') &&
+    (!('stageId' in args) || typeof (args as { stageId: unknown }).stageId === 'string')
+  );
+}
+
+export function isGetReleaseStagesArgs(args: unknown): args is {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: 'createdAt' | 'updatedAt';
+  pipelineId?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
+    (!('orderBy' in args) || isPaginationOrderBy((args as { orderBy: unknown }).orderBy)) &&
+    (!('pipelineId' in args) || typeof (args as { pipelineId: unknown }).pipelineId === 'string')
+  );
+}
+
+export function isCreateReleaseStageArgs(args: unknown): args is {
+  pipelineId: string;
+  name: string;
+  color: string;
+  position: number;
+  type: 'planned' | 'started' | 'completed' | 'canceled';
+  frozen?: boolean;
+  id?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    'pipelineId' in args &&
+    typeof (args as { pipelineId: unknown }).pipelineId === 'string' &&
+    'name' in args &&
+    isNonEmptyString((args as { name: unknown }).name) &&
+    'color' in args &&
+    isNonEmptyString((args as { color: unknown }).color) &&
+    'position' in args &&
+    isFiniteNumber((args as { position: unknown }).position) &&
+    'type' in args &&
+    isReleaseStageType((args as { type: unknown }).type) &&
+    (!('frozen' in args) || typeof (args as { frozen: unknown }).frozen === 'boolean') &&
+    (!('id' in args) || typeof (args as { id: unknown }).id === 'string')
+  );
+}
+
+export function isUpdateReleaseStageArgs(args: unknown): args is {
+  id: string;
+  name?: string;
+  color?: string;
+  position?: number;
+  frozen?: boolean;
+} {
+  if (!isJsonObject(args)) {
+    return false;
+  }
+
+  const hasUpdateField = ['name', 'color', 'position', 'frozen']
+    .some((key) => key in args && (args as Record<string, unknown>)[key] !== undefined);
+
+  return (
+    'id' in args &&
+    typeof (args as { id: unknown }).id === 'string' &&
+    hasUpdateField &&
+    (!('name' in args) || typeof (args as { name: unknown }).name === 'string') &&
+    (!('color' in args) || typeof (args as { color: unknown }).color === 'string') &&
+    (!('position' in args) || typeof (args as { position: unknown }).position === 'number') &&
+    (!('frozen' in args) || typeof (args as { frozen: unknown }).frozen === 'boolean')
+  );
+}
+
+export function isArchiveReleaseStageArgs(args: unknown): args is { stageId: string } {
+  return isJsonObject(args) && 'stageId' in args && typeof (args as { stageId: unknown }).stageId === 'string';
+}
+
+export function isUnarchiveReleaseStageArgs(args: unknown): args is { stageId: string } {
+  return isArchiveReleaseStageArgs(args);
+}
+
+export function isGetReleaseNotesArgs(args: unknown): args is {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: 'createdAt' | 'updatedAt';
+} {
+  return (
+    isJsonObject(args) &&
+    (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
+    (!('includeArchived' in args) ||
+      typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
+    (!('orderBy' in args) || isPaginationOrderBy((args as { orderBy: unknown }).orderBy))
+  );
+}
+
+export function isGetReleaseNoteByIdArgs(args: unknown): args is { id: string } {
+  return isJsonObject(args) && 'id' in args && typeof (args as { id: unknown }).id === 'string';
+}
+
+export function isCreateReleaseArgs(args: unknown): args is {
+  pipelineId: string;
+  name: string;
+  version?: string;
+  description?: string;
+  commitSha?: string;
+  stageId?: string;
+  startDate?: string;
+  targetDate?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    'pipelineId' in args &&
+    typeof (args as { pipelineId: unknown }).pipelineId === 'string' &&
+    'name' in args &&
+    isNonEmptyString((args as { name: unknown }).name) &&
+    (!('version' in args) || typeof (args as { version: unknown }).version === 'string') &&
+    (!('description' in args) || typeof (args as { description: unknown }).description === 'string') &&
+    (!('commitSha' in args) || typeof (args as { commitSha: unknown }).commitSha === 'string') &&
+    (!('stageId' in args) || typeof (args as { stageId: unknown }).stageId === 'string') &&
+    (!('startDate' in args) || typeof (args as { startDate: unknown }).startDate === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: unknown }).targetDate === 'string')
+  );
+}
+
+export function isUpdateReleaseArgs(args: unknown): args is {
+  id: string;
+  name?: string;
+  version?: string;
+  description?: string;
+  commitSha?: string;
+  pipelineId?: string;
+  stageId?: string;
+  startDate?: string;
+  targetDate?: string;
+  trashed?: boolean;
+} {
+  if (!isJsonObject(args)) {
+    return false;
+  }
+
+  const hasUpdateField = [
+    'name',
+    'version',
+    'description',
+    'commitSha',
+    'pipelineId',
+    'stageId',
+    'startDate',
+    'targetDate',
+    'trashed',
+  ].some((key) => key in args && (args as Record<string, unknown>)[key] !== undefined);
+
+  return (
+    'id' in args &&
+    typeof (args as { id: unknown }).id === 'string' &&
+    hasUpdateField &&
+    (!('name' in args) || typeof (args as { name: unknown }).name === 'string') &&
+    (!('version' in args) || typeof (args as { version: unknown }).version === 'string') &&
+    (!('description' in args) || typeof (args as { description: unknown }).description === 'string') &&
+    (!('commitSha' in args) || typeof (args as { commitSha: unknown }).commitSha === 'string') &&
+    (!('pipelineId' in args) || typeof (args as { pipelineId: unknown }).pipelineId === 'string') &&
+    (!('stageId' in args) || typeof (args as { stageId: unknown }).stageId === 'string') &&
+    (!('startDate' in args) || typeof (args as { startDate: unknown }).startDate === 'string') &&
+    (!('targetDate' in args) || typeof (args as { targetDate: unknown }).targetDate === 'string') &&
+    (!('trashed' in args) || typeof (args as { trashed: unknown }).trashed === 'boolean')
+  );
+}
+
+export function isCompleteReleaseArgs(args: unknown): args is {
+  pipelineId: string;
+  version?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    'pipelineId' in args &&
+    typeof (args as { pipelineId: unknown }).pipelineId === 'string' &&
+    (!('version' in args) || typeof (args as { version: unknown }).version === 'string')
+  );
+}
+
+export function isArchiveReleaseArgs(args: unknown): args is { releaseId: string } {
+  return (
+    isJsonObject(args) &&
+    'releaseId' in args &&
+    typeof (args as { releaseId: unknown }).releaseId === 'string'
+  );
+}
+
+export function isUnarchiveReleaseArgs(args: unknown): args is { releaseId: string } {
+  return isArchiveReleaseArgs(args);
+}
+
+export function isAddIssueToReleaseArgs(args: unknown): args is {
+  issueId: string;
+  releaseId: string;
+} {
+  return (
+    isJsonObject(args) &&
+    'issueId' in args &&
+    typeof (args as { issueId: unknown }).issueId === 'string' &&
+    'releaseId' in args &&
+    typeof (args as { releaseId: unknown }).releaseId === 'string'
+  );
+}
+
+export function isRemoveIssueFromReleaseArgs(args: unknown): args is {
+  issueId: string;
+  releaseId: string;
+} {
+  return isAddIssueToReleaseArgs(args);
+}
+
+export function isCreateReleaseNoteArgs(args: unknown): args is {
+  pipelineId: string;
+  content?: string;
+  releaseIds?: string[];
+  rangeFromReleaseId?: string;
+  rangeToReleaseId?: string;
+} {
+  return (
+    isJsonObject(args) &&
+    'pipelineId' in args &&
+    typeof (args as { pipelineId: unknown }).pipelineId === 'string' &&
+    (!('content' in args) || typeof (args as { content: unknown }).content === 'string') &&
+    (!('releaseIds' in args) || isStringArray((args as { releaseIds: unknown }).releaseIds)) &&
+    (!('rangeFromReleaseId' in args) ||
+      typeof (args as { rangeFromReleaseId: unknown }).rangeFromReleaseId === 'string') &&
+    (!('rangeToReleaseId' in args) ||
+      typeof (args as { rangeToReleaseId: unknown }).rangeToReleaseId === 'string') &&
+    hasExclusiveReleaseSelection(args)
+  );
+}
+
+export function isUpdateReleaseNoteArgs(args: unknown): args is {
+  id: string;
+  content?: string;
+  releaseIds?: string[];
+  rangeFromReleaseId?: string;
+  rangeToReleaseId?: string;
+} {
+  if (!isJsonObject(args)) {
+    return false;
+  }
+
+  const hasContent = 'content' in args && typeof (args as { content: unknown }).content === 'string';
+  const hasSelectionKeys =
+    'releaseIds' in args || 'rangeFromReleaseId' in args || 'rangeToReleaseId' in args;
+  const hasSelection = hasSelectionKeys && hasExclusiveReleaseSelection(args);
+
+  return (
+    'id' in args &&
+    typeof (args as { id: unknown }).id === 'string' &&
+    (hasContent || hasSelection) &&
+    (!('content' in args) || typeof (args as { content: unknown }).content === 'string') &&
+    (!('releaseIds' in args) || isStringArray((args as { releaseIds: unknown }).releaseIds)) &&
+    (!('rangeFromReleaseId' in args) ||
+      typeof (args as { rangeFromReleaseId: unknown }).rangeFromReleaseId === 'string') &&
+    (!('rangeToReleaseId' in args) ||
+      typeof (args as { rangeToReleaseId: unknown }).rangeToReleaseId === 'string')
+  );
+}
+
+export function isDeleteReleaseNoteArgs(args: unknown): args is { id: string } {
+  return isJsonObject(args) && 'id' in args && typeof (args as { id: unknown }).id === 'string';
+}
+
 /**
  * Type guard for linear_getMilestones tool arguments
  */
@@ -1926,6 +2328,14 @@ function isPaginationOrderBy(value: unknown): value is 'createdAt' | 'updatedAt'
 
 function isMilestoneStatus(value: unknown): value is 'done' | 'next' | 'overdue' | 'unstarted' {
   return value === 'done' || value === 'next' || value === 'overdue' || value === 'unstarted';
+}
+
+function isReleasePipelineType(value: unknown): value is 'continuous' | 'scheduled' {
+  return value === 'continuous' || value === 'scheduled';
+}
+
+function isReleaseStageType(value: unknown): value is 'planned' | 'started' | 'completed' | 'canceled' {
+  return value === 'planned' || value === 'started' || value === 'completed' || value === 'canceled';
 }
 
 /**

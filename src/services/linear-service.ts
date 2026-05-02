@@ -113,6 +113,128 @@ type DocumentUpdateArgs = {
   trashed?: boolean;
 };
 
+type ReleasePipelineListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+};
+
+type ReleasePipelineCreateArgs = {
+  name: string;
+  teamIds: string[];
+  type?: 'continuous' | 'scheduled';
+  slugId?: string;
+  isProduction?: boolean;
+  includePathPatterns?: string[];
+};
+
+type ReleasePipelineUpdateArgs = {
+  id: string;
+  name?: string;
+  teamIds?: string[];
+  type?: 'continuous' | 'scheduled';
+  slugId?: string;
+  isProduction?: boolean;
+  includePathPatterns?: string[];
+};
+
+type ReleaseListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  pipelineId?: string;
+  stageId?: string;
+};
+
+type ReleaseSearchArgs = {
+  term?: string;
+  limit?: number;
+  includeArchived?: boolean;
+  pipelineId?: string;
+  stageId?: string;
+};
+
+type ReleaseStageListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  pipelineId?: string;
+};
+
+type ReleaseStageCreateArgs = {
+  pipelineId: string;
+  name: string;
+  color: string;
+  position: number;
+  type: 'planned' | 'started' | 'completed' | 'canceled';
+  frozen?: boolean;
+  id?: string;
+};
+
+type ReleaseStageUpdateArgs = {
+  id: string;
+  name?: string;
+  color?: string;
+  position?: number;
+  frozen?: boolean;
+};
+
+type ReleaseNoteListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+};
+
+type ReleaseCreateArgs = {
+  pipelineId: string;
+  name: string;
+  version?: string;
+  description?: string;
+  commitSha?: string;
+  stageId?: string;
+  startDate?: string;
+  targetDate?: string;
+};
+
+type ReleaseUpdateArgs = {
+  id: string;
+  name?: string;
+  version?: string;
+  description?: string;
+  commitSha?: string;
+  pipelineId?: string;
+  stageId?: string;
+  startDate?: string;
+  targetDate?: string;
+  trashed?: boolean;
+};
+
+type ReleaseCompleteArgs = {
+  pipelineId: string;
+  version?: string;
+};
+
+type IssueToReleaseArgs = {
+  issueId: string;
+  releaseId: string;
+};
+
+type ReleaseNoteCreateArgs = {
+  pipelineId: string;
+  content?: string;
+  releaseIds?: string[];
+  rangeFromReleaseId?: string;
+  rangeToReleaseId?: string;
+};
+
+type ReleaseNoteUpdateArgs = {
+  id: string;
+  content?: string;
+  releaseIds?: string[];
+  rangeFromReleaseId?: string;
+  rangeToReleaseId?: string;
+};
+
 const FAVORITE_VIEWS_QUERY = `
   query FavoriteViews($first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
     favorites(first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
@@ -528,6 +650,7 @@ const ISSUE_CUSTOM_FIELD_VALUE_FIELDS = [
   'type',
 ];
 
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -593,6 +716,10 @@ function typeRefToGraphQL(typeRef: GraphQLTypeRef): string {
   }
 
   return typeRef.name ?? 'String';
+}
+
+function toDateOrNull(value: string | undefined): Date | null {
+  return value ? new Date(value) : null;
 }
 
 function hasRequiredArguments(field: GraphQLField): boolean {
@@ -1666,6 +1793,354 @@ export class LinearService {
     return {
       ...(await this.normalizeDocument(document)),
       metadata: document.metadata ?? null,
+    };
+  }
+
+  private async buildReleasePipelineSelection(includeDetails = false) {
+    if (!includeDetails) {
+      return ` {
+        id
+        name
+        slugId
+        type
+        production: isProduction
+        pathPatterns: includePathPatterns
+        createdAt
+        updatedAt
+        archivedAt
+        url
+      }`;
+    }
+
+    return ` {
+      id
+      name
+      slugId
+      type
+      production: isProduction
+      pathPatterns: includePathPatterns
+      createdAt
+      updatedAt
+      archivedAt
+      url
+      teams {
+        nodes {
+          id
+          name
+          key
+        }
+      }
+      stages {
+        nodes {
+          id
+          name
+          color
+          type
+          position
+          frozen
+          createdAt
+          updatedAt
+          archivedAt
+        }
+      }
+      latestReleaseNote {
+        id
+        title
+        slugId
+        createdAt
+        updatedAt
+        documentContent {
+          content
+        }
+        releases {
+          id
+          name
+          version
+        }
+        lastRelease {
+          id
+          name
+          version
+        }
+      }
+    }`;
+  }
+
+  private async buildReleaseStageSelection() {
+    return ` {
+      id
+      name
+      color
+      type
+      position
+      frozen
+      createdAt
+      updatedAt
+      archivedAt
+      pipeline {
+        id
+        name
+        slugId
+        type
+      }
+    }`;
+  }
+
+  private async buildReleaseNoteSelection() {
+    return ` {
+      id
+      title
+      slugId
+      createdAt
+      updatedAt
+      documentContent {
+        content
+      }
+      releases {
+        id
+        name
+        version
+      }
+      lastRelease {
+        id
+        name
+        version
+      }
+    }`;
+  }
+
+  private async buildReleaseSelection(includeDetails = false) {
+    const base = ` {
+      id
+      name
+      version
+      description
+      commitSha
+      startDate
+      targetDate
+      startedAt
+      completedAt
+      canceledAt
+      createdAt
+      updatedAt
+      trashed
+      url
+      issueCount
+      currentProgress
+      creator {
+        id
+        name
+        email
+      }
+      pipeline {
+        id
+        name
+        slugId
+        type
+      }
+      stage {
+        id
+        name
+        color
+        type
+        frozen
+      }`;
+
+    if (!includeDetails) {
+      return `${base}
+    }`;
+    }
+
+    return `${base}
+      issues {
+        nodes {
+          id
+          identifier
+          title
+        }
+      }
+      releaseNotes {
+        id
+        title
+        slugId
+        createdAt
+        updatedAt
+        documentContent {
+          content
+        }
+        releases {
+          id
+          name
+          version
+        }
+        lastRelease {
+          id
+          name
+          version
+        }
+      }
+    }`;
+  }
+
+  private buildReleaseFilter(args: { pipelineId?: string; stageId?: string }) {
+    return this.compactObject({
+      pipeline: this.nonEmptyString(args.pipelineId)
+        ? { id: { eq: this.nonEmptyString(args.pipelineId) } }
+        : undefined,
+      stage: this.nonEmptyString(args.stageId)
+        ? { id: { eq: this.nonEmptyString(args.stageId) } }
+        : undefined,
+    });
+  }
+
+  private normalizeReleaseReference(raw: Record<string, unknown>) {
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      name: getFirstString(raw, ['name']) ?? '',
+      version: getFirstString(raw, ['version']) ?? null,
+    };
+  }
+
+  private normalizeReleaseNoteNode(raw: Record<string, unknown>) {
+    const documentContent = getFirstRecord(raw, ['documentContent']);
+    const releases = extractListItems(raw.releases).map((release) => this.normalizeReleaseReference(release));
+    const lastRelease = getFirstRecord(raw, ['lastRelease']);
+
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      title: getFirstString(raw, ['title']) ?? null,
+      slugId: getFirstString(raw, ['slugId']) ?? null,
+      content:
+        getFirstString(raw, ['content']) ??
+        (documentContent ? getFirstString(documentContent, ['content']) ?? null : null),
+      createdAt: toDateOrNull(getFirstString(raw, ['createdAt'])),
+      updatedAt: toDateOrNull(getFirstString(raw, ['updatedAt'])),
+      releases,
+      lastRelease: lastRelease ? this.normalizeReleaseReference(lastRelease) : null,
+    };
+  }
+
+  private normalizeReleaseStageNode(raw: Record<string, unknown>) {
+    const pipeline = getFirstRecord(raw, ['pipeline']);
+
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      name: getFirstString(raw, ['name']) ?? '',
+      color: getFirstString(raw, ['color']) ?? null,
+      type: getFirstString(raw, ['type']) ?? '',
+      position: typeof raw.position === 'number' ? raw.position : null,
+      description: getFirstString(raw, ['description']) ?? null,
+      frozen: getFirstBoolean(raw, ['frozen']) ?? false,
+      createdAt: toDateOrNull(getFirstString(raw, ['createdAt'])),
+      updatedAt: toDateOrNull(getFirstString(raw, ['updatedAt'])),
+      archivedAt: toDateOrNull(getFirstString(raw, ['archivedAt'])),
+      pipeline: pipeline
+        ? {
+            id: getFirstString(pipeline, ['id']) ?? '',
+            name: getFirstString(pipeline, ['name']) ?? '',
+            slugId: getFirstString(pipeline, ['slugId']) ?? null,
+            type: getFirstString(pipeline, ['type']) ?? '',
+          }
+        : null,
+    };
+  }
+
+  private normalizeReleasePipelineNode(raw: Record<string, unknown>) {
+    const teams = extractListItems(raw.teams).map((team) => ({
+      id: getFirstString(team, ['id']) ?? '',
+      name: getFirstString(team, ['name']) ?? '',
+      key: getFirstString(team, ['key']) ?? null,
+    }));
+    const stages = extractListItems(raw.stages).map((stage) => {
+      const { pipeline, ...normalizedStage } = this.normalizeReleaseStageNode(stage);
+      return normalizedStage;
+    });
+    const latestReleaseNote = getFirstRecord(raw, ['latestReleaseNote']);
+
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      name: getFirstString(raw, ['name']) ?? '',
+      slugId: getFirstString(raw, ['slugId']) ?? null,
+      description: getFirstString(raw, ['description']) ?? null,
+      type: getFirstString(raw, ['type']) ?? '',
+      production: getFirstBoolean(raw, ['production']) ?? false,
+      pathPatterns: Array.isArray(raw.pathPatterns)
+        ? raw.pathPatterns.filter((item): item is string => typeof item === 'string')
+        : [],
+      createdAt: toDateOrNull(getFirstString(raw, ['createdAt'])),
+      updatedAt: toDateOrNull(getFirstString(raw, ['updatedAt'])),
+      archivedAt: toDateOrNull(getFirstString(raw, ['archivedAt'])),
+      url: getFirstString(raw, ['url']) ?? null,
+      teams,
+      stages,
+      latestReleaseNote: latestReleaseNote ? this.normalizeReleaseNoteNode(latestReleaseNote) : null,
+    };
+  }
+
+  private normalizeIssueReference(raw: Record<string, unknown>) {
+    const id = getFirstString(raw, ['id']) ?? '';
+    return {
+      id,
+      identifier: getFirstString(raw, ['identifier']) ?? id,
+      title: getFirstString(raw, ['title']) ?? '',
+    };
+  }
+
+  private normalizeReleaseNode(raw: Record<string, unknown>) {
+    const creator = getFirstRecord(raw, ['creator']);
+    const pipeline = getFirstRecord(raw, ['pipeline']);
+    const stage = getFirstRecord(raw, ['stage']);
+    const issues = extractListItems(raw.issues).map((issue) => this.normalizeIssueReference(issue));
+    const releaseNotes = extractListItems(raw.releaseNotes).map((note) => this.normalizeReleaseNoteNode(note));
+
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      name: getFirstString(raw, ['name']) ?? '',
+      version: getFirstString(raw, ['version']) ?? null,
+      description: getFirstString(raw, ['description']) ?? null,
+      commitSha: getFirstString(raw, ['commitSha']) ?? null,
+      startDate: getFirstString(raw, ['startDate']) ?? null,
+      targetDate: getFirstString(raw, ['targetDate']) ?? null,
+      startedAt: toDateOrNull(getFirstString(raw, ['startedAt'])),
+      completedAt: toDateOrNull(getFirstString(raw, ['completedAt'])),
+      canceledAt: toDateOrNull(getFirstString(raw, ['canceledAt'])),
+      createdAt: toDateOrNull(getFirstString(raw, ['createdAt'])),
+      updatedAt: toDateOrNull(getFirstString(raw, ['updatedAt'])),
+      trashed:
+        typeof raw.trashed === 'boolean'
+          ? raw.trashed
+          : raw.trashed === null
+            ? null
+            : null,
+      url: getFirstString(raw, ['url']) ?? null,
+      issueCount: typeof raw.issueCount === 'number' ? raw.issueCount : null,
+      currentProgress: isPlainObject(raw.currentProgress) ? raw.currentProgress : null,
+      creator: creator
+        ? {
+            id: getFirstString(creator, ['id']) ?? '',
+            name: getFirstString(creator, ['name']) ?? '',
+            email: getFirstString(creator, ['email']) ?? null,
+          }
+        : null,
+      pipeline: pipeline
+        ? {
+            id: getFirstString(pipeline, ['id']) ?? '',
+            name: getFirstString(pipeline, ['name']) ?? '',
+            slugId: getFirstString(pipeline, ['slugId']) ?? null,
+            type: getFirstString(pipeline, ['type']) ?? '',
+          }
+        : null,
+      stage: stage
+        ? {
+            id: getFirstString(stage, ['id']) ?? '',
+            name: getFirstString(stage, ['name']) ?? '',
+            color: getFirstString(stage, ['color']) ?? null,
+            type: getFirstString(stage, ['type']) ?? '',
+            frozen: getFirstBoolean(stage, ['frozen']) ?? false,
+          }
+        : null,
+      issues,
+      releaseNotes,
     };
   }
 
@@ -2963,6 +3438,811 @@ export class LinearService {
   async unarchiveDocument(id: string) {
     const payload = await this.client.unarchiveDocument(id);
     return { success: payload.success, id };
+  }
+
+  async getReleasePipelines(args: ReleasePipelineListArgs = {}) {
+    const selection = await this.buildReleasePipelineSelection();
+    const response = await this.requestGraphQL<{
+      releasePipelines: { nodes?: Record<string, unknown>[] };
+    }>(
+      `query LinearGetReleasePipelines($first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+        releasePipelines(first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+          nodes${selection}
+        }
+      }`,
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+      }),
+    );
+
+    return extractListItems(response.releasePipelines).map((pipeline) => {
+      const normalized = this.normalizeReleasePipelineNode(pipeline);
+      return {
+        id: normalized.id,
+        name: normalized.name,
+        slugId: normalized.slugId,
+        description: normalized.description,
+        type: normalized.type,
+        production: normalized.production,
+        pathPatterns: normalized.pathPatterns,
+        createdAt: normalized.createdAt,
+        updatedAt: normalized.updatedAt,
+        archivedAt: normalized.archivedAt,
+        url: normalized.url,
+      };
+    });
+  }
+
+  async getReleasePipelineById(id: string) {
+    const selection = await this.buildReleasePipelineSelection(true);
+    const response = await this.requestGraphQL<{ release: Record<string, unknown> | null; releasePipeline: Record<string, unknown> | null }>(
+      `query LinearGetReleasePipelineById($id: String!) {
+        releasePipeline(id: $id)${selection}
+      }`,
+      { id },
+    );
+
+    const pipeline = response.releasePipeline;
+    if (!pipeline) {
+      throw new Error(`Release pipeline with ID ${id} not found`);
+    }
+
+    return this.normalizeReleasePipelineNode(pipeline);
+  }
+
+  async createReleasePipeline(args: ReleasePipelineCreateArgs) {
+    const name = this.nonEmptyString(args.name);
+    if (!name) {
+      throw new Error('Release pipeline name is required');
+    }
+
+    const selection = await this.buildReleasePipelineSelection(true);
+    const response = await this.requestGraphQL<{
+      releasePipelineCreate: { success: boolean; releasePipeline?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearCreateReleasePipeline($input: ReleasePipelineCreateInput!) {
+        releasePipelineCreate(input: $input) {
+          success
+          releasePipeline${selection}
+        }
+      }`,
+      {
+        input: this.compactObject({
+          name,
+          teamIds: [...args.teamIds],
+          type: args.type,
+          slugId: this.nonEmptyString(args.slugId),
+          isProduction: args.isProduction,
+          includePathPatterns:
+            args.includePathPatterns === undefined ? undefined : [...args.includePathPatterns],
+        }),
+      },
+    );
+
+    if (!response.releasePipelineCreate.success || !response.releasePipelineCreate.releasePipeline) {
+      throw new Error('Failed to create release pipeline');
+    }
+
+    return this.normalizeReleasePipelineNode(response.releasePipelineCreate.releasePipeline);
+  }
+
+  async updateReleasePipeline(args: ReleasePipelineUpdateArgs) {
+    const updateInput = this.compactObject({
+      name: this.nonEmptyString(args.name),
+      teamIds: args.teamIds === undefined ? undefined : [...args.teamIds],
+      type: args.type,
+      slugId: this.nonEmptyString(args.slugId),
+      isProduction: args.isProduction,
+      includePathPatterns:
+        args.includePathPatterns === undefined ? undefined : [...args.includePathPatterns],
+    });
+
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one release pipeline field must be provided');
+    }
+
+    const selection = await this.buildReleasePipelineSelection(true);
+    const response = await this.requestGraphQL<{
+      releasePipelineUpdate: { success: boolean; releasePipeline?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUpdateReleasePipeline($id: String!, $input: ReleasePipelineUpdateInput!) {
+        releasePipelineUpdate(id: $id, input: $input) {
+          success
+          releasePipeline${selection}
+        }
+      }`,
+      {
+        id: args.id,
+        input: updateInput,
+      },
+    );
+
+    if (!response.releasePipelineUpdate.success || !response.releasePipelineUpdate.releasePipeline) {
+      throw new Error(`Failed to update release pipeline ${args.id}`);
+    }
+
+    return this.normalizeReleasePipelineNode(response.releasePipelineUpdate.releasePipeline);
+  }
+
+  async archiveReleasePipeline(pipelineId: string) {
+    const selection = await this.buildReleasePipelineSelection(true);
+    const response = await this.requestGraphQL<{
+      releasePipelineArchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearArchiveReleasePipeline($id: String!) {
+        releasePipelineArchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: pipelineId },
+    );
+
+    if (!response.releasePipelineArchive.success || !response.releasePipelineArchive.entity) {
+      throw new Error(`Failed to archive release pipeline ${pipelineId}`);
+    }
+
+    return {
+      success: true,
+      releasePipeline: this.normalizeReleasePipelineNode(response.releasePipelineArchive.entity),
+    };
+  }
+
+  async unarchiveReleasePipeline(pipelineId: string) {
+    const selection = await this.buildReleasePipelineSelection(true);
+    const response = await this.requestGraphQL<{
+      releasePipelineUnarchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUnarchiveReleasePipeline($id: String!) {
+        releasePipelineUnarchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: pipelineId },
+    );
+
+    if (!response.releasePipelineUnarchive.success || !response.releasePipelineUnarchive.entity) {
+      throw new Error(`Failed to unarchive release pipeline ${pipelineId}`);
+    }
+
+    return {
+      success: true,
+      releasePipeline: this.normalizeReleasePipelineNode(response.releasePipelineUnarchive.entity),
+    };
+  }
+
+  async deleteReleasePipeline(pipelineId: string) {
+    const response = await this.requestGraphQL<{
+      releasePipelineDelete: { success: boolean };
+    }>(
+      `mutation LinearDeleteReleasePipeline($id: String!) {
+        releasePipelineDelete(id: $id) {
+          success
+        }
+      }`,
+      { id: pipelineId },
+    );
+
+    if (!response.releasePipelineDelete.success) {
+      throw new Error(`Failed to delete release pipeline ${pipelineId}`);
+    }
+
+    return { success: true, id: pipelineId };
+  }
+
+  async getReleases(args: ReleaseListArgs = {}) {
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releases: { nodes?: Record<string, unknown>[] };
+    }>(
+      `query LinearGetReleases($first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy, $filter: ReleaseFilter) {
+        releases(first: $first, includeArchived: $includeArchived, orderBy: $orderBy, filter: $filter) {
+          nodes${selection}
+        }
+      }`,
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.nonEmptyObject(this.buildReleaseFilter(args)),
+      }),
+    );
+
+    return extractListItems(response.releases).map((release) => {
+      const { issues, releaseNotes, ...summary } = this.normalizeReleaseNode(release);
+      return summary;
+    });
+  }
+
+  async getReleaseById(id: string) {
+    const selection = await this.buildReleaseSelection(true);
+    const response = await this.requestGraphQL<{ release: Record<string, unknown> | null }>(
+      `query LinearGetReleaseById($id: String!) {
+        release(id: $id)${selection}
+      }`,
+      { id },
+    );
+
+    if (!response.release) {
+      throw new Error(`Release with ID ${id} not found`);
+    }
+
+    return this.normalizeReleaseNode(response.release);
+  }
+
+  async searchReleases(args: ReleaseSearchArgs = {}) {
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{ releaseSearch: Record<string, unknown>[] }>(
+      `query LinearSearchReleases($term: String, $first: Int, $filter: ReleaseFilter) {
+        releaseSearch(term: $term, first: $first, filter: $filter)${selection}
+      }`,
+      this.compactObject({
+        term: this.nonEmptyString(args.term),
+        first: args.limit ?? 20,
+        filter: this.nonEmptyObject(this.buildReleaseFilter(args)),
+      }),
+    );
+
+    return extractListItems(response.releaseSearch).map((release) => {
+      const { issues, releaseNotes, ...summary } = this.normalizeReleaseNode(release);
+      return summary;
+    });
+  }
+
+  async getReleaseStages(args: ReleaseStageListArgs = {}) {
+    const selection = await this.buildReleaseStageSelection();
+    const response = await this.requestGraphQL<{
+      releaseStages: { nodes?: Record<string, unknown>[] };
+    }>(
+      `query LinearGetReleaseStages($first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+        releaseStages(first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+          nodes${selection}
+        }
+      }`,
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+      }),
+    );
+
+    const stages = extractListItems(response.releaseStages).map((stage) =>
+      this.normalizeReleaseStageNode(stage),
+    );
+    const pipelineId = this.nonEmptyString(args.pipelineId);
+
+    return pipelineId ? stages.filter((stage) => stage.pipeline?.id === pipelineId) : stages;
+  }
+
+  async createReleaseStage(args: ReleaseStageCreateArgs) {
+    const pipelineId = this.nonEmptyString(args.pipelineId);
+    const name = this.nonEmptyString(args.name);
+    const color = this.nonEmptyString(args.color);
+    if (!pipelineId || !name || !color) {
+      throw new Error('Release stage pipeline ID, name, and color are required');
+    }
+
+    const selection = await this.buildReleaseStageSelection();
+    const response = await this.requestGraphQL<{
+      releaseStageCreate: { success: boolean; releaseStage?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearCreateReleaseStage($input: ReleaseStageCreateInput!) {
+        releaseStageCreate(input: $input) {
+          success
+          releaseStage${selection}
+        }
+      }`,
+      {
+        input: this.compactObject({
+          pipelineId,
+          name,
+          color,
+          position: args.position,
+          type: args.type,
+          frozen: args.frozen,
+          id: this.nonEmptyString(args.id),
+        }),
+      },
+    );
+
+    if (!response.releaseStageCreate.success || !response.releaseStageCreate.releaseStage) {
+      throw new Error('Failed to create release stage');
+    }
+
+    return this.normalizeReleaseStageNode(response.releaseStageCreate.releaseStage);
+  }
+
+  async updateReleaseStage(args: ReleaseStageUpdateArgs) {
+    const updateInput = this.compactObject({
+      name: this.nonEmptyString(args.name),
+      color: this.nonEmptyString(args.color),
+      position: args.position,
+      frozen: args.frozen,
+    });
+
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one release stage field must be provided');
+    }
+
+    const selection = await this.buildReleaseStageSelection();
+    const response = await this.requestGraphQL<{
+      releaseStageUpdate: { success: boolean; releaseStage?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUpdateReleaseStage($id: String!, $input: ReleaseStageUpdateInput!) {
+        releaseStageUpdate(id: $id, input: $input) {
+          success
+          releaseStage${selection}
+        }
+      }`,
+      {
+        id: args.id,
+        input: updateInput,
+      },
+    );
+
+    if (!response.releaseStageUpdate.success || !response.releaseStageUpdate.releaseStage) {
+      throw new Error(`Failed to update release stage ${args.id}`);
+    }
+
+    return this.normalizeReleaseStageNode(response.releaseStageUpdate.releaseStage);
+  }
+
+  async archiveReleaseStage(stageId: string) {
+    const selection = await this.buildReleaseStageSelection();
+    const response = await this.requestGraphQL<{
+      releaseStageArchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearArchiveReleaseStage($id: String!) {
+        releaseStageArchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: stageId },
+    );
+
+    if (!response.releaseStageArchive.success || !response.releaseStageArchive.entity) {
+      throw new Error(`Failed to archive release stage ${stageId}`);
+    }
+
+    return {
+      success: true,
+      releaseStage: this.normalizeReleaseStageNode(response.releaseStageArchive.entity),
+    };
+  }
+
+  async unarchiveReleaseStage(stageId: string) {
+    const selection = await this.buildReleaseStageSelection();
+    const response = await this.requestGraphQL<{
+      releaseStageUnarchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUnarchiveReleaseStage($id: String!) {
+        releaseStageUnarchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: stageId },
+    );
+
+    if (!response.releaseStageUnarchive.success || !response.releaseStageUnarchive.entity) {
+      throw new Error(`Failed to unarchive release stage ${stageId}`);
+    }
+
+    return {
+      success: true,
+      releaseStage: this.normalizeReleaseStageNode(response.releaseStageUnarchive.entity),
+    };
+  }
+
+  async getReleaseNotes(args: ReleaseNoteListArgs = {}) {
+    const selection = await this.buildReleaseNoteSelection();
+    const response = await this.requestGraphQL<{
+      releaseNotes: { nodes?: Record<string, unknown>[] };
+    }>(
+      `query LinearGetReleaseNotes($first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+        releaseNotes(first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+          nodes${selection}
+        }
+      }`,
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+      }),
+    );
+
+    return extractListItems(response.releaseNotes).map((note) => this.normalizeReleaseNoteNode(note));
+  }
+
+  async getReleaseNoteById(id: string) {
+    const selection = await this.buildReleaseNoteSelection();
+    const response = await this.requestGraphQL<{ releaseNote: Record<string, unknown> | null }>(
+      `query LinearGetReleaseNoteById($id: String!) {
+        releaseNote(id: $id)${selection}
+      }`,
+      { id },
+    );
+
+    if (!response.releaseNote) {
+      throw new Error(`Release note with ID ${id} not found`);
+    }
+
+    return this.normalizeReleaseNoteNode(response.releaseNote);
+  }
+
+  async createRelease(args: ReleaseCreateArgs) {
+    const pipelineId = this.nonEmptyString(args.pipelineId);
+    const name = this.nonEmptyString(args.name);
+    if (!pipelineId || !name) {
+      throw new Error('Release pipeline ID and name are required');
+    }
+
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releaseCreate: { success: boolean; release?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearCreateRelease($input: ReleaseCreateInput!) {
+        releaseCreate(input: $input) {
+          success
+          release${selection}
+        }
+      }`,
+      {
+        input: this.compactObject({
+          pipelineId,
+          name,
+          version: this.nonEmptyString(args.version),
+          description: this.nonEmptyString(args.description),
+          commitSha: this.nonEmptyString(args.commitSha),
+          stageId: this.nonEmptyString(args.stageId),
+          startDate: this.nonEmptyString(args.startDate),
+          targetDate: this.nonEmptyString(args.targetDate),
+        }),
+      },
+    );
+
+    if (!response.releaseCreate.success || !response.releaseCreate.release) {
+      throw new Error('Failed to create release');
+    }
+
+    return this.normalizeReleaseNode(response.releaseCreate.release);
+  }
+
+  async updateRelease(args: ReleaseUpdateArgs) {
+    const updateInput = this.compactObject({
+      name: this.nonEmptyString(args.name),
+      version: this.nonEmptyString(args.version),
+      description: this.nonEmptyString(args.description),
+      commitSha: this.nonEmptyString(args.commitSha),
+      pipelineId: this.nonEmptyString(args.pipelineId),
+      stageId: this.nonEmptyString(args.stageId),
+      startDate: this.nonEmptyString(args.startDate),
+      targetDate: this.nonEmptyString(args.targetDate),
+      trashed: args.trashed,
+    });
+
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one release field must be provided');
+    }
+
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releaseUpdate: { success: boolean; release?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUpdateRelease($id: String!, $input: ReleaseUpdateInput!) {
+        releaseUpdate(id: $id, input: $input) {
+          success
+          release${selection}
+        }
+      }`,
+      {
+        id: args.id,
+        input: updateInput,
+      },
+    );
+
+    if (!response.releaseUpdate.success || !response.releaseUpdate.release) {
+      throw new Error(`Failed to update release ${args.id}`);
+    }
+
+    return this.normalizeReleaseNode(response.releaseUpdate.release);
+  }
+
+  async completeRelease(args: ReleaseCompleteArgs) {
+    const pipelineId = this.nonEmptyString(args.pipelineId);
+    if (!pipelineId) {
+      throw new Error('Release pipeline ID is required');
+    }
+
+    const completedStages = await this.getReleaseStages({
+      limit: 100,
+      includeArchived: false,
+      orderBy: 'updatedAt',
+      pipelineId,
+    });
+
+    if (!completedStages.some((stage) => stage.type === 'completed')) {
+      throw new Error(
+        `Cannot complete release for pipeline ${pipelineId}: no completed release stage exists. ` +
+          'Create a completed stage in Linear before calling completeRelease.',
+      );
+    }
+
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releaseComplete: { success: boolean; release?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearCompleteRelease($input: ReleaseCompleteInput!) {
+        releaseComplete(input: $input) {
+          success
+          release${selection}
+        }
+      }`,
+      {
+        input: this.compactObject({
+          pipelineId,
+          version: this.nonEmptyString(args.version),
+        }),
+      },
+    );
+
+    if (!response.releaseComplete.success || !response.releaseComplete.release) {
+      throw new Error('Failed to complete release');
+    }
+
+    return this.normalizeReleaseNode(response.releaseComplete.release);
+  }
+
+  async archiveRelease(releaseId: string) {
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releaseArchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearArchiveRelease($id: String!) {
+        releaseArchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: releaseId },
+    );
+
+    if (!response.releaseArchive.success || !response.releaseArchive.entity) {
+      throw new Error(`Failed to archive release ${releaseId}`);
+    }
+
+    return {
+      success: true,
+      release: this.normalizeReleaseNode(response.releaseArchive.entity),
+    };
+  }
+
+  async unarchiveRelease(releaseId: string) {
+    const selection = await this.buildReleaseSelection();
+    const response = await this.requestGraphQL<{
+      releaseUnarchive: { success: boolean; entity?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUnarchiveRelease($id: String!) {
+        releaseUnarchive(id: $id) {
+          success
+          entity${selection}
+        }
+      }`,
+      { id: releaseId },
+    );
+
+    if (!response.releaseUnarchive.success || !response.releaseUnarchive.entity) {
+      throw new Error(`Failed to unarchive release ${releaseId}`);
+    }
+
+    return {
+      success: true,
+      release: this.normalizeReleaseNode(response.releaseUnarchive.entity),
+    };
+  }
+
+  async addIssueToRelease(args: IssueToReleaseArgs) {
+    const response = await this.requestGraphQL<{
+      issueToReleaseCreate: {
+        success: boolean;
+        issueToRelease?: {
+          issue?: Record<string, unknown> | null;
+          release?: Record<string, unknown> | null;
+        } | null;
+      };
+    }>(
+      `mutation LinearAddIssueToRelease($input: IssueToReleaseCreateInput!) {
+        issueToReleaseCreate(input: $input) {
+          success
+          issueToRelease {
+            issue {
+              id
+              identifier
+              title
+            }
+            release {
+              id
+              name
+              version
+            }
+          }
+        }
+      }`,
+      {
+        input: {
+          issueId: args.issueId,
+          releaseId: args.releaseId,
+        },
+      },
+    );
+
+    const association = response.issueToReleaseCreate.issueToRelease;
+    if (!response.issueToReleaseCreate.success || !association?.issue || !association.release) {
+      throw new Error(`Failed to add issue ${args.issueId} to release ${args.releaseId}`);
+    }
+
+    return {
+      success: true,
+      issue: this.normalizeIssueReference(association.issue),
+      release: this.normalizeReleaseReference(association.release),
+    };
+  }
+
+  async removeIssueFromRelease(args: IssueToReleaseArgs) {
+    const response = await this.requestGraphQL<{
+      issueToReleaseDeleteByIssueAndRelease: { success: boolean };
+    }>(
+      `mutation LinearRemoveIssueFromRelease($issueId: String!, $releaseId: String!) {
+        issueToReleaseDeleteByIssueAndRelease(issueId: $issueId, releaseId: $releaseId) {
+          success
+        }
+      }`,
+      {
+        issueId: args.issueId,
+        releaseId: args.releaseId,
+      },
+    );
+
+    if (!response.issueToReleaseDeleteByIssueAndRelease.success) {
+      throw new Error(`Failed to remove issue ${args.issueId} from release ${args.releaseId}`);
+    }
+
+    return {
+      success: true,
+      issue: {
+        id: args.issueId,
+        identifier: args.issueId,
+        title: '',
+      },
+      release: {
+        id: args.releaseId,
+        name: '',
+        version: null,
+      },
+    };
+  }
+
+  async createReleaseNote(args: ReleaseNoteCreateArgs) {
+    const pipelineId = this.nonEmptyString(args.pipelineId);
+    if (!pipelineId) {
+      throw new Error('Release pipeline ID is required');
+    }
+
+    const releaseIds = this.nonEmptyArray(args.releaseIds);
+    const rangeFromReleaseId = this.nonEmptyString(args.rangeFromReleaseId);
+    const rangeToReleaseId = this.nonEmptyString(args.rangeToReleaseId);
+
+    if (releaseIds && (rangeFromReleaseId || rangeToReleaseId)) {
+      throw new Error('A release note cannot specify both explicit releaseIds and a release range');
+    }
+
+    if (!releaseIds && !rangeFromReleaseId && !rangeToReleaseId) {
+      throw new Error('A release note must specify either releaseIds or a complete release range');
+    }
+
+    if (!releaseIds && (!rangeFromReleaseId || !rangeToReleaseId)) {
+      throw new Error('A release note must specify either releaseIds or a complete release range');
+    }
+
+    const selection = await this.buildReleaseNoteSelection();
+    const response = await this.requestGraphQL<{
+      releaseNoteCreate: { success: boolean; releaseNote?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearCreateReleaseNote($input: ReleaseNoteCreateInput!) {
+        releaseNoteCreate(input: $input) {
+          success
+          releaseNote${selection}
+        }
+      }`,
+      {
+        input: this.compactObject({
+          pipelineId,
+          content: this.nonEmptyString(args.content),
+          releaseIds,
+          rangeFromReleaseId,
+          rangeToReleaseId,
+        }),
+      },
+    );
+
+    if (!response.releaseNoteCreate.success || !response.releaseNoteCreate.releaseNote) {
+      throw new Error('Failed to create release note');
+    }
+
+    return this.normalizeReleaseNoteNode(response.releaseNoteCreate.releaseNote);
+  }
+
+  async updateReleaseNote(args: ReleaseNoteUpdateArgs) {
+    const content = this.nonEmptyString(args.content);
+    const releaseIds = this.nonEmptyArray(args.releaseIds);
+    const rangeFromReleaseId = this.nonEmptyString(args.rangeFromReleaseId);
+    const rangeToReleaseId = this.nonEmptyString(args.rangeToReleaseId);
+
+    if (releaseIds && (rangeFromReleaseId || rangeToReleaseId)) {
+      throw new Error('A release note cannot specify both explicit releaseIds and a release range');
+    }
+
+    if ((rangeFromReleaseId && !rangeToReleaseId) || (!rangeFromReleaseId && rangeToReleaseId)) {
+      throw new Error(
+        'A release note range update must include both rangeFromReleaseId and rangeToReleaseId',
+      );
+    }
+
+    const updateInput = this.compactObject({
+      content,
+      releaseIds,
+      rangeFromReleaseId,
+      rangeToReleaseId,
+    });
+
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one release note field must be provided');
+    }
+
+    const selection = await this.buildReleaseNoteSelection();
+    const response = await this.requestGraphQL<{
+      releaseNoteUpdate: { success: boolean; releaseNote?: Record<string, unknown> | null };
+    }>(
+      `mutation LinearUpdateReleaseNote($id: String!, $input: ReleaseNoteUpdateInput!) {
+        releaseNoteUpdate(id: $id, input: $input) {
+          success
+          releaseNote${selection}
+        }
+      }`,
+      {
+        id: args.id,
+        input: updateInput,
+      },
+    );
+
+    if (!response.releaseNoteUpdate.success || !response.releaseNoteUpdate.releaseNote) {
+      throw new Error(`Failed to update release note ${args.id}`);
+    }
+
+    return this.normalizeReleaseNoteNode(response.releaseNoteUpdate.releaseNote);
+  }
+
+  async deleteReleaseNote(id: string) {
+    const response = await this.requestGraphQL<{
+      releaseNoteDelete: { success: boolean };
+    }>(
+      `mutation LinearDeleteReleaseNote($id: String!) {
+        releaseNoteDelete(id: $id) {
+          success
+        }
+      }`,
+      { id },
+    );
+
+    if (!response.releaseNoteDelete.success) {
+      throw new Error(`Failed to delete release note ${id}`);
+    }
+
+    return { success: true, id };
   }
 
   async getMilestoneById(id: string) {

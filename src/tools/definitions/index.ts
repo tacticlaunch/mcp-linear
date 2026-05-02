@@ -50,6 +50,7 @@ import {
   roadmapToolDefinitions,
   updateRoadmapToolDefinition,
 } from './roadmap-tools.js';
+import { releaseToolDefinitions } from './release-tools.js';
 import {
   archiveMilestoneToolDefinition,
   createMilestoneToolDefinition,
@@ -184,6 +185,9 @@ export const allToolDefinitions: MCPToolDefinition[] = [
 
   // Roadmap tools
   ...roadmapToolDefinitions,
+
+  // Release tools
+  ...releaseToolDefinitions,
 
   // Milestone tools
   getMilestonesToolDefinition,

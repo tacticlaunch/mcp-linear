@@ -172,6 +172,42 @@ These are MCP-server observability helpers for tool-only clients.
 | `linear_addProjectMember`       | Add a member to a project                 | ✅ Implemented |
 | `linear_removeProjectMember`    | Remove a member from a project            | ✅ Implemented |
 
+### Release Management Tools
+
+This batch uses raw GraphQL instead of the installed SDK because the current public release schema is available but the local `@linear/sdk` package does not expose first-class release models yet. It now covers both the release/read note flows and the release pipeline/stage admin mutations exposed in the public alpha schema.
+
+| Tool Name                        | Description                                                              | Status         |
+| -------------------------------- | ------------------------------------------------------------------------ | -------------- |
+| `linear_getReleasePipelines`     | Get release pipelines from Linear                                        | ✅ Implemented |
+| `linear_getReleasePipelineById`  | Get details of a specific release pipeline                               | ✅ Implemented |
+| `linear_createReleasePipeline`   | Create a new release pipeline                                            | ✅ Implemented |
+| `linear_updateReleasePipeline`   | Update an existing release pipeline                                      | ✅ Implemented |
+| `linear_archiveReleasePipeline`  | Archive a release pipeline                                               | ✅ Implemented |
+| `linear_unarchiveReleasePipeline`| Unarchive a release pipeline                                             | ✅ Implemented |
+| `linear_deleteReleasePipeline`   | Delete a release pipeline                                                | ✅ Implemented |
+| `linear_getReleases`             | Get releases with optional pipeline and stage filters                    | ✅ Implemented |
+| `linear_getReleaseById`          | Get details of a specific release                                        | ✅ Implemented |
+| `linear_searchReleases`          | Search releases by term, version, or pipeline name                       | ✅ Implemented |
+| `linear_getReleaseStages`        | Get release stages from Linear                                           | ✅ Implemented |
+| `linear_createReleaseStage`      | Create a new release stage in a pipeline                                 | ✅ Implemented |
+| `linear_updateReleaseStage`      | Update an existing release stage                                         | ✅ Implemented |
+| `linear_archiveReleaseStage`     | Archive a release stage                                                  | ✅ Implemented |
+| `linear_unarchiveReleaseStage`   | Unarchive a release stage                                                | ✅ Implemented |
+| `linear_getReleaseNotes`         | Get release notes from Linear                                            | ✅ Implemented |
+| `linear_getReleaseNoteById`      | Get details of a specific release note                                   | ✅ Implemented |
+| `linear_createRelease`           | Create a new release in a release pipeline                               | ✅ Implemented |
+| `linear_updateRelease`           | Update an existing release                                               | ✅ Implemented |
+| `linear_completeRelease`         | Mark a release as completed within a pipeline                            | ✅ Implemented |
+
+`linear_completeRelease` currently depends on the target pipeline already having a valid `completed` release stage in Linear. Fresh pipelines created through the public GraphQL release surface did not seed default stages in live validation, so completion can fail until that stage exists.
+| `linear_archiveRelease`          | Archive a release                                                        | ✅ Implemented |
+| `linear_unarchiveRelease`        | Unarchive a release                                                      | ✅ Implemented |
+| `linear_addIssueToRelease`       | Add an issue to a release                                                | ✅ Implemented |
+| `linear_removeIssueFromRelease`  | Remove an issue from a release                                           | ✅ Implemented |
+| `linear_createReleaseNote`       | Create a release note from explicit release IDs or a release range       | ✅ Implemented |
+| `linear_updateReleaseNote`       | Update a release note's content or covered releases                      | ✅ Implemented |
+| `linear_deleteReleaseNote`       | Delete a release note                                                    | ✅ Implemented |
+
 ### Roadmap Tools
 
 | Tool Name                | Description                                               | Status         |
