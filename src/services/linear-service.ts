@@ -5400,37 +5400,71 @@ export class LinearService {
    */
   async createIssueRelation(issueId: string, relatedIssueId: string, relationType: string) {
     try {
-      // Get both issues
-      const issue = await this.client.issue(issueId);
-      if (!issue) {
-        throw new Error(`Issue with ID ${issueId} not found`);
+      // Linear's IssueRelationType enum only contains "blocks" | "duplicate" | "related".
+      // The tool advertises "blocked_by" and "duplicate_of" as user-friendly aliases;
+      // implement them by swapping the issue/relatedIssue and using the canonical type.
+      let sourceIssueId = issueId;
+      let targetIssueId = relatedIssueId;
+      let canonicalType: 'blocks' | 'duplicate' | 'related';
+      switch (relationType) {
+        case 'blocks':
+        case 'duplicate':
+        case 'related':
+          canonicalType = relationType;
+          break;
+        case 'blocked_by':
+          canonicalType = 'blocks';
+          sourceIssueId = relatedIssueId;
+          targetIssueId = issueId;
+          break;
+        case 'duplicate_of':
+          canonicalType = 'duplicate';
+          sourceIssueId = relatedIssueId;
+          targetIssueId = issueId;
+          break;
+        default:
+          throw new Error(`${relationType} is not a valid relation type`);
       }
 
-      const relatedIssue = await this.client.issue(relatedIssueId);
-      if (!relatedIssue) {
-        throw new Error(`Related issue with ID ${relatedIssueId} not found`);
+      const sourceIssue = await this.client.issue(sourceIssueId);
+      if (!sourceIssue) {
+        throw new Error(`Issue with ID ${sourceIssueId} not found`);
+      }
+      const targetIssue = await this.client.issue(targetIssueId);
+      if (!targetIssue) {
+        throw new Error(`Related issue with ID ${targetIssueId} not found`);
       }
 
-      const validTypes = ["blocks", "duplicate", "related"];
-      
-      if (!validTypes.includes(relationType)) {
-        throw new Error(`${relationType} is not a valid relation type`)
+      const payload = await this.client.createIssueRelation({
+        issueId: sourceIssueId,
+        relatedIssueId: targetIssueId,
+        // Linear's IssueRelationType is `blocks` | `duplicate` | `related`; the SDK
+        // accepts the string form here without needing the runtime enum import.
+        type: canonicalType as unknown as never,
+      });
+
+      const issueRelation = payload.issueRelation ? await payload.issueRelation : null;
+      if (!issueRelation) {
+        return {
+          success: payload.success === true,
+          relation: null,
+        };
       }
 
-      const relation = await this.client.createIssueRelation({
-        issueId,
-        relatedIssueId,
-        // @ts-ignore
-        type: relationType, 
-      })
-
-      // For now, we'll just acknowledge the request with a success message
-      // The actual relation creation logic would need to be implemented based on the Linear SDK specifics
-      // In a production environment, we should check the SDK documentation for the correct method
+      // Resolve the lazy issue/relatedIssue fields so we can expose stable identifiers.
+      const [resolvedSource, resolvedTarget] = await Promise.all([
+        issueRelation.issue ? await issueRelation.issue : null,
+        issueRelation.relatedIssue ? await issueRelation.relatedIssue : null,
+      ]);
 
       return {
-        success: true,
-        relation,
+        success: payload.success === true,
+        relation: {
+          id: issueRelation.id,
+          type: issueRelation.type,
+          issueIdentifier: resolvedSource?.identifier ?? sourceIssue.identifier,
+          relatedIssueIdentifier: resolvedTarget?.identifier ?? targetIssue.identifier,
+        },
       };
     } catch (error) {
       console.error('Error creating issue relation:', error);
