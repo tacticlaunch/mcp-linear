@@ -95,7 +95,21 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error('MCP smoke test failed:', error);
-  process.exit(1);
-});
+// Hard timeout so a stuck child process can never hang CI for hours.
+const SMOKE_TEST_TIMEOUT_MS = 60_000;
+const watchdog = setTimeout(() => {
+  console.error(`MCP smoke test timed out after ${SMOKE_TEST_TIMEOUT_MS}ms`);
+  process.exit(2);
+}, SMOKE_TEST_TIMEOUT_MS);
+watchdog.unref();
+
+main()
+  .then(() => {
+    clearTimeout(watchdog);
+    process.exit(0);
+  })
+  .catch((error) => {
+    clearTimeout(watchdog);
+    console.error('MCP smoke test failed:', error);
+    process.exit(1);
+  });
