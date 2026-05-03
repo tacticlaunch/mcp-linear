@@ -5,8 +5,11 @@
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "mcp-linear": "./dist/index.js"
+    "mcp-linear": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "directories": {
     "doc": "docs"
   },
@@ -37,7 +40,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tacticlaunch/mcp-linear"
+    "url": "git+https://github.com/tacticlaunch/mcp-linear.git"
   },
   "dependencies": {
     "@linear/sdk": "^38.0.0",
