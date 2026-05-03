@@ -1,162 +1,97 @@
 <p align="center">
-  <img src="docs/linear-app-icon.png" alt="Linear App Icon" width="220" height="220">
+  <img src="https://github.com/tacticlaunch/mcp-linear/blob/main/docs/linear-app-icon.png?raw=true" alt="Linear App Icon" width="250" height="250">
 </p>
 
 # MCP Linear
 
-`mcp-linear` is a Linear-focused Model Context Protocol server built for real project-management workflows, not just basic issue CRUD.
+A Model Context Protocol (MCP) server for the Linear GraphQL API, built for real project-management workflows — not just basic issue CRUD.
 
-This version goes well beyond the earlier baseline by adding:
+![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
+[![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
+[![smithery badge](https://smithery.ai/badge/@tacticlaunch/mcp-linear)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
-- a much broader Linear tool surface
-- MCP-native resources and prompts
-- PM-oriented read paths for projects, cycles, milestones, docs, and saved views
-- document management and project update workflows
-- custom field, template, notification, session, audit, and integration reads
-- server observability and rate-limit visibility
-- stronger validation with an official MCP SDK smoke test
+<a href="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear/badge" />
+</a>
 
-## Why this version exists
+## Features
 
-The original baseline was useful, but too narrow for the way real teams use Linear with AI agents.
+MCP Linear bridges AI assistants and Linear by implementing the MCP protocol. With it you can:
 
-This version is designed for workflows like:
-
-- planning a project from issues, milestones, cycles, docs, and saved views
-- drafting project updates from live Linear state
-- managing templates, custom fields, favorites, and PM read models
-- reading notifications, subscriptions, sessions, and audits without leaving MCP
-- running read-heavy multi-project planning sessions without constantly tripping over brittle wrapper behavior
-
-In short: this is intended to be a **practical Linear operations server** for AI assistants, not just a thin GraphQL wrapper.
-
-## What this version adds
-
-### Broader tool coverage
-
-Compared to the earlier baseline, this version now includes support for:
-
-- milestones, roadmaps, initiatives, project updates, and project members
-- saved views and favorite mutations
-- Linear documents and document history
-- PM-oriented project issue and cycle issue queries
-- comment updates/deletes
-- cycle CRUD and cycle stats
-- workflow state creation/update
-- team settings, memberships, labels, and membership management
-- issue templates and create-from-template flows
-- webhooks and attachments
-- notifications, subscriptions, and unread helpers
-- authentication session reads and logout helpers
-- organization and user audit reads
-- integration listing
+- Retrieve issues, projects, teams, cycles, milestones, roadmaps, and documents
+- Create and update issues, change status, assign, and comment
+- Manage projects, project updates, milestones, roadmaps, saved views, and favorites
+- Work with templates, custom fields, webhooks, and attachments
+- Read notifications, subscriptions, sessions, audits, and integrations without leaving MCP
+- Inspect rate-limit and server health before running heavy planning sessions
 
 See [`TOOLS.md`](./TOOLS.md) for the full inventory.
 
-### MCP-native features
+### MCP-native resources and prompts
 
-This server is not tools-only anymore.
+The server exposes MCP resources and prompts in addition to tools, including:
 
-It now exposes:
+- Resources: `linear://viewer`, `linear://organization`, `linear://teams`, `linear://projects`, `linear://project/{id}`, `linear://project/{id}/issues`, `linear://project/{id}/documents`, `linear://issue/{id}`, `linear://document/{id}`, `linear://roadmap/{id}`, `linear://milestone/{id}`, `linear://rate-limit`
+- Prompts: `summarize-project-status`, `draft-project-update`, `triage-issue`, `summarize-document`
 
-#### MCP Resources
+## Example prompts
 
-Read-only resources for high-value context, including:
+Once connected, you can use prompts like:
 
-- `linear://viewer`
-- `linear://organization`
-- `linear://teams`
-- `linear://projects`
-- `linear://project/{id}`
-- `linear://project/{id}/issues?...`
-- `linear://project/{id}/documents?...`
-- `linear://issue/{id}`
-- `linear://document/{id}`
-- `linear://roadmap/{id}`
-- `linear://milestone/{id}`
-- `linear://rate-limit`
-
-#### MCP Prompts
-
-Reusable PM-oriented prompts, including:
-
-- `summarize-project-status`
-- `draft-project-update`
-- `triage-issue`
-- `summarize-document`
-
-These make the server feel like a real MCP-native integration instead of a tools-only wrapper.
-
-### Better operational behavior
-
-This version also improves the server itself:
-
-- central Linear API rate-limit tracking and retry/cooldown handling
-- explicit `linear_getRateLimitStatus` and `linear_getServerStatus` tools
-- stdio safety hardening for the MCP runtime
-- runtime diagnostics for uncaught exceptions and disconnect debugging
-- narrower custom GraphQL queries where SDK-generated queries were stale or too chatty
-
-## High-value use cases
-
-Once connected, this server works well for prompts like:
-
-- "Show me the current status of this Linear project, including issues, docs, and milestones."
-- "Draft a weekly project update for OrdelloTS."
-- "Show all open issues in this project grouped by milestone and cycle."
-- "Find the newest documents related to Premier and summarize the key decisions."
-- "Show notifications and unread subscription context for current work."
-- "Inspect rate-limit/server health before running a big planning session."
+- "Show me all my Linear issues"
+- "Create a new issue titled 'Fix login bug' in the Frontend team"
+- "Change the status of issue FE-123 to 'In Progress'"
+- "Assign issue BE-456 to John Smith"
+- "Show all open issues in this project grouped by milestone and cycle"
+- "Draft a weekly project update from the current Linear state"
+- "Find the newest documents related to a project and summarize the key decisions"
 
 ## Installation
 
-### Clone and build
+### Getting your Linear API token
+
+1. Log in to your Linear account at [linear.app](https://linear.app)
+2. Click on your organization avatar (top-left corner)
+3. Select **Settings**
+4. Navigate to **Security & access** in the left sidebar
+5. Under **Personal API Keys** click **New API Key**
+6. Give your key a name (e.g., `MCP Linear Integration`)
+7. Copy the generated API token and store it securely — you won't be able to see it again
+
+### Installing via [add-mcp](https://github.com/neondatabase/add-mcp) (Recommended)
+
+`add-mcp` installs the server into Claude Code, Cursor, Codex, VS Code, Claude Desktop, and many other MCP-aware agents with a single command:
 
 ```bash
-git clone https://github.com/itz4blitz/mcp-linear.git
-cd mcp-linear
-npm install
-npm run build
+npx add-mcp @tacticlaunch/mcp-linear --env LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
 ```
 
-### Optional: link the CLI locally
+Add `-g` to install globally instead of into the current project. See the [add-mcp docs](https://github.com/neondatabase/add-mcp) for the full agent list and flags.
+
+### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear)
+
+- For Cursor:
 
 ```bash
-npm link
+npx -y @smithery/cli install @tacticlaunch/mcp-linear --client cursor
 ```
 
-This makes the `mcp-linear` command available globally from your local checkout.
-
-## Running the server
-
-### With an explicit token
+- For Claude Desktop:
 
 ```bash
-mcp-linear --token YOUR_LINEAR_API_TOKEN
+npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
 ```
 
-### With an environment variable
+### Manual configuration
 
-```bash
-export LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
-mcp-linear
-```
-
-### Directly from the built output
-
-```bash
-node dist/index.js --token YOUR_LINEAR_API_TOKEN
-```
-
-## MCP client configuration
-
-If you linked the CLI locally, use a config like:
+Add the following to your MCP settings file:
 
 ```json
 {
   "mcpServers": {
     "linear": {
-      "command": "mcp-linear",
+      "command": "npx",
+      "args": ["-y", "@tacticlaunch/mcp-linear"],
       "env": {
         "LINEAR_API_TOKEN": "<YOUR_TOKEN>"
       }
@@ -165,32 +100,48 @@ If you linked the CLI locally, use a config like:
 }
 ```
 
-If you prefer running directly from the repository build, point your client at `dist/index.js`:
-
-```json
-{
-  "mcpServers": {
-    "linear": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/mcp-linear/dist/index.js"
-      ],
-      "env": {
-        "LINEAR_API_TOKEN": "<YOUR_TOKEN>"
-      }
-    }
-  }
-}
-```
-
-Common config locations:
+#### Client-specific configuration locations
 
 - Cursor: `~/.cursor/mcp.json`
 - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Claude VSCode Extension: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
 - GoMCP: `~/.config/gomcp/config.yaml`
 
-## Validation and quality bar
+### Manual run
+
+Prerequisites:
+
+- Node.js (v18+)
+- NPM or Yarn
+- Linear API token
+
+```bash
+# Install globally
+npm install -g @tacticlaunch/mcp-linear
+
+# Or clone and install locally
+git clone https://github.com/tacticlaunch/mcp-linear.git
+cd mcp-linear
+npm install
+npm link  # Makes the package available globally
+```
+
+#### Running the server
+
+Run the server with your Linear API token:
+
+```bash
+mcp-linear --token YOUR_LINEAR_API_TOKEN
+```
+
+Or set the token in your environment and run without arguments:
+
+```bash
+export LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
+mcp-linear
+```
+
+## Validation
 
 The default validation path is:
 
@@ -199,41 +150,16 @@ npm test
 npm run build
 ```
 
-`npm test` includes:
-
-- Jest unit tests
-- an official MCP SDK smoke test against the built stdio server
-
-The smoke test validates:
-
-- tool registration
-- resource registration
-- prompt registration
-- host-compatible MCP schema emission
-
-This is especially important for an MCP server because many failures only show up at runtime or during tool/resource registration.
+`npm test` runs Jest unit tests and an official MCP SDK smoke test against the built stdio server, covering tool, resource, and prompt registration plus host-compatible schema emission.
 
 ## Development
 
 See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for local development details.
 
-The repo is organized around:
+## Links
 
-- `src/services/linear-service.ts` for SDK and GraphQL integration
-- `src/tools/definitions/*.ts` for MCP tool contracts
-- `src/tools/handlers/*.ts` for MCP handlers
-- `src/tools/type-guards.ts` for runtime validation
-- `src/mcp-resources.ts` and `src/mcp-prompts.ts` for MCP-native surface area
-
-## Tool inventory
-
-Use [`TOOLS.md`](./TOOLS.md) for the current inventory of:
-
-- implemented tools
-- MCP resources
-- MCP prompts
-- future roadmap items that are actually realistic for the current Linear SDK
+[tacticlaunch/cursor-memory-bank](https://github.com/tacticlaunch/cursor-memory-bank) — If you are a developer seeking to enhance your workflow with Cursor, consider giving it a try.
 
 ## License
 
-This project is licensed under the MIT License. See [`LICENSE`](./LICENSE).
+This project is licensed under the MIT License — see the [`LICENSE`](./LICENSE) file for details.
