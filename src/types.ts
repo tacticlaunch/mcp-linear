@@ -8,6 +8,7 @@ export interface MCPToolDefinition {
     type: string;
     properties: Record<string, any>;
     required?: string[];
+    anyOf?: Array<{ required: string[] }>;
   };
   output_schema: {
     type: string;

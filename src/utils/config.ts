@@ -29,19 +29,25 @@ export function getLinearApiToken(): string | undefined {
   const tokenFromArgs = getCommandLineArg('--token');
 
   // If not found, try to get it from environment variables
-  // Check both LINEAR_API_TOKEN and LINEAR_API_KEY for compatibility with Smithery
+  // Accept either LINEAR_API_TOKEN or LINEAR_API_KEY.
   const tokenFromEnv = process.env.LINEAR_API_TOKEN || process.env.LINEAR_API_KEY;
 
-  // Log for debugging
+  // Only emit environment diagnostics in explicit debug mode.
   if (!tokenFromArgs && !tokenFromEnv) {
-    console.error('API token not found in command line args or environment variables');
-    console.error(
-      'Environment variables:',
-      Object.keys(process.env).filter((key) => key.includes('LINEAR')),
-    );
+    logError('API token not found in command line args or environment variables');
+    if (isDebugLoggingEnabled()) {
+      console.error(
+        'Environment variables:',
+        Object.keys(process.env).filter((key) => key.includes('LINEAR')),
+      );
+    }
   }
 
   return tokenFromArgs || tokenFromEnv;
+}
+
+export function isDebugLoggingEnabled(): boolean {
+  return process.env.MCP_LINEAR_DEBUG === '1' || process.env.MCP_LINEAR_DEBUG === 'true';
 }
 
 /**
@@ -49,7 +55,9 @@ export function getLinearApiToken(): string | undefined {
  * @param message The message to log
  */
 export function logInfo(message: string): void {
-  console.error(message);
+  if (isDebugLoggingEnabled()) {
+    console.error(message);
+  }
 }
 
 /**

@@ -17,32 +17,12 @@
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "jest --passWithNoTests",
+    "test": "npm run test:unit && npm run test:mcp-smoke",
+    "test:unit": "jest --passWithNoTests",
+    "test:mcp-smoke": "npm run build && node scripts/mcp-smoke-test.mjs",
     "test:watch": "jest --watch",
     "prepare": "npm run build",
     "postinstall": "node -e \"try { require('fs').chmodSync('./dist/index.js', '755') } catch (e) {}\""
-  },
-  "smithery": {
-    "name": "linear",
-    "displayName": "Linear",
-    "description": "Interact with Linear project management through AI assistants",
-    "tools": [
-      "linear_getViewer",
-      "linear_getOrganization",
-      "linear_getUsers",
-      "linear_getLabels",
-      "linear_getTeams",
-      "linear_getProjects",
-      "linear_createProject",
-      "linear_getIssues",
-      "linear_getIssueById",
-      "linear_searchIssues",
-      "linear_createIssue",
-      "linear_updateIssue",
-      "linear_createComment",
-      "linear_addIssueLabel",
-      "linear_removeIssueLabel"
-    ]
   },
   "keywords": [
     "mcp",
@@ -51,8 +31,7 @@
     "claude",
     "ai",
     "model-context-protocol",
-    "project-management",
-    "smithery"
+    "project-management"
   ],
   "author": "Alexey Elizarov <alex.elizarov1@gmail.com>",
   "license": "MIT",

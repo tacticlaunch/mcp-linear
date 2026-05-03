@@ -4,11 +4,14 @@ import {
   isAssignIssueArgs,
   isConvertIssueToSubtaskArgs,
   isCreateCommentArgs,
+  isDeleteCommentArgs,
   isCreateIssueArgs,
   isCreateIssueRelationArgs,
   isDuplicateIssueArgs,
+  isGetCustomFieldsArgs,
   isGetCommentsArgs,
   isGetIssueByIdArgs,
+  isGetIssueCustomFieldsArgs,
   isGetIssueHistoryArgs,
   isGetIssuesArgs,
   isRemoveIssueLabelArgs,
@@ -16,7 +19,9 @@ import {
   isSetIssuePriorityArgs,
   isSubscribeToIssueArgs,
   isTransferIssueArgs,
+  isUpdateCommentArgs,
   isUpdateIssueArgs,
+  isUpdateIssueCustomFieldArgs,
 } from '../type-guards.js';
 import { LinearService } from '../../services/linear-service.js';
 import { logError } from '../../utils/config.js';
@@ -63,17 +68,67 @@ export function handleGetIssueById(linearService: LinearService) {
 export function handleSearchIssues(linearService: LinearService) {
   return async (args: unknown) => {
     try {
-      console.error('searchIssues args:', JSON.stringify(args, null, 2));
-
       if (!isSearchIssuesArgs(args)) {
-        console.error('Invalid arguments for searchIssues');
         throw new Error('Invalid arguments for searchIssues');
       }
 
-      console.error('Arguments validated successfully');
       return await linearService.searchIssues(args);
     } catch (error) {
       logError('Error searching issues', error);
+      throw error;
+    }
+  };
+}
+
+/**
+ * Handler for getting custom field definitions
+ */
+export function handleGetCustomFields(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetCustomFieldsArgs(args)) {
+        throw new Error('Invalid arguments for getCustomFields');
+      }
+
+      return await linearService.getCustomFields();
+    } catch (error) {
+      logError('Error getting custom fields', error);
+      throw error;
+    }
+  };
+}
+
+/**
+ * Handler for getting custom field values for an issue
+ */
+export function handleGetIssueCustomFields(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetIssueCustomFieldsArgs(args)) {
+        throw new Error('Invalid arguments for getIssueCustomFields');
+      }
+
+      return await linearService.getIssueCustomFields(args.issueId);
+    } catch (error) {
+      logError('Error getting issue custom fields', error);
+      throw error;
+    }
+  };
+}
+
+/**
+ * Handler for updating a custom field value on an issue
+ */
+export function handleUpdateIssueCustomField(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isUpdateIssueCustomFieldArgs(args)) {
+        throw new Error('Invalid arguments for updateIssueCustomField');
+      }
+
+      return await linearService.updateIssueCustomField(args);
+    } catch (error) {
+      logError('Error updating issue custom field', error);
       throw error;
     }
   };
@@ -128,6 +183,36 @@ export function handleCreateComment(linearService: LinearService) {
       return await linearService.createComment(args);
     } catch (error) {
       logError('Error creating comment', error);
+      throw error;
+    }
+  };
+}
+
+export function handleUpdateComment(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isUpdateCommentArgs(args)) {
+        throw new Error('Invalid arguments for updateComment');
+      }
+
+      return await linearService.updateComment(args);
+    } catch (error) {
+      logError('Error updating comment', error);
+      throw error;
+    }
+  };
+}
+
+export function handleDeleteComment(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isDeleteCommentArgs(args)) {
+        throw new Error('Invalid arguments for deleteComment');
+      }
+
+      return await linearService.deleteComment(args.id);
+    } catch (error) {
+      logError('Error deleting comment', error);
       throw error;
     }
   };

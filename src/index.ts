@@ -3,10 +3,15 @@
 import { LinearClient } from '@linear/sdk';
 import { runMCPServer } from './mcp-server.js';
 
+import { getLinearPrompt, getLinearPromptDefinitions } from './mcp-prompts.js';
+import { getLinearResourceDefinitions, readLinearResource } from './mcp-resources.js';
+import { installRuntimeDiagnostics } from './runtime-diagnostics.js';
+import { createServerStatusProvider } from './server-status.js';
 import { LinearService } from './services/linear-service.js';
 import { allToolDefinitions } from './tools/definitions/index.js';
 import { registerToolHandlers } from './tools/handlers/index.js';
-import { getLinearApiToken, logInfo, logError } from './utils/config.js';
+import { getLinearRateLimitSnapshot, installLinearRateLimitHandling } from './utils/linear-rate-limit.js';
+import { getLinearApiToken, logInfo, logError, isDebugLoggingEnabled } from './utils/config.js';
 import pkg from '../package.json' with { type: 'json' }; // Import package.json to access version
 
 /**
@@ -30,7 +35,16 @@ async function runServer() {
 
     // Initialize Linear client and service
     const linearClient = new LinearClient({ apiKey: linearApiToken });
+    installLinearRateLimitHandling(linearClient);
     const linearService = new LinearService(linearClient);
+    const getRateLimitStatus = () => getLinearRateLimitSnapshot(linearClient);
+    const getServerStatus = createServerStatusProvider({
+      version: pkg.version,
+      toolCount: allToolDefinitions.length,
+      resourceCount: getLinearResourceDefinitions().length,
+      promptCount: getLinearPromptDefinitions().length,
+      getRateLimitStatus,
+    });
 
     // Start the MCP server
     const server = await runMCPServer({
@@ -41,8 +55,19 @@ async function runServer() {
           tools: allToolDefinitions,
         };
       },
+      listResources: async () => getLinearResourceDefinitions(),
+      readResource: async (uri: string) =>
+        readLinearResource(uri, {
+          linearService,
+          getRateLimitSnapshot: getRateLimitStatus,
+        }),
+      listPrompts: async () => getLinearPromptDefinitions(),
+      getPrompt: async (name: string, args?: Record<string, string>) => getLinearPrompt(name, args),
       handleRequest: async (req: { name: string; args: unknown }) => {
-        const handlers = registerToolHandlers(linearService);
+        const handlers = registerToolHandlers(linearService, {
+          getRateLimitStatus,
+          getServerStatus,
+        });
         const toolName = req.name;
 
         if (toolName in handlers) {
@@ -55,10 +80,11 @@ async function runServer() {
       },
     });
 
-    // Set up heartbeat to keep server alive
-    setInterval(() => {
-      logInfo('MCP Linear is running...');
-    }, 60000);
+    if (isDebugLoggingEnabled()) {
+      setInterval(() => {
+        logInfo('MCP Linear is running...');
+      }, 60000);
+    }
 
     return server;
   } catch (error) {
@@ -68,6 +94,7 @@ async function runServer() {
 }
 
 // Start the server
+installRuntimeDiagnostics();
 runServer().catch((error) => {
   logError('Fatal error in MCP Linear', error);
   process.exit(1);

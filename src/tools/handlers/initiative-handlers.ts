@@ -10,147 +10,155 @@ import {
   isAddProjectToInitiativeInput,
   isRemoveProjectFromInitiativeInput,
 } from '../type-guards.js';
+import { logError } from '../../utils/config.js';
 
 export function getInitiativesHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isGetInitiativesInput(args)) {
-      throw new Error('Invalid input for getInitiatives');
-    }
+    try {
+      if (!isGetInitiativesInput(args)) {
+        throw new Error('Invalid input for getInitiatives');
+      }
 
-    console.error('[getInitiatives] Fetching initiatives with options:', args);
-    const initiatives = await linearService.getInitiatives(args);
-    console.error(`[getInitiatives] Retrieved ${initiatives.length} initiatives`);
-    return initiatives;
+      return await linearService.getInitiatives(args);
+    } catch (error) {
+      logError('Error getting initiatives', error);
+      throw error;
+    }
   };
 }
 
 export function getInitiativeByIdHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isGetInitiativeByIdInput(args)) {
-      throw new Error('Invalid input for getInitiativeById');
-    }
+    try {
+      if (!isGetInitiativeByIdInput(args)) {
+        throw new Error('Invalid input for getInitiativeById');
+      }
 
-    console.error(`[getInitiativeById] Fetching initiative: ${args.initiativeId}`);
-    const initiative = await linearService.getInitiativeById(
-      args.initiativeId,
-      args.includeProjects,
-    );
-    console.error(`[getInitiativeById] Retrieved initiative: ${initiative.name}`);
-    return initiative;
+      return await linearService.getInitiativeById(args.initiativeId, args.includeProjects);
+    } catch (error) {
+      logError('Error getting initiative by ID', error);
+      throw error;
+    }
   };
 }
 
 export function createInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isCreateInitiativeInput(args)) {
-      throw new Error('Invalid input for createInitiative');
-    }
+    try {
+      if (!isCreateInitiativeInput(args)) {
+        throw new Error('Invalid input for createInitiative');
+      }
 
-    console.error('[createInitiative] Creating new initiative:', args.name);
-    const result = await linearService.createInitiative(args);
-    console.error(`[createInitiative] Initiative created successfully`);
-    return result;
+      return await linearService.createInitiative(args);
+    } catch (error) {
+      logError('Error creating initiative', error);
+      throw error;
+    }
   };
 }
 
 export function updateInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isUpdateInitiativeInput(args)) {
-      throw new Error('Invalid input for updateInitiative');
-    }
+    try {
+      if (!isUpdateInitiativeInput(args)) {
+        throw new Error('Invalid input for updateInitiative');
+      }
 
-    const { initiativeId, ...updateData } = args;
-    console.error(`[updateInitiative] Updating initiative: ${initiativeId}`);
-    const result = await linearService.updateInitiative(initiativeId, updateData);
-    console.error(`[updateInitiative] Initiative updated successfully`);
-    return result;
+      const { initiativeId, ...updateData } = args;
+      return await linearService.updateInitiative(initiativeId, updateData);
+    } catch (error) {
+      logError('Error updating initiative', error);
+      throw error;
+    }
   };
 }
 
 export function archiveInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isArchiveInitiativeInput(args)) {
-      throw new Error('Invalid input for archiveInitiative');
-    }
+    try {
+      if (!isArchiveInitiativeInput(args)) {
+        throw new Error('Invalid input for archiveInitiative');
+      }
 
-    console.error(`[archiveInitiative] Archiving initiative: ${args.initiativeId}`);
-    const result = await linearService.archiveInitiative(args.initiativeId);
-    console.error(`[archiveInitiative] Initiative archived successfully`);
-    return result;
+      return await linearService.archiveInitiative(args.initiativeId);
+    } catch (error) {
+      logError('Error archiving initiative', error);
+      throw error;
+    }
   };
 }
 
 export function unarchiveInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isArchiveInitiativeInput(args)) {
-      throw new Error('Invalid input for unarchiveInitiative');
-    }
+    try {
+      if (!isArchiveInitiativeInput(args)) {
+        throw new Error('Invalid input for unarchiveInitiative');
+      }
 
-    console.error(`[unarchiveInitiative] Unarchiving initiative: ${args.initiativeId}`);
-    const result = await linearService.unarchiveInitiative(args.initiativeId);
-    console.error(`[unarchiveInitiative] Initiative unarchived successfully`);
-    return result;
+      return await linearService.unarchiveInitiative(args.initiativeId);
+    } catch (error) {
+      logError('Error unarchiving initiative', error);
+      throw error;
+    }
   };
 }
 
 export function deleteInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isDeleteInitiativeInput(args)) {
-      throw new Error('Invalid input for deleteInitiative');
-    }
+    try {
+      if (!isDeleteInitiativeInput(args)) {
+        throw new Error('Invalid input for deleteInitiative');
+      }
 
-    console.error(`[deleteInitiative] Deleting initiative: ${args.initiativeId}`);
-    const result = await linearService.deleteInitiative(args.initiativeId);
-    console.error(`[deleteInitiative] Initiative deleted successfully`);
-    return result;
+      return await linearService.deleteInitiative(args.initiativeId);
+    } catch (error) {
+      logError('Error deleting initiative', error);
+      throw error;
+    }
   };
 }
 
 export function getInitiativeProjectsHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isGetInitiativeProjectsInput(args)) {
-      throw new Error('Invalid input for getInitiativeProjects');
-    }
+    try {
+      if (!isGetInitiativeProjectsInput(args)) {
+        throw new Error('Invalid input for getInitiativeProjects');
+      }
 
-    console.error(`[getInitiativeProjects] Fetching projects for initiative: ${args.initiativeId}`);
-    const projects = await linearService.getInitiativeProjects(
-      args.initiativeId,
-      args.includeArchived,
-    );
-    console.error(`[getInitiativeProjects] Retrieved ${projects.length} projects`);
-    return projects;
+      return await linearService.getInitiativeProjects(args.initiativeId, args.includeArchived);
+    } catch (error) {
+      logError('Error getting initiative projects', error);
+      throw error;
+    }
   };
 }
 
 export function addProjectToInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isAddProjectToInitiativeInput(args)) {
-      throw new Error('Invalid input for addProjectToInitiative');
-    }
+    try {
+      if (!isAddProjectToInitiativeInput(args)) {
+        throw new Error('Invalid input for addProjectToInitiative');
+      }
 
-    console.error(
-      `[addProjectToInitiative] Adding project ${args.projectId} to initiative ${args.initiativeId}`,
-    );
-    const result = await linearService.addProjectToInitiative(args.initiativeId, args.projectId);
-    console.error(`[addProjectToInitiative] Project added successfully`);
-    return result;
+      return await linearService.addProjectToInitiative(args.initiativeId, args.projectId);
+    } catch (error) {
+      logError('Error adding project to initiative', error);
+      throw error;
+    }
   };
 }
 
 export function removeProjectFromInitiativeHandler(linearService: LinearService) {
   return async (args: unknown) => {
-    if (!isRemoveProjectFromInitiativeInput(args)) {
-      throw new Error('Invalid input for removeProjectFromInitiative');
-    }
+    try {
+      if (!isRemoveProjectFromInitiativeInput(args)) {
+        throw new Error('Invalid input for removeProjectFromInitiative');
+      }
 
-    console.error(
-      `[removeProjectFromInitiative] Removing project ${args.projectId} from initiative ${args.initiativeId}`,
-    );
-    const result = await linearService.removeProjectFromInitiative(
-      args.initiativeId,
-      args.projectId,
-    );
-    console.error(`[removeProjectFromInitiative] Project removed successfully`);
-    return result;
+      return await linearService.removeProjectFromInitiative(args.initiativeId, args.projectId);
+    } catch (error) {
+      logError('Error removing project from initiative', error);
+      throw error;
+    }
   };
 }

@@ -4,7 +4,7 @@ To develop locally:
 
 ```bash
 # Clone the repository
-git clone https://github.com/tacticlaunch/mcp-linear.git
+git clone https://github.com/itz4blitz/mcp-linear.git
 cd mcp-linear
 
 # Install dependencies
@@ -13,6 +13,26 @@ npm install
 # Run in development mode
 npm run dev -- --token YOUR_LINEAR_API_TOKEN
 ```
+
+### Validation
+
+Use the following checks before merging or publishing:
+
+```bash
+# Full validation: Jest plus black-box MCP registration smoke test
+npm test
+
+# TypeScript build
+npm run build
+
+# Jest only
+npm run test:unit
+
+# MCP SDK smoke test against the built stdio server
+npm run test:mcp-smoke
+```
+
+The smoke test verifies that the built server successfully exposes its registered tools, resources, and prompts over stdio.
 
 ### Inspecting the server
 
@@ -57,5 +77,3 @@ npm login
 ```bash
 npm publish --access public
 ```
-
-5. For Smithery registry, you'll need to work with the Smithery team to get your server listed in their catalog.

@@ -4,11 +4,10 @@
 
 # MCP Linear
 
-A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to interact with Linear project management systems.
+A Model Context Protocol (MCP) server for the Linear GraphQL API, built for real project-management workflows — not just basic issue CRUD.
 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
 [![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
-[![smithery badge](https://smithery.ai/badge/@tacticlaunch/mcp-linear)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
 <a href="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear/badge" />
@@ -16,14 +15,23 @@ A Model Context Protocol (MCP) server implementation for the Linear GraphQL API 
 
 ## Features
 
-MCP Linear bridges the gap between AI assistant and Linear (project management tool) by implementing the MCP protocol. This allows to:
+MCP Linear bridges AI assistants and Linear by implementing the MCP protocol. With it you can:
 
-- Retrieve issues, projects, teams, and other data from Linear
-- Create and update issues
-- Change issue status
-- Assign issues to team members
-- Add comments
-- Create projects and teams
+- Retrieve issues, projects, teams, cycles, milestones, roadmaps, and documents
+- Create and update issues, change status, assign, and comment
+- Manage projects, project updates, milestones, roadmaps, saved views, and favorites
+- Work with templates, custom fields, webhooks, and attachments
+- Read notifications, subscriptions, sessions, audits, and integrations without leaving MCP
+- Inspect rate-limit and server health before running heavy planning sessions
+
+See [`TOOLS.md`](./TOOLS.md) for the full inventory.
+
+### MCP-native resources and prompts
+
+The server exposes MCP resources and prompts in addition to tools, including:
+
+- Resources: `linear://viewer`, `linear://organization`, `linear://teams`, `linear://projects`, `linear://project/{id}`, `linear://project/{id}/issues`, `linear://project/{id}/documents`, `linear://issue/{id}`, `linear://document/{id}`, `linear://roadmap/{id}`, `linear://milestone/{id}`, `linear://rate-limit`
+- Prompts: `summarize-project-status`, `draft-project-update`, `triage-issue`, `summarize-document`
 
 ## Example prompts
 
@@ -33,37 +41,33 @@ Once connected, you can use prompts like:
 - "Create a new issue titled 'Fix login bug' in the Frontend team"
 - "Change the status of issue FE-123 to 'In Progress'"
 - "Assign issue BE-456 to John Smith"
-- "Add a comment to issue UI-789: 'This needs to be fixed by Friday'"
+- "Show all open issues in this project grouped by milestone and cycle"
+- "Draft a weekly project update from the current Linear state"
+- "Find the newest documents related to a project and summarize the key decisions"
 
 ## Installation
 
-### Getting Your Linear API Token
-
-To use MCP Linear, you'll need a Linear API token. Here's how to get one:
+### Getting your Linear API token
 
 1. Log in to your Linear account at [linear.app](https://linear.app)
-2. Click on organization avatar (in the top-left corner)
+2. Click on your organization avatar (top-left corner)
 3. Select **Settings**
 4. Navigate to **Security & access** in the left sidebar
 5. Under **Personal API Keys** click **New API Key**
 6. Give your key a name (e.g., `MCP Linear Integration`)
-7. Copy the generated API token and store it securely - you won't be able to see it again!
+7. Copy the generated API token and store it securely — you won't be able to see it again
 
-### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear) (Recommended)
+### Installing via [add-mcp](https://github.com/neondatabase/add-mcp) (Recommended)
 
-- To install MCP Linear for Cursor:
-
-```bash
-npx -y @smithery/cli install @tacticlaunch/mcp-linear --client cursor
-```
-
-- To install MCP Linear for Claude Desktop:
+`add-mcp` installs the server into Claude Code, Cursor, Codex, VS Code, Claude Desktop, and many other MCP-aware agents with a single command:
 
 ```bash
-npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
+npx add-mcp @tacticlaunch/mcp-linear --env LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
 ```
 
-### Manual Configuration
+Add `-g` to install globally instead of into the current project. See the [add-mcp docs](https://github.com/neondatabase/add-mcp) for the full agent list and flags.
+
+### Manual configuration
 
 Add the following to your MCP settings file:
 
@@ -81,7 +85,7 @@ Add the following to your MCP settings file:
 }
 ```
 
-#### Client-Specific Configuration Locations
+#### Client-specific configuration locations
 
 - Cursor: `~/.cursor/mcp.json`
 - Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -90,7 +94,7 @@ Add the following to your MCP settings file:
 
 ### Manual run
 
-Prerequisites
+Prerequisites:
 
 - Node.js (v18+)
 - NPM or Yarn
@@ -107,7 +111,7 @@ npm install
 npm link  # Makes the package available globally
 ```
 
-#### Running the Server
+#### Running the server
 
 Run the server with your Linear API token:
 
@@ -122,19 +126,25 @@ export LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
 mcp-linear
 ```
 
-## Available Tools
+## Validation
 
-See [TOOLS.md](https://github.com/tacticlaunch/mcp-linear/blob/main/TOOLS.md) for a complete list of available tools and planned features.
+The default validation path is:
+
+```bash
+npm test
+npm run build
+```
+
+`npm test` runs Jest unit tests and an official MCP SDK smoke test against the built stdio server, covering tool, resource, and prompt registration plus host-compatible schema emission.
 
 ## Development
 
-See [DEVELOPMENT.md](https://github.com/tacticlaunch/mcp-linear/blob/main/DEVELOPMENT.md) for more information on how to develop locally.
+See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for local development details.
 
 ## Links
 
-[tacticlaunch/cursor-memory-bank](https://github.com/tacticlaunch/cursor-memory-bank) - If you are a developer seeking to enhance your workflow with Cursor, consider giving it a try.
-
+[tacticlaunch/cursor-memory-bank](https://github.com/tacticlaunch/cursor-memory-bank) — If you are a developer seeking to enhance your workflow with Cursor, consider giving it a try.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License — see the [`LICENSE`](./LICENSE) file for details.

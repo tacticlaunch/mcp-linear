@@ -1,5 +1,55 @@
 import { MCPToolDefinition } from '../../types.js';
 
+const jsonValueSchema = {
+  anyOf: [
+    { type: 'string' },
+    { type: 'number' },
+    { type: 'boolean' },
+    { type: 'null' },
+    { type: 'array', items: {} },
+    { type: 'object', additionalProperties: true },
+  ],
+};
+
+const customFieldDefinitionSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    type: { type: 'string' },
+    required: { type: 'boolean' },
+    team: { type: 'object' },
+    options: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          color: { type: 'string' },
+          raw: { type: 'object', additionalProperties: true },
+        },
+      },
+    },
+    raw: { type: 'object', additionalProperties: true },
+  },
+};
+
+const issueCustomFieldValueSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    customFieldId: { type: 'string' },
+    name: { type: 'string' },
+    type: { type: 'string' },
+    value: jsonValueSchema,
+    displayValue: { type: 'string' },
+    customField: customFieldDefinitionSchema,
+    raw: { type: 'object', additionalProperties: true },
+  },
+};
+
 /**
  * Tool definition for getting issues
  */
@@ -40,6 +90,7 @@ export const getIssuesToolDefinition: MCPToolDefinition = {
         assignee: { type: 'object' },
         project: { type: 'object' },
         cycle: { type: 'object' },
+        projectMilestone: { type: 'object' },
         parent: { type: 'object' },
         labels: {
           type: 'array',
@@ -100,6 +151,7 @@ export const getIssueByIdToolDefinition: MCPToolDefinition = {
       assignee: { type: 'object' },
       project: { type: 'object' },
       cycle: { type: 'object' },
+      projectMilestone: { type: 'object' },
       parent: { type: 'object' },
       labels: {
         type: 'array',
@@ -117,6 +169,90 @@ export const getIssueByIdToolDefinition: MCPToolDefinition = {
       updatedAt: { type: 'string' },
       url: { type: 'string' },
       comments: { type: 'array' },
+    },
+  },
+};
+
+/**
+ * Tool definition for getting custom field definitions
+ */
+export const getCustomFieldsToolDefinition: MCPToolDefinition = {
+  name: 'linear_getCustomFields',
+  description: 'Get the custom field definitions available in the authenticated Linear workspace',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  output_schema: {
+    type: 'array',
+    items: customFieldDefinitionSchema,
+  },
+};
+
+/**
+ * Tool definition for getting custom field values for an issue
+ */
+export const getIssueCustomFieldsToolDefinition: MCPToolDefinition = {
+  name: 'linear_getIssueCustomFields',
+  description: 'Get the custom field values that are currently set on a specific issue',
+  input_schema: {
+    type: 'object',
+    properties: {
+      issueId: {
+        type: 'string',
+        description: 'ID or identifier of the issue (e.g., ABC-123)',
+      },
+    },
+    required: ['issueId'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      issueId: { type: 'string' },
+      identifier: { type: 'string' },
+      customFields: {
+        type: 'array',
+        items: issueCustomFieldValueSchema,
+      },
+    },
+  },
+};
+
+/**
+ * Tool definition for updating a custom field value on an issue
+ */
+export const updateIssueCustomFieldToolDefinition: MCPToolDefinition = {
+  name: 'linear_updateIssueCustomField',
+  description: 'Set or clear a custom field value on an issue. Pass null as value to clear it.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      issueId: {
+        type: 'string',
+        description: 'ID or identifier of the issue whose custom field should be updated',
+      },
+      customFieldId: {
+        type: 'string',
+        description: 'ID of the custom field definition to update',
+      },
+      value: {
+        ...jsonValueSchema,
+        description:
+          'JSON-compatible value to write. Use null to clear the field. Arrays and objects are passed through as-is when the Linear schema accepts them.',
+      },
+    },
+    required: ['issueId', 'customFieldId', 'value'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      issueId: { type: 'string' },
+      customFieldId: { type: 'string' },
+      value: jsonValueSchema,
+      currentValue: issueCustomFieldValueSchema,
+      raw: { type: 'object', additionalProperties: true },
     },
   },
 };
@@ -183,6 +319,7 @@ export const searchIssuesToolDefinition: MCPToolDefinition = {
         assignee: { type: 'object' },
         project: { type: 'object' },
         cycle: { type: 'object' },
+        projectMilestone: { type: 'object' },
         parent: { type: 'object' },
         labels: {
           type: 'array',
@@ -237,6 +374,10 @@ export const createIssueToolDefinition: MCPToolDefinition = {
       projectId: {
         type: 'string',
         description: 'ID of the project the issue belongs to',
+      },
+      projectMilestoneId: {
+        type: 'string',
+        description: 'ID of the project milestone the issue belongs to',
       },
       cycleId: {
         type: 'string',
@@ -323,6 +464,10 @@ export const updateIssueToolDefinition: MCPToolDefinition = {
       projectId: {
         type: 'string',
         description: 'ID of the project to move the issue to',
+      },
+      projectMilestoneId: {
+        type: 'string',
+        description: 'ID of the project milestone to assign to the issue',
       },
       assigneeId: {
         type: 'string',
@@ -417,6 +562,58 @@ export const createCommentToolDefinition: MCPToolDefinition = {
       body: { type: 'string' },
       url: { type: 'string' },
       parentId: { type: 'string' },
+    },
+  },
+};
+
+export const updateCommentToolDefinition: MCPToolDefinition = {
+  name: 'linear_updateComment',
+  description: 'Update an existing comment',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the comment to update' },
+      body: { type: 'string', description: 'Updated comment body' },
+      quotedText: { type: 'string', description: 'Optional quoted text for inline comments' },
+      resolvingCommentId: { type: 'string', description: 'Optional resolving comment ID' },
+      resolvingUserId: { type: 'string', description: 'Optional resolving user ID' },
+      subscriberIds: { type: 'array', items: { type: 'string' }, description: 'Optional subscriber IDs' },
+      doNotSubscribeToIssue: { type: 'boolean', description: 'Prevent auto subscription on update' },
+    },
+    required: ['id'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      body: { type: ['string', 'null'] },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
+      editedAt: { type: ['string', 'null'] },
+      quotedText: { type: ['string', 'null'] },
+      url: { type: 'string' },
+      issue: { type: ['object', 'null'] },
+      parent: { type: ['object', 'null'] },
+      user: { type: ['object', 'null'] },
+    },
+  },
+};
+
+export const deleteCommentToolDefinition: MCPToolDefinition = {
+  name: 'linear_deleteComment',
+  description: 'Delete a comment',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the comment to delete' },
+    },
+    required: ['id'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      id: { type: 'string' },
     },
   },
 };

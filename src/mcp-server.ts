@@ -2,10 +2,18 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
   ListToolsRequestSchema,
-  Tool,
+  ReadResourceRequestSchema,
+  type GetPromptResult,
+  type Prompt,
+  type ReadResourceResult,
+  type Resource,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCPToolDefinition } from './types.js';
+import { convertToolDefinition } from './tool-schema.js';
 import pkg from '../package.json' with { type: 'json' };
 
 /**
@@ -14,6 +22,10 @@ import pkg from '../package.json' with { type: 'json' };
 export interface MCPServerHandlers {
   handleInitialize: () => Promise<{ tools: MCPToolDefinition[] }>;
   handleRequest: (req: { name: string; args: unknown }) => Promise<unknown>;
+  listResources?: () => Promise<Resource[]>;
+  readResource?: (uri: string) => Promise<ReadResourceResult>;
+  listPrompts?: () => Promise<Prompt[]>;
+  getPrompt?: (name: string, args?: Record<string, string>) => Promise<GetPromptResult>;
 }
 
 /**
@@ -23,21 +35,10 @@ export interface MCPServerConfig {
   tools: MCPToolDefinition[];
   handleInitialize: () => Promise<{ tools: MCPToolDefinition[] }>;
   handleRequest: (req: { name: string; args: unknown }) => Promise<unknown>;
-}
-
-/**
- * Convert MCPToolDefinition to the MCP SDK Tool format
- */
-function convertToolDefinition(toolDef: MCPToolDefinition): Tool {
-  return {
-    name: toolDef.name,
-    description: toolDef.description,
-    inputSchema: {
-      type: 'object',
-      properties: toolDef.input_schema.properties,
-      ...(toolDef.input_schema.required ? { required: toolDef.input_schema.required } : {}),
-    },
-  };
+  listResources?: () => Promise<Resource[]>;
+  readResource?: (uri: string) => Promise<ReadResourceResult>;
+  listPrompts?: () => Promise<Prompt[]>;
+  getPrompt?: (name: string, args?: Record<string, string>) => Promise<GetPromptResult>;
 }
 
 /**
@@ -52,6 +53,8 @@ export async function runMCPServer(config: MCPServerConfig) {
     {
       capabilities: {
         tools: {},
+        resources: config.listResources && config.readResource ? {} : undefined,
+        prompts: config.listPrompts && config.getPrompt ? {} : undefined,
       },
     },
   );
@@ -63,6 +66,26 @@ export async function runMCPServer(config: MCPServerConfig) {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: sdkTools,
   }));
+
+  if (config.listResources && config.readResource) {
+    server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+      resources: await config.listResources!(),
+    }));
+
+    server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      return await config.readResource!(request.params.uri);
+    });
+  }
+
+  if (config.listPrompts && config.getPrompt) {
+    server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+      prompts: await config.listPrompts!(),
+    }));
+
+    server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      return await config.getPrompt!(request.params.name, request.params.arguments ?? undefined);
+    });
+  }
 
   // Handle call tool request
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
