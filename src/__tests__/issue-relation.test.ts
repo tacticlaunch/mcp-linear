@@ -141,7 +141,7 @@ describe('LinearService.createIssueRelation', () => {
             issue: undefined,
             relatedIssue: undefined,
           }),
-        } as ReturnType<typeof buildPayload>,
+        } as unknown as ReturnType<typeof buildPayload>,
       }),
     );
 
