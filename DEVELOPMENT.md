@@ -77,5 +77,3 @@ npm login
 ```bash
 npm publish --access public
 ```
-
-5. For Smithery registry, you'll need to work with the Smithery team to get your server listed in their catalog.

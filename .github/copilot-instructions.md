@@ -11,7 +11,7 @@ This repository is an MCP server for Linear, not an application. Most work in th
 - `src/tools/definitions/index.ts` and `src/tools/handlers/index.ts`: central registration.
 - `src/__tests__/*.ts`: focused Jest coverage for service behavior and tool wiring.
 - `TOOLS.md`: user-facing tool inventory and planned work.
-- `package.json`: package metadata and Smithery-exposed tool list.
+- `package.json`: package metadata.
 
 ## How To Add Or Change A Tool
 
@@ -22,7 +22,6 @@ This repository is an MCP server for Linear, not an application. Most work in th
 - Keep handlers thin.
 - Keep `input_schema`, `output_schema`, type guards, and normalized service output aligned exactly, especially around nullable fields and enums.
 - Register every new tool in both index files.
-- Update `package.json` `smithery.tools` when the tool is intended to be exposed to clients.
 - Update `TOOLS.md` when the public tool surface changes.
 
 ## Validation

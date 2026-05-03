@@ -9,7 +9,6 @@ Requirements:
   - tool definitions in `#file:../../src/tools/definitions/index.ts`
   - handlers in `#file:../../src/tools/handlers/index.ts`
   - runtime validation in `#file:../../src/tools/type-guards.ts`
-- Update `#file:../../package.json` `smithery.tools` when the tool is public.
 - Update `#file:../../TOOLS.md`.
 - Add focused tests under `#file:../../src/__tests__/linear-service.test.ts` or a new adjacent test file.
 - Run `npm test` and `npm run build`.

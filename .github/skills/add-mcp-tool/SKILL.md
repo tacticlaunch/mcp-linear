@@ -19,10 +19,9 @@ Implement a Linear capability end-to-end so the MCP surface, runtime behavior, a
 6. Add or update the handler so it validates, delegates, and logs failures.
 7. Add or update the type guard in `src/tools/type-guards.ts`.
 8. Register the tool in both index files.
-9. Update `package.json` `smithery.tools` if the tool should be exposed to clients.
-10. Update `TOOLS.md`.
-11. Add focused tests in `src/__tests__`.
-12. Run `npm test` and `npm run build`.
+9. Update `TOOLS.md`.
+10. Add focused tests in `src/__tests__`.
+11. Run `npm test` and `npm run build`.
 
 ## Project-specific reminders
 

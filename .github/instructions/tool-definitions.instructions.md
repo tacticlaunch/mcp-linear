@@ -9,5 +9,5 @@ Changes in the MCP surface must keep definitions, handlers, and guards aligned.
 - Prefer explicit enums and positive integer constraints over generic `string` or `number` schemas when the contract is known.
 - Handlers in this repo should stay thin: validate, delegate to `LinearService`, and log failures.
 - Every new public tool must be registered in both `src/tools/definitions/index.ts` and `src/tools/handlers/index.ts`.
-- If the tool is intended for external clients, update `package.json` `smithery.tools` and `TOOLS.md` in the same change.
+- If the tool is intended for external clients, update `TOOLS.md` in the same change.
 - Call out API naming mismatches directly in descriptions when needed, such as Linear saved views being exposed as `CustomView` in the SDK.

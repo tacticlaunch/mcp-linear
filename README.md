@@ -8,7 +8,6 @@ A Model Context Protocol (MCP) server for the Linear GraphQL API, built for real
 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
 [![npm version](https://img.shields.io/npm/v/@tacticlaunch/mcp-linear.svg)](https://www.npmjs.com/package/@tacticlaunch/mcp-linear)
-[![smithery badge](https://smithery.ai/badge/@tacticlaunch/mcp-linear)](https://smithery.ai/server/@tacticlaunch/mcp-linear)
 
 <a href="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@tacticlaunch/mcp-linear/badge" />
@@ -67,20 +66,6 @@ npx add-mcp @tacticlaunch/mcp-linear --env LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKE
 ```
 
 Add `-g` to install globally instead of into the current project. See the [add-mcp docs](https://github.com/neondatabase/add-mcp) for the full agent list and flags.
-
-### Installing via [Smithery](https://smithery.ai/server/@tacticlaunch/mcp-linear)
-
-- For Cursor:
-
-```bash
-npx -y @smithery/cli install @tacticlaunch/mcp-linear --client cursor
-```
-
-- For Claude Desktop:
-
-```bash
-npx -y @smithery/cli install @tacticlaunch/mcp-linear --client claude
-```
 
 ### Manual configuration
 

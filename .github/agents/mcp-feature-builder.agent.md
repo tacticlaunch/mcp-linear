@@ -19,7 +19,7 @@ Follow this workflow:
    - handler
    - type guard
    - central registration
-6. Update `package.json` `smithery.tools` and `TOOLS.md` when the public tool surface changes.
+6. Update `TOOLS.md` when the public tool surface changes.
 7. Add focused Jest coverage in `src/__tests__`.
 8. Run `npm test` and `npm run build` before finishing.
 

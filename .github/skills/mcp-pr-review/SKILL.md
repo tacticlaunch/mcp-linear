@@ -11,7 +11,7 @@ Use this review workflow for `mcp-linear` pull requests.
 2. Output schema and normalized service output alignment.
 3. Nullable field handling, especially for update and clear operations.
 4. Missing handler or index registration.
-5. Missing `package.json` Smithery tool updates or `TOOLS.md` updates.
+5. Missing `TOOLS.md` updates.
 6. Direct GraphQL added without a clear SDK rationale.
 7. Missing tests for negative validation paths, nullable updates, or SDK fallback behavior.
 
