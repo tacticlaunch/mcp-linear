@@ -3,10 +3,12 @@ import {
   isAddProjectMemberArgs,
   isArchiveProjectArgs,
   isCreateProjectArgs,
+  isGetProjectByIdArgs,
   isCreateProjectUpdateArgs,
   isGetProjectMembersArgs,
   isGetProjectIssuesArgs,
   isGetProjectUpdatesArgs,
+  isProjectUpdateIdArgs,
   isRemoveIssueFromProjectArgs,
   isRemoveProjectMemberArgs,
   isUpdateProjectArgs,
@@ -24,6 +26,21 @@ export function handleGetProjects(linearService: LinearService) {
       return await linearService.getProjects();
     } catch (error) {
       logError('Error getting projects', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetProjectById(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetProjectByIdArgs(args)) {
+        throw new Error('Invalid arguments for getProjectById');
+      }
+
+      return await linearService.getProjectById(args.id);
+    } catch (error) {
+      logError('Error getting project by ID', error);
       throw error;
     }
   };
@@ -146,6 +163,21 @@ export function handleUpdateProjectUpdate(linearService: LinearService) {
   };
 }
 
+export function handleGetProjectUpdateById(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid arguments for getProjectUpdateById');
+      }
+
+      return await linearService.getProjectUpdateById(args.id);
+    } catch (error) {
+      logError('Error getting project update by ID', error);
+      throw error;
+    }
+  };
+}
+
 /**
  * Handler for getting project updates
  */
@@ -159,6 +191,51 @@ export function handleGetProjectUpdates(linearService: LinearService) {
       return await linearService.getProjectUpdates(args.projectId, args.limit);
     } catch (error) {
       logError('Error getting project updates', error);
+      throw error;
+    }
+  };
+}
+
+export function handleArchiveProjectUpdate(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid arguments for archiveProjectUpdate');
+      }
+
+      return await linearService.archiveProjectUpdate(args.id);
+    } catch (error) {
+      logError('Error archiving project update', error);
+      throw error;
+    }
+  };
+}
+
+export function handleUnarchiveProjectUpdate(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid arguments for unarchiveProjectUpdate');
+      }
+
+      return await linearService.unarchiveProjectUpdate(args.id);
+    } catch (error) {
+      logError('Error unarchiving project update', error);
+      throw error;
+    }
+  };
+}
+
+export function handleDeleteProjectUpdate(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid arguments for deleteProjectUpdate');
+      }
+
+      return await linearService.deleteProjectUpdate(args.id);
+    } catch (error) {
+      logError('Error deleting project update', error);
       throw error;
     }
   };

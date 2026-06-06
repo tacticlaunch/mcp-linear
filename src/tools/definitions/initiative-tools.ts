@@ -1,5 +1,35 @@
 import { MCPToolDefinition } from '../../types.js';
 
+const initiativeUpdateOutputSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    body: { type: 'string' },
+    health: { type: ['string', 'null'] },
+    diff: { type: ['object', 'null'] },
+    diffMarkdown: { type: ['string', 'null'] },
+    isDiffHidden: { type: 'boolean' },
+    isStale: { type: 'boolean' },
+    commentCount: { type: ['number', 'null'] },
+    url: { type: ['string', 'null'] },
+    slugId: { type: ['string', 'null'] },
+    archivedAt: { type: ['string', 'null'] },
+    editedAt: { type: ['string', 'null'] },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    user: { type: ['object', 'null'] },
+    initiative: { type: ['object', 'null'] },
+  },
+};
+
+const initiativeUpdateArchiveOutputSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    id: { type: 'string' },
+  },
+};
+
 export const initiativeToolDefinitions: MCPToolDefinition[] = [
   {
     name: 'linear_getInitiatives',
@@ -128,7 +158,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
         status: {
           type: 'string',
           description: 'Status of the initiative',
-          enum: ['notStarted', 'inProgress', 'completed', 'paused'],
+          enum: ['Planned', 'Active', 'Completed'],
         },
         icon: {
           type: 'string',
@@ -185,7 +215,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
         status: {
           type: 'string',
           description: 'Updated status of the initiative',
-          enum: ['notStarted', 'inProgress', 'completed', 'paused'],
+          enum: ['Planned', 'Active', 'Completed'],
         },
         icon: {
           type: 'string',
@@ -313,6 +343,106 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
         },
       },
     },
+  },
+  {
+    name: 'linear_getInitiativeUpdateById',
+    description: 'Get a specific initiative update by ID',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'ID of the initiative update to retrieve' },
+      },
+      required: ['id'],
+    },
+    output_schema: initiativeUpdateOutputSchema,
+  },
+  {
+    name: 'linear_getInitiativeUpdates',
+    description: 'Get updates for an initiative',
+    input_schema: {
+      type: 'object',
+      properties: {
+        initiativeId: { type: 'string', description: 'ID of the initiative to inspect' },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          description: 'Maximum number of initiative updates to return (default: 25)',
+        },
+      },
+      required: ['initiativeId'],
+    },
+    output_schema: {
+      type: 'array',
+      items: initiativeUpdateOutputSchema,
+    },
+  },
+  {
+    name: 'linear_createInitiativeUpdate',
+    description: 'Create a new initiative update',
+    input_schema: {
+      type: 'object',
+      properties: {
+        initiativeId: { type: 'string', description: 'ID of the initiative to update' },
+        body: { type: 'string', description: 'Initiative update body in Markdown' },
+        health: {
+          type: 'string',
+          enum: ['onTrack', 'atRisk', 'offTrack'],
+          description: 'Optional health status for the initiative update',
+        },
+        isDiffHidden: {
+          type: 'boolean',
+          description: 'Whether Linear should hide the diff against the previous update',
+        },
+      },
+      required: ['initiativeId', 'body'],
+    },
+    output_schema: initiativeUpdateOutputSchema,
+  },
+  {
+    name: 'linear_updateInitiativeUpdate',
+    description: 'Update an existing initiative update',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'ID of the initiative update to update' },
+        body: { type: 'string', description: 'Updated body in Markdown' },
+        health: {
+          type: 'string',
+          enum: ['onTrack', 'atRisk', 'offTrack'],
+          description: 'Updated health status',
+        },
+        isDiffHidden: {
+          type: 'boolean',
+          description: 'Whether Linear should hide the diff against the previous update',
+        },
+      },
+      required: ['id'],
+    },
+    output_schema: initiativeUpdateOutputSchema,
+  },
+  {
+    name: 'linear_archiveInitiativeUpdate',
+    description: 'Archive an initiative update',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'ID of the initiative update to archive' },
+      },
+      required: ['id'],
+    },
+    output_schema: initiativeUpdateArchiveOutputSchema,
+  },
+  {
+    name: 'linear_unarchiveInitiativeUpdate',
+    description: 'Restore an archived initiative update',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'ID of the initiative update to restore' },
+      },
+      required: ['id'],
+    },
+    output_schema: initiativeUpdateArchiveOutputSchema,
   },
   {
     name: 'linear_addProjectToInitiative',

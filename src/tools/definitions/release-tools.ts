@@ -713,6 +713,18 @@ export const createReleaseToolDefinition: MCPToolDefinition = {
         type: 'string',
         description: 'Optional estimated completion date in YYYY-MM-DD format',
       },
+      createdAt: {
+        type: 'string',
+        description: 'Optional creation timestamp for a backfilled release (ISO 8601)',
+      },
+      startedAt: {
+        type: 'string',
+        description: 'Optional actual start timestamp for a backfilled release (ISO 8601)',
+      },
+      completedAt: {
+        type: 'string',
+        description: 'Optional actual completion timestamp for a backfilled release (ISO 8601)',
+      },
     },
     required: ['pipelineId', 'name'],
   },
@@ -760,6 +772,14 @@ export const updateReleaseToolDefinition: MCPToolDefinition = {
       targetDate: {
         type: 'string',
         description: 'The updated target date in YYYY-MM-DD format',
+      },
+      startedAt: {
+        type: 'string',
+        description: 'The updated actual start timestamp (ISO 8601)',
+      },
+      completedAt: {
+        type: 'string',
+        description: 'The updated actual completion timestamp (ISO 8601)',
       },
       trashed: {
         type: 'boolean',

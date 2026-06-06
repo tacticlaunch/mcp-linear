@@ -18,6 +18,7 @@ import {
   subscribeToIssueToolDefinition,
   convertIssueToSubtaskToolDefinition,
   createIssueRelationToolDefinition,
+  deleteIssueRelationToolDefinition,
   archiveIssueToolDefinition,
   setIssuePriorityToolDefinition,
   transferIssueToolDefinition,
@@ -33,7 +34,11 @@ import {
   updateProjectToolDefinition,
   createProjectUpdateToolDefinition,
   updateProjectUpdateToolDefinition,
+  getProjectUpdateByIdToolDefinition,
   getProjectUpdatesToolDefinition,
+  archiveProjectUpdateToolDefinition,
+  unarchiveProjectUpdateToolDefinition,
+  deleteProjectUpdateToolDefinition,
   archiveProjectToolDefinition,
   addIssueToProjectToolDefinition,
   removeIssueFromProjectToolDefinition,
@@ -41,6 +46,7 @@ import {
   getProjectMembersToolDefinition,
   addProjectMemberToolDefinition,
   removeProjectMemberToolDefinition,
+  getProjectByIdToolDefinition,
 } from './project-tools.js';
 import {
   archiveRoadmapToolDefinition,
@@ -61,10 +67,16 @@ import {
 import {
   archiveDocumentToolDefinition,
   createDocumentToolDefinition,
+  getCycleDocumentsToolDefinition,
   getDocumentByIdToolDefinition,
   getDocumentContentHistoryToolDefinition,
   getDocumentsToolDefinition,
+  getInitiativeDocumentsToolDefinition,
+  getIssueDocumentsToolDefinition,
   getProjectDocumentsToolDefinition,
+  getReleaseDocumentsToolDefinition,
+  getTeamDocumentsToolDefinition,
+  getTeamResourcesToolDefinition,
   searchDocumentsToolDefinition,
   unarchiveDocumentToolDefinition,
   updateDocumentToolDefinition,
@@ -142,6 +154,7 @@ import {
   removeIssueFromCycleToolDefinition,
 } from './cycle-tools.js';
 import { initiativeToolDefinitions } from './initiative-tools.js';
+import { customerToolDefinitions } from './customer-tools.js';
 
 // All tool definitions
 export const allToolDefinitions: MCPToolDefinition[] = [
@@ -168,13 +181,18 @@ export const allToolDefinitions: MCPToolDefinition[] = [
 
   // Project tools
   getProjectsToolDefinition,
+  getProjectByIdToolDefinition,
   createProjectToolDefinition,
 
   // Project Management tools
   updateProjectToolDefinition,
   createProjectUpdateToolDefinition,
   updateProjectUpdateToolDefinition,
+  getProjectUpdateByIdToolDefinition,
   getProjectUpdatesToolDefinition,
+  archiveProjectUpdateToolDefinition,
+  unarchiveProjectUpdateToolDefinition,
+  deleteProjectUpdateToolDefinition,
   archiveProjectToolDefinition,
   addIssueToProjectToolDefinition,
   removeIssueFromProjectToolDefinition,
@@ -200,6 +218,12 @@ export const allToolDefinitions: MCPToolDefinition[] = [
   getDocumentsToolDefinition,
   getDocumentByIdToolDefinition,
   getProjectDocumentsToolDefinition,
+  getInitiativeDocumentsToolDefinition,
+  getTeamDocumentsToolDefinition,
+  getIssueDocumentsToolDefinition,
+  getReleaseDocumentsToolDefinition,
+  getCycleDocumentsToolDefinition,
+  getTeamResourcesToolDefinition,
   searchDocumentsToolDefinition,
   getDocumentContentHistoryToolDefinition,
   createDocumentToolDefinition,
@@ -254,6 +278,9 @@ export const allToolDefinitions: MCPToolDefinition[] = [
   // Initiative Management tools
   ...initiativeToolDefinitions,
 
+  // Customer tools
+  ...customerToolDefinitions,
+
   // Issue tools
   getIssuesToolDefinition,
   getIssueByIdToolDefinition,
@@ -283,6 +310,7 @@ export const allToolDefinitions: MCPToolDefinition[] = [
   subscribeToIssueToolDefinition,
   convertIssueToSubtaskToolDefinition,
   createIssueRelationToolDefinition,
+  deleteIssueRelationToolDefinition,
   archiveIssueToolDefinition,
   setIssuePriorityToolDefinition,
   transferIssueToolDefinition,
@@ -309,6 +337,7 @@ export {
   addIssueLabelToolDefinition,
   removeIssueLabelToolDefinition,
   getProjectsToolDefinition,
+  getProjectByIdToolDefinition,
   createProjectToolDefinition,
   getTeamsToolDefinition,
   getWorkflowStatesToolDefinition,
@@ -333,6 +362,7 @@ export {
   subscribeToIssueToolDefinition,
   convertIssueToSubtaskToolDefinition,
   createIssueRelationToolDefinition,
+  deleteIssueRelationToolDefinition,
   archiveIssueToolDefinition,
   setIssuePriorityToolDefinition,
   transferIssueToolDefinition,
@@ -353,7 +383,11 @@ export {
   updateProjectToolDefinition,
   createProjectUpdateToolDefinition,
   updateProjectUpdateToolDefinition,
+  getProjectUpdateByIdToolDefinition,
   getProjectUpdatesToolDefinition,
+  archiveProjectUpdateToolDefinition,
+  unarchiveProjectUpdateToolDefinition,
+  deleteProjectUpdateToolDefinition,
   archiveProjectToolDefinition,
   addIssueToProjectToolDefinition,
   removeIssueFromProjectToolDefinition,
@@ -373,6 +407,12 @@ export {
   getDocumentsToolDefinition,
   getDocumentByIdToolDefinition,
   getProjectDocumentsToolDefinition,
+  getInitiativeDocumentsToolDefinition,
+  getTeamDocumentsToolDefinition,
+  getIssueDocumentsToolDefinition,
+  getReleaseDocumentsToolDefinition,
+  getCycleDocumentsToolDefinition,
+  getTeamResourcesToolDefinition,
   searchDocumentsToolDefinition,
   getDocumentContentHistoryToolDefinition,
   createDocumentToolDefinition,

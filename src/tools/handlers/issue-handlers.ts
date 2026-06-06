@@ -8,6 +8,7 @@ import {
   isCreateIssueArgs,
   isCreateIssueRelationArgs,
   isDuplicateIssueArgs,
+  isDeleteIssueRelationArgs,
   isGetCustomFieldsArgs,
   isGetCommentsArgs,
   isGetIssueByIdArgs,
@@ -326,6 +327,21 @@ export function handleCreateIssueRelation(linearService: LinearService) {
   };
 }
 
+export function handleDeleteIssueRelation(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isDeleteIssueRelationArgs(args)) {
+        throw new Error('Invalid arguments for deleteIssueRelation');
+      }
+
+      return await linearService.deleteIssueRelation(args.id);
+    } catch (error) {
+      logError('Error deleting issue relation', error);
+      throw error;
+    }
+  };
+}
+
 /**
  * Handler for archiving an issue
  */
@@ -426,9 +442,9 @@ export function handleGetComments(linearService: LinearService) {
         throw new Error('Invalid arguments for getComments');
       }
 
-      return await linearService.getComments(args.issueId, args.limit);
+      return await linearService.getComments(args);
     } catch (error) {
-      logError('Error getting comments for issue', error);
+      logError('Error getting comments', error);
       throw error;
     }
   };

@@ -75,6 +75,36 @@ const issueSummaryOutputSchema = {
   },
 };
 
+const projectOutputSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    content: { type: ['string', 'null'] },
+    state: { type: ['string', 'null'] },
+    trashed: { type: ['boolean', 'null'] },
+    slackChannelId: { type: ['string', 'null'] },
+    microsoftTeamsChannelId: { type: ['string', 'null'] },
+    startDate: { type: ['string', 'null'] },
+    targetDate: { type: ['string', 'null'] },
+    icon: { type: ['string', 'null'] },
+    color: { type: ['string', 'null'] },
+    url: { type: ['string', 'null'] },
+    lead: { type: ['object', 'null'] },
+    teams: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
 /**
  * Tool definition for getting projects
  */
@@ -87,28 +117,21 @@ export const getProjectsToolDefinition: MCPToolDefinition = {
   },
   output_schema: {
     type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        name: { type: 'string' },
-        description: { type: 'string' },
-        content: { type: 'string' },
-        state: { type: 'string' },
-        teams: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-            },
-          },
-        },
-        url: { type: 'string' },
-      },
-    },
+    items: projectOutputSchema,
   },
+};
+
+export const getProjectByIdToolDefinition: MCPToolDefinition = {
+  name: 'linear_getProjectById',
+  description: 'Get details for a specific Linear project by ID',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID or slug of the project to retrieve' },
+    },
+    required: ['id'],
+  },
+  output_schema: projectOutputSchema,
 };
 
 export const getProjectMembersToolDefinition: MCPToolDefinition = {
@@ -210,18 +233,42 @@ export const createProjectToolDefinition: MCPToolDefinition = {
       state: {
         type: 'string',
         description:
-          "Initial state of the project (e.g., 'planned', 'started', 'paused', 'completed', 'canceled')",
+          "Initial project status by lifecycle type/name (e.g., 'planned', 'started') or project status UUID",
+      },
+      startDate: {
+        type: 'string',
+        description: 'Project start date',
+      },
+      targetDate: {
+        type: 'string',
+        description: 'Project target date',
+      },
+      leadId: {
+        type: 'string',
+        description: 'ID of the project lead',
+      },
+      memberIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'IDs of users assigned as project members',
+      },
+      sortOrder: {
+        type: 'number',
+        description: 'Project sort order',
+      },
+      icon: {
+        type: 'string',
+        description: 'Project icon',
+      },
+      color: {
+        type: 'string',
+        description: 'Project color',
       },
     },
     required: ['name', 'teamIds'],
   },
   output_schema: {
-    type: 'object',
-    properties: {
-      id: { type: 'string' },
-      name: { type: 'string' },
-      url: { type: 'string' },
-    },
+    ...projectOutputSchema,
   },
 };
 
@@ -253,20 +300,85 @@ export const updateProjectToolDefinition: MCPToolDefinition = {
       state: {
         type: 'string',
         description:
-          "New state of the project (e.g., 'planned', 'started', 'paused', 'completed', 'canceled')",
+          "New project status by lifecycle type/name (e.g., 'planned', 'started') or project status UUID",
+      },
+      startDate: {
+        type: 'string',
+        description: 'New project start date',
+      },
+      targetDate: {
+        type: 'string',
+        description: 'New project target date',
+      },
+      leadId: {
+        type: 'string',
+        description: 'New project lead user ID',
+      },
+      memberIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Replacement list of project member user IDs',
+      },
+      sortOrder: {
+        type: 'number',
+        description: 'New project sort order',
+      },
+      icon: {
+        type: 'string',
+        description: 'New project icon',
+      },
+      color: {
+        type: 'string',
+        description: 'New project color',
       },
     },
     required: ['id'],
   },
   output_schema: {
-    type: 'object',
-    properties: {
-      id: { type: 'string' },
-      name: { type: 'string' },
-      description: { type: 'string' },
-      state: { type: 'string' },
-      url: { type: 'string' },
+    ...projectOutputSchema,
+  },
+};
+
+/**
+ * Shared output schema for project update payloads
+ */
+const projectUpdateOutputSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    body: { type: 'string' },
+    health: { type: 'string' },
+    diff: { type: ['object', 'null'] },
+    diffMarkdown: { type: ['string', 'null'] },
+    isDiffHidden: { type: 'boolean' },
+    url: { type: ['string', 'null'] },
+    slugId: { type: ['string', 'null'] },
+    archivedAt: { type: ['string', 'null'] },
+    editedAt: { type: ['string', 'null'] },
+    createdAt: { type: 'string' },
+    updatedAt: { type: 'string' },
+    user: {
+      type: ['object', 'null'],
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+      },
     },
+    project: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+      },
+    },
+  },
+};
+
+const archiveProjectUpdateOutputSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    id: { type: 'string' },
   },
 };
 
@@ -292,33 +404,14 @@ export const createProjectUpdateToolDefinition: MCPToolDefinition = {
         description: 'Optional health status for the update',
         enum: ['onTrack', 'atRisk', 'offTrack'],
       },
+      isDiffHidden: {
+        type: 'boolean',
+        description: 'Whether Linear should hide the diff against the previous project update',
+      },
     },
     required: ['projectId', 'body'],
   },
-  output_schema: {
-    type: 'object',
-    properties: {
-      id: { type: 'string' },
-      body: { type: 'string' },
-      health: { type: 'string' },
-      createdAt: { type: 'string' },
-      updatedAt: { type: 'string' },
-      user: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-        },
-      },
-      project: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-        },
-      },
-    },
-  },
+  output_schema: projectUpdateOutputSchema,
 };
 
 /**
@@ -343,33 +436,69 @@ export const updateProjectUpdateToolDefinition: MCPToolDefinition = {
         description: 'Updated health status for the project update',
         enum: ['onTrack', 'atRisk', 'offTrack'],
       },
+      isDiffHidden: {
+        type: 'boolean',
+        description: 'Whether Linear should hide the diff against the previous project update',
+      },
     },
     required: ['id'],
   },
-  output_schema: {
+  output_schema: projectUpdateOutputSchema,
+};
+
+export const getProjectUpdateByIdToolDefinition: MCPToolDefinition = {
+  name: 'linear_getProjectUpdateById',
+  description: 'Get a specific Linear project update by ID',
+  input_schema: {
     type: 'object',
     properties: {
-      id: { type: 'string' },
-      body: { type: 'string' },
-      health: { type: 'string' },
-      createdAt: { type: 'string' },
-      updatedAt: { type: 'string' },
-      user: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-        },
-      },
-      project: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-        },
+      id: {
+        type: 'string',
+        description: 'ID of the project update to retrieve',
       },
     },
+    required: ['id'],
   },
+  output_schema: projectUpdateOutputSchema,
+};
+
+export const archiveProjectUpdateToolDefinition: MCPToolDefinition = {
+  name: 'linear_archiveProjectUpdate',
+  description: 'Archive a Linear project update',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the project update to archive' },
+    },
+    required: ['id'],
+  },
+  output_schema: archiveProjectUpdateOutputSchema,
+};
+
+export const unarchiveProjectUpdateToolDefinition: MCPToolDefinition = {
+  name: 'linear_unarchiveProjectUpdate',
+  description: 'Restore an archived Linear project update',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the project update to restore' },
+    },
+    required: ['id'],
+  },
+  output_schema: archiveProjectUpdateOutputSchema,
+};
+
+export const deleteProjectUpdateToolDefinition: MCPToolDefinition = {
+  name: 'linear_deleteProjectUpdate',
+  description: 'Delete a Linear project update',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'ID of the project update to delete' },
+    },
+    required: ['id'],
+  },
+  output_schema: archiveProjectUpdateOutputSchema,
 };
 
 /**
@@ -394,30 +523,7 @@ export const getProjectUpdatesToolDefinition: MCPToolDefinition = {
   },
   output_schema: {
     type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        body: { type: 'string' },
-        health: { type: 'string' },
-        createdAt: { type: 'string' },
-        updatedAt: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-          },
-        },
-        project: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            name: { type: 'string' },
-          },
-        },
-      },
-    },
+    items: projectUpdateOutputSchema,
   },
 };
 

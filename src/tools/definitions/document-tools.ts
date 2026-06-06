@@ -22,6 +22,33 @@ const documentReferenceSchema = {
   },
 };
 
+const documentIssueReferenceSchema = {
+  type: ['object', 'null'],
+  properties: {
+    id: { type: 'string' },
+    identifier: { type: 'string' },
+    title: { type: 'string' },
+  },
+};
+
+const documentReleaseReferenceSchema = {
+  type: ['object', 'null'],
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    version: nullableStringSchema,
+  },
+};
+
+const documentCycleReferenceSchema = {
+  type: ['object', 'null'],
+  properties: {
+    id: { type: 'string' },
+    name: nullableStringSchema,
+    number: { type: ['number', 'null'] },
+  },
+};
+
 const documentUserSchema = {
   type: ['object', 'null'],
   properties: {
@@ -52,6 +79,11 @@ const documentOutputSchema = {
     updatedBy: documentUserSchema,
     project: documentReferenceSchema,
     initiative: documentReferenceSchema,
+    team: documentReferenceSchema,
+    issue: documentIssueReferenceSchema,
+    release: documentReleaseReferenceSchema,
+    cycle: documentCycleReferenceSchema,
+    resourceFolderId: nullableStringSchema,
     lastAppliedTemplate: documentReferenceSchema,
   },
 };
@@ -81,6 +113,22 @@ export const getDocumentsToolDefinition: MCPToolDefinition = {
       initiativeId: {
         type: 'string',
         description: 'Filter documents by initiative ID',
+      },
+      teamId: {
+        type: 'string',
+        description: 'Filter documents by team ID',
+      },
+      issueId: {
+        type: 'string',
+        description: 'Filter documents by issue ID',
+      },
+      releaseId: {
+        type: 'string',
+        description: 'Filter documents by release ID',
+      },
+      cycleId: {
+        type: 'string',
+        description: 'Filter documents by cycle ID',
       },
       title: {
         type: 'string',
@@ -142,6 +190,228 @@ export const getProjectDocumentsToolDefinition: MCPToolDefinition = {
   output_schema: {
     type: 'array',
     items: documentOutputSchema,
+  },
+};
+
+export const getInitiativeDocumentsToolDefinition: MCPToolDefinition = {
+  name: 'linear_getInitiativeDocuments',
+  description: 'Get documents for a specific Linear initiative',
+  input_schema: {
+    type: 'object',
+    properties: {
+      initiativeId: {
+        type: 'string',
+        description: 'ID of the initiative whose documents should be returned',
+      },
+      limit: {
+        ...positiveLimitSchema,
+        description: 'Maximum number of documents to return (default: 25)',
+      },
+      includeArchived: {
+        type: 'boolean',
+        description: 'Include archived documents in the results',
+      },
+      orderBy: {
+        ...paginationOrderBySchema,
+        description: 'Sort documents by created or updated date',
+      },
+      title: {
+        type: 'string',
+        description: 'Case-insensitive title search filter',
+      },
+    },
+    required: ['initiativeId'],
+  },
+  output_schema: {
+    type: 'array',
+    items: documentOutputSchema,
+  },
+};
+
+export const getTeamDocumentsToolDefinition: MCPToolDefinition = {
+  name: 'linear_getTeamDocuments',
+  description: 'Get documents associated with a specific Linear team',
+  input_schema: {
+    type: 'object',
+    properties: {
+      teamId: {
+        type: 'string',
+        description: 'ID of the team whose documents should be returned',
+      },
+      limit: {
+        ...positiveLimitSchema,
+        description: 'Maximum number of documents to return (default: 25)',
+      },
+      includeArchived: {
+        type: 'boolean',
+        description: 'Include archived documents in the results',
+      },
+      orderBy: {
+        ...paginationOrderBySchema,
+        description: 'Sort documents by created or updated date',
+      },
+      title: {
+        type: 'string',
+        description: 'Case-insensitive title search filter',
+      },
+    },
+    required: ['teamId'],
+  },
+  output_schema: {
+    type: 'array',
+    items: documentOutputSchema,
+  },
+};
+
+function createParentDocumentToolDefinition(
+  name: string,
+  description: string,
+  idProperty: string,
+  idDescription: string,
+): MCPToolDefinition {
+  return {
+    name,
+    description,
+    input_schema: {
+      type: 'object',
+      properties: {
+        [idProperty]: {
+          type: 'string',
+          description: idDescription,
+        },
+        limit: {
+          ...positiveLimitSchema,
+          description: 'Maximum number of documents to return (default: 25)',
+        },
+        includeArchived: {
+          type: 'boolean',
+          description: 'Include archived documents in the results',
+        },
+        orderBy: {
+          ...paginationOrderBySchema,
+          description: 'Sort documents by created or updated date',
+        },
+        title: {
+          type: 'string',
+          description: 'Case-insensitive title search filter',
+        },
+      },
+      required: [idProperty],
+    },
+    output_schema: {
+      type: 'array',
+      items: documentOutputSchema,
+    },
+  };
+}
+
+export const getIssueDocumentsToolDefinition = createParentDocumentToolDefinition(
+  'linear_getIssueDocuments',
+  'Get documents associated with a specific Linear issue',
+  'issueId',
+  'ID or identifier of the issue whose documents should be returned',
+);
+
+export const getReleaseDocumentsToolDefinition = createParentDocumentToolDefinition(
+  'linear_getReleaseDocuments',
+  'Get documents associated with a specific Linear release',
+  'releaseId',
+  'ID of the release whose documents should be returned',
+);
+
+export const getCycleDocumentsToolDefinition = createParentDocumentToolDefinition(
+  'linear_getCycleDocuments',
+  'Get documents associated with a specific Linear cycle',
+  'cycleId',
+  'ID of the cycle whose documents should be returned',
+);
+
+const pinnedResourceSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    type: { type: 'string', enum: ['document', 'externalLink', 'unknown'] },
+    sortOrder: { type: 'number' },
+    createdAt: nullableStringSchema,
+    updatedAt: nullableStringSchema,
+    section: {
+      type: ['object', 'null'],
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+      },
+    },
+    document: {
+      type: ['object', 'null'],
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        url: nullableStringSchema,
+        slugId: nullableStringSchema,
+        icon: nullableStringSchema,
+        color: nullableStringSchema,
+        archivedAt: nullableStringSchema,
+      },
+    },
+    externalLink: {
+      type: ['object', 'null'],
+      properties: {
+        id: { type: 'string' },
+        label: { type: 'string' },
+        url: { type: 'string' },
+        sortOrder: { type: 'number' },
+        archivedAt: nullableStringSchema,
+      },
+    },
+  },
+};
+
+export const getTeamResourcesToolDefinition: MCPToolDefinition = {
+  name: 'linear_getTeamResources',
+  description: 'Get team home resource sections and pinned documents or external links',
+  input_schema: {
+    type: 'object',
+    properties: {
+      teamId: {
+        type: 'string',
+        description: 'ID of the team whose home resources should be returned',
+      },
+    },
+    required: ['teamId'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      team: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          key: { type: 'string' },
+        },
+      },
+      sections: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            sortOrder: { type: 'number' },
+            createdAt: nullableStringSchema,
+            updatedAt: nullableStringSchema,
+            resources: {
+              type: 'array',
+              items: pinnedResourceSchema,
+            },
+          },
+        },
+      },
+      unsectioned: {
+        type: 'array',
+        items: pinnedResourceSchema,
+      },
+    },
   },
 };
 
@@ -245,6 +515,11 @@ export const createDocumentToolDefinition: MCPToolDefinition = {
       color: { type: 'string', description: 'Icon color for the document' },
       projectId: { type: 'string', description: 'Optional project associated with the document' },
       initiativeId: { type: 'string', description: 'Optional initiative associated with the document' },
+      teamId: { type: 'string', description: 'Optional team associated with the document' },
+      issueId: { type: 'string', description: 'Optional issue associated with the document' },
+      releaseId: { type: 'string', description: 'Optional release associated with the document' },
+      cycleId: { type: 'string', description: 'Optional cycle associated with the document' },
+      resourceFolderId: { type: 'string', description: 'Optional resource folder containing the document' },
       lastAppliedTemplateId: { type: 'string', description: 'Optional template last applied to the document' },
       sortOrder: { type: 'number', description: 'Optional sort order in the resources list' },
     },
@@ -284,6 +559,26 @@ export const updateDocumentToolDefinition: MCPToolDefinition = {
       initiativeId: {
         ...nullableStringSchema,
         description: 'Updated initiative association. Pass null to clear it.',
+      },
+      teamId: {
+        ...nullableStringSchema,
+        description: 'Updated team association. Pass null to clear it.',
+      },
+      issueId: {
+        ...nullableStringSchema,
+        description: 'Updated issue association. Pass null to clear it.',
+      },
+      releaseId: {
+        ...nullableStringSchema,
+        description: 'Updated release association. Pass null to clear it.',
+      },
+      cycleId: {
+        ...nullableStringSchema,
+        description: 'Updated cycle association. Pass null to clear it.',
+      },
+      resourceFolderId: {
+        ...nullableStringSchema,
+        description: 'Updated resource folder association. Pass null to clear it.',
       },
       lastAppliedTemplateId: {
         ...nullableStringSchema,

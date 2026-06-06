@@ -17,10 +17,11 @@ A Model Context Protocol (MCP) server for the Linear GraphQL API, built for real
 
 MCP Linear bridges AI assistants and Linear by implementing the MCP protocol. With it you can:
 
-- Retrieve issues, projects, teams, cycles, milestones, roadmaps, and documents
+- Retrieve issues, projects, teams, cycles, milestones, roadmaps, customers, customer needs, and workspace/project/initiative/team/issue/release/cycle documents
 - Create and update issues, change status, assign, and comment
-- Manage projects, project updates, milestones, roadmaps, saved views, and favorites
+- Manage projects, full diff-aware project and initiative update lifecycles, milestones, roadmaps, saved views, and favorites
 - Work with templates, custom fields, webhooks, and attachments
+- Work with customer records, customer statuses/tiers, and customer needs linked to issues or projects
 - Read notifications, subscriptions, sessions, audits, and integrations without leaving MCP
 - Inspect rate-limit and server health before running heavy planning sessions
 
@@ -44,6 +45,11 @@ Once connected, you can use prompts like:
 - "Show all open issues in this project grouped by milestone and cycle"
 - "Draft a weekly project update from the current Linear state"
 - "Find the newest documents related to a project and summarize the key decisions"
+- "Show the pinned documents and links on this team's home page"
+- "Create a document for ENG-123 with resource ordering metadata"
+- "Get the latest project update diff and archive an outdated update"
+- "Show customer needs for this project and mark the important ones"
+- "Create an initiative update and hide the generated diff from the update body"
 
 ## Installation
 
