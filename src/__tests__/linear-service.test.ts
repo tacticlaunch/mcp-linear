@@ -1803,6 +1803,210 @@ describe('LinearService document workflows', () => {
     });
   });
 
+  it('gets initiative documents with the current document initiative filter', async () => {
+    const documents = jest.fn().mockResolvedValue({ nodes: [] });
+    const initiative = jest.fn().mockResolvedValue({ id: 'initiative-1', name: 'Enterprise' });
+    const service = new LinearService({ documents, initiative } as never);
+
+    await service.getInitiativeDocuments({
+      initiativeId: 'initiative-1',
+      limit: 10,
+      includeArchived: true,
+      orderBy: 'updatedAt',
+      title: 'strategy',
+    });
+
+    expect(initiative).toHaveBeenCalledWith('initiative-1');
+    expect(documents).toHaveBeenCalledWith({
+      first: 10,
+      includeArchived: true,
+      orderBy: 'updatedAt',
+      filter: {
+        initiative: { id: { eq: 'initiative-1' } },
+        title: { containsIgnoreCase: 'strategy' },
+      },
+    });
+  });
+
+  it('gets team documents through the current document team filter', async () => {
+    const documents = jest.fn().mockResolvedValue({
+      nodes: [
+        {
+          id: 'doc-team',
+          title: 'Team operating notes',
+          content: '# Notes',
+          color: '#0f0',
+          icon: 'book',
+          slugId: 'team-operating-notes',
+          sortOrder: 1,
+          createdAt: new Date('2026-06-04T00:00:00.000Z'),
+          updatedAt: new Date('2026-06-05T00:00:00.000Z'),
+          url: 'https://linear.app/doc/team-operating-notes',
+          archivedAt: undefined,
+          hiddenAt: undefined,
+          trashed: false,
+          documentContentId: 'content-team',
+          creator: undefined,
+          updatedBy: undefined,
+          project: undefined,
+          initiative: undefined,
+          team: undefined,
+          lastAppliedTemplate: undefined,
+        },
+      ],
+    });
+    const team = jest.fn().mockResolvedValue({ id: 'team-1', name: 'Platform' });
+    const service = new LinearService({ documents, team } as never);
+
+    const result = await service.getTeamDocuments({
+      teamId: 'team-1',
+      limit: 10,
+      includeArchived: true,
+      orderBy: 'updatedAt',
+      title: 'notes',
+    });
+
+    expect(team).toHaveBeenCalledWith('team-1');
+    expect(documents).toHaveBeenCalledWith({
+      first: 10,
+      includeArchived: true,
+      orderBy: 'updatedAt',
+      filter: {
+        team: { id: { eq: 'team-1' } },
+        title: { containsIgnoreCase: 'notes' },
+      },
+    });
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'doc-team',
+        team: { id: 'team-1', name: 'Platform' },
+      }),
+    ]);
+  });
+
+  it('gets issue, release, and cycle documents with current document parent filters', async () => {
+    const documents = jest.fn().mockResolvedValue({ nodes: [] });
+    const issue = jest.fn().mockResolvedValue({ id: 'issue-1', identifier: 'ENG-123', title: 'Fix auth' });
+    const cycle = jest.fn().mockResolvedValue({ id: 'cycle-1', name: 'Cycle 42' });
+    const release = jest.fn().mockResolvedValue({ id: 'release-1', name: 'Mobile 1.2' });
+    const service = new LinearService({ documents, issue, cycle, release } as never);
+
+    await service.getIssueDocuments({ issueId: 'ENG-123', limit: 5, title: 'bug' });
+    await service.getReleaseDocuments({ releaseId: 'release-1', limit: 6, includeArchived: true });
+    await service.getCycleDocuments({ cycleId: 'cycle-1', limit: 7, orderBy: 'updatedAt' });
+
+    expect(issue).toHaveBeenCalledWith('ENG-123');
+    expect(cycle).toHaveBeenCalledWith('cycle-1');
+    expect(release).toHaveBeenCalledWith('release-1');
+    expect(documents).toHaveBeenNthCalledWith(1, {
+      first: 5,
+      includeArchived: false,
+      filter: {
+        issue: { id: { eq: 'issue-1' } },
+        title: { containsIgnoreCase: 'bug' },
+      },
+    });
+    expect(documents).toHaveBeenNthCalledWith(2, {
+      first: 6,
+      includeArchived: true,
+      filter: {
+        release: { id: { eq: 'release-1' } },
+      },
+    });
+    expect(documents).toHaveBeenNthCalledWith(3, {
+      first: 7,
+      includeArchived: false,
+      orderBy: 'updatedAt',
+      filter: {
+        cycle: { id: { eq: 'cycle-1' } },
+      },
+    });
+  });
+
+  it('gets team home resource sections with pinned documents and links', async () => {
+    const request = jest.fn().mockResolvedValue({
+      team: {
+        id: 'team-1',
+        name: 'Platform',
+        key: 'PLAT',
+        resourceSections: [
+          {
+            id: 'section-1',
+            title: 'Runbooks',
+            sortOrder: 1,
+            createdAt: '2026-06-04T00:00:00.000Z',
+            updatedAt: '2026-06-05T00:00:00.000Z',
+          },
+        ],
+        pinnedResources: [
+          {
+            id: 'pin-1',
+            sortOrder: 1,
+            createdAt: '2026-06-04T00:00:00.000Z',
+            updatedAt: '2026-06-05T00:00:00.000Z',
+            section: { id: 'section-1', title: 'Runbooks' },
+            document: {
+              id: 'doc-1',
+              title: 'Deploy runbook',
+              url: 'https://linear.app/doc/deploy-runbook',
+              slugId: 'deploy-runbook',
+              icon: 'book',
+              color: '#0f0',
+              archivedAt: null,
+            },
+            entityExternalLink: null,
+          },
+          {
+            id: 'pin-2',
+            sortOrder: 2,
+            createdAt: '2026-06-04T00:00:00.000Z',
+            updatedAt: '2026-06-05T00:00:00.000Z',
+            section: null,
+            document: null,
+            entityExternalLink: {
+              id: 'link-1',
+              label: 'On-call dashboard',
+              url: 'https://example.com/on-call',
+              sortOrder: 1,
+              archivedAt: null,
+            },
+          },
+        ],
+      },
+    });
+    const service = new LinearService({ client: { request } } as never);
+
+    const result = await service.getTeamResources('team-1');
+
+    expect(request).toHaveBeenCalledWith(expect.stringContaining('pinnedResources'), { id: 'team-1' });
+    expect(result).toEqual({
+      team: { id: 'team-1', name: 'Platform', key: 'PLAT' },
+      sections: [
+        {
+          id: 'section-1',
+          title: 'Runbooks',
+          sortOrder: 1,
+          createdAt: '2026-06-04T00:00:00.000Z',
+          updatedAt: '2026-06-05T00:00:00.000Z',
+          resources: [
+            expect.objectContaining({
+              id: 'pin-1',
+              type: 'document',
+              document: expect.objectContaining({ id: 'doc-1', title: 'Deploy runbook' }),
+            }),
+          ],
+        },
+      ],
+      unsectioned: [
+        expect.objectContaining({
+          id: 'pin-2',
+          type: 'externalLink',
+          externalLink: expect.objectContaining({ id: 'link-1', label: 'On-call dashboard' }),
+        }),
+      ],
+    });
+  });
+
   it('searches documents and normalizes search metadata', async () => {
     const searchDocuments = jest.fn().mockResolvedValue({
       totalCount: 1,
@@ -1827,6 +2031,7 @@ describe('LinearService document workflows', () => {
           updatedBy: undefined,
           project: Promise.resolve({ id: 'project-1', name: 'OrdelloTS' }),
           initiative: undefined,
+          team: undefined,
           lastAppliedTemplate: undefined,
         },
       ],
@@ -1860,6 +2065,69 @@ describe('LinearService document workflows', () => {
     });
   });
 
+  it('creates team documents with the current document team association', async () => {
+    const createDocument = jest.fn().mockResolvedValue({
+      success: true,
+      document: Promise.resolve({
+        id: 'doc-team',
+        title: 'Team handbook',
+        content: '# Handbook',
+        color: '#0f0',
+        icon: 'book',
+        slugId: 'team-handbook',
+        sortOrder: 1,
+        createdAt: new Date('2026-06-04T00:00:00.000Z'),
+        updatedAt: new Date('2026-06-04T00:00:00.000Z'),
+        url: 'https://linear.app/doc/team-handbook',
+        archivedAt: undefined,
+        hiddenAt: undefined,
+        trashed: false,
+        documentContentId: 'content-team',
+        creator: undefined,
+        updatedBy: undefined,
+        project: undefined,
+        initiative: undefined,
+        team: undefined,
+        issue: Promise.resolve({ id: 'issue-1', identifier: 'ENG-123', title: 'Fix auth' }),
+        release: Promise.resolve({ id: 'release-1', name: 'Mobile 1.2', version: '1.2.0' }),
+        cycle: Promise.resolve({ id: 'cycle-1', name: 'Cycle 42' }),
+        lastAppliedTemplate: undefined,
+      }),
+    });
+    const team = jest.fn().mockResolvedValue({ id: 'team-1', name: 'Platform' });
+    const service = new LinearService({ createDocument, team } as never);
+
+    const result = await service.createDocument({
+      title: 'Team handbook',
+      content: '# Handbook',
+      teamId: 'team-1',
+      issueId: 'ENG-123',
+      releaseId: 'release-1',
+      cycleId: 'cycle-1',
+      resourceFolderId: 'folder-1',
+      sortOrder: 1,
+    });
+
+    expect(team).toHaveBeenCalledWith('team-1');
+    expect(createDocument).toHaveBeenCalledWith({
+      title: 'Team handbook',
+      content: '# Handbook',
+      teamId: 'team-1',
+      issueId: 'ENG-123',
+      releaseId: 'release-1',
+      cycleId: 'cycle-1',
+      resourceFolderId: 'folder-1',
+      sortOrder: 1,
+    });
+    expect(result).toEqual(expect.objectContaining({
+      id: 'doc-team',
+      team: { id: 'team-1', name: 'Platform' },
+      issue: { id: 'issue-1', identifier: 'ENG-123', title: 'Fix auth' },
+      release: { id: 'release-1', name: 'Mobile 1.2', version: '1.2.0' },
+      cycle: expect.objectContaining({ id: 'cycle-1', name: 'Cycle 42' }),
+    }));
+  });
+
   it('updates documents with nullable clearing support', async () => {
     const updateDocument = jest.fn().mockResolvedValue({
       success: true,
@@ -1882,10 +2150,15 @@ describe('LinearService document workflows', () => {
         updatedBy: undefined,
         project: undefined,
         initiative: undefined,
+        team: undefined,
+        issue: undefined,
+        release: undefined,
+        cycle: undefined,
         lastAppliedTemplate: undefined,
       }),
     });
-    const service = new LinearService({ updateDocument } as never);
+    const team = jest.fn().mockResolvedValue({ id: 'team-1', name: 'Platform' });
+    const service = new LinearService({ updateDocument, team } as never);
 
     const result = await service.updateDocument({
       id: 'doc-1',
@@ -1894,6 +2167,11 @@ describe('LinearService document workflows', () => {
       icon: null,
       color: null,
       projectId: null,
+      teamId: 'team-1',
+      issueId: null,
+      releaseId: null,
+      cycleId: null,
+      resourceFolderId: null,
     });
 
     expect(updateDocument).toHaveBeenCalledWith('doc-1', {
@@ -1902,8 +2180,17 @@ describe('LinearService document workflows', () => {
       icon: null,
       color: null,
       projectId: null,
+      teamId: 'team-1',
+      issueId: null,
+      releaseId: null,
+      cycleId: null,
+      resourceFolderId: null,
     });
-    expect(result).toEqual(expect.objectContaining({ id: 'doc-1', title: 'Updated spec' }));
+    expect(result).toEqual(expect.objectContaining({
+      id: 'doc-1',
+      title: 'Updated spec',
+      team: { id: 'team-1', name: 'Platform' },
+    }));
   });
 
   it('returns document content history entries', async () => {
@@ -1915,6 +2202,7 @@ describe('LinearService document workflows', () => {
           actorIds: ['user-1'],
           createdAt: new Date('2026-04-01T00:00:00.000Z'),
           contentDataSnapshotAt: new Date('2026-04-01T00:00:00.000Z'),
+          metadata: { diffMarkdown: '- Added onboarding notes' },
         },
       ],
     });
@@ -1931,9 +2219,195 @@ describe('LinearService document workflows', () => {
           actorIds: ['user-1'],
           createdAt: new Date('2026-04-01T00:00:00.000Z'),
           contentDataSnapshotAt: new Date('2026-04-01T00:00:00.000Z'),
+          metadata: { diffMarkdown: '- Added onboarding notes' },
         },
       ],
     });
+  });
+});
+
+describe('LinearService project status resolution', () => {
+  const projectRecord = {
+    id: 'project-1',
+    name: 'Platform',
+    description: 'Build the platform',
+    content: 'Project content',
+    state: 'planned',
+    startDate: null,
+    targetDate: null,
+    lead: undefined,
+    icon: undefined,
+    color: '#bec2c8',
+    url: 'https://linear.app/project-1',
+  };
+
+  it('resolves createProject state names to Linear project status IDs', async () => {
+    const projectStatuses = jest.fn().mockResolvedValue({
+      nodes: [
+        { id: 'status-backlog', name: 'Backlog', type: 'backlog', position: 0 },
+        { id: 'status-planned', name: 'Planned', type: 'planned', position: 1 },
+      ],
+    });
+    const createProject = jest.fn().mockResolvedValue({
+      success: true,
+      project: Promise.resolve(projectRecord),
+    });
+    const service = new LinearService({ projectStatuses, createProject } as never);
+
+    await service.createProject({
+      name: 'Platform',
+      teamIds: ['team-1'],
+      state: 'planned',
+    });
+
+    expect(projectStatuses).toHaveBeenCalledWith();
+    expect(createProject).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Platform',
+      teamIds: ['team-1'],
+      statusId: 'status-planned',
+    }));
+  });
+
+  it('passes UUID project status IDs through without a lookup', async () => {
+    const statusId = '11111111-1111-4111-8111-111111111111';
+    const projectStatuses = jest.fn();
+    const createProject = jest.fn().mockResolvedValue({
+      success: true,
+      project: Promise.resolve(projectRecord),
+    });
+    const service = new LinearService({ projectStatuses, createProject } as never);
+
+    await service.createProject({
+      name: 'Platform',
+      teamIds: ['team-1'],
+      state: statusId,
+    });
+
+    expect(projectStatuses).not.toHaveBeenCalled();
+    expect(createProject).toHaveBeenCalledWith(expect.objectContaining({
+      statusId,
+    }));
+  });
+
+  it('resolves updateProject state names to Linear project status IDs', async () => {
+    const projectStatuses = jest.fn().mockResolvedValue({
+      nodes: [
+        { id: 'status-started', name: 'In Progress', type: 'started', position: 2 },
+      ],
+    });
+    const project = jest
+      .fn()
+      .mockResolvedValueOnce({ id: 'project-1' })
+      .mockResolvedValueOnce({ ...projectRecord, state: 'started' });
+    const updateProject = jest.fn().mockResolvedValue({ success: true });
+    const service = new LinearService({ projectStatuses, project, updateProject } as never);
+
+    await service.updateProject({
+      id: 'project-1',
+      state: 'In Progress',
+    });
+
+    expect(updateProject).toHaveBeenCalledWith('project-1', expect.objectContaining({
+      statusId: 'status-started',
+    }));
+  });
+});
+
+describe('LinearService project update diff workflows', () => {
+  const projectUpdateNode = {
+    id: 'update-1',
+    body: 'Progress update',
+    health: 'onTrack',
+    diff: { health: { from: 'atRisk', to: 'onTrack' } },
+    diffMarkdown: '- Health changed from at risk to on track',
+    isDiffHidden: false,
+    url: 'https://linear.app/project/update/update-1',
+    slugId: 'update-1',
+    archivedAt: null,
+    editedAt: null,
+    createdAt: new Date('2026-06-04T00:00:00.000Z'),
+    updatedAt: new Date('2026-06-05T00:00:00.000Z'),
+    user: Promise.resolve({ id: 'user-1', name: 'Alex' }),
+    project: Promise.resolve({ id: 'project-1', name: 'Platform' }),
+  };
+
+  it('creates project updates with diff visibility control', async () => {
+    const project = jest.fn().mockResolvedValue({ id: 'project-1', name: 'Platform' });
+    const createProjectUpdate = jest.fn().mockResolvedValue({
+      success: true,
+      projectUpdate: Promise.resolve(projectUpdateNode),
+    });
+    const service = new LinearService({ project, createProjectUpdate } as never);
+
+    const result = await service.createProjectUpdate({
+      projectId: 'project-1',
+      body: 'Progress update',
+      health: 'onTrack',
+      isDiffHidden: true,
+    });
+
+    expect(createProjectUpdate).toHaveBeenCalledWith({
+      projectId: 'project-1',
+      body: 'Progress update',
+      health: 'onTrack',
+      isDiffHidden: true,
+    });
+    expect(result).toEqual(expect.objectContaining({
+      id: 'update-1',
+      diffMarkdown: '- Health changed from at risk to on track',
+      project: { id: 'project-1', name: 'Platform' },
+    }));
+  });
+
+  it('returns Linear diff fields from project updates', async () => {
+    const project = jest.fn().mockResolvedValue({ id: 'project-1', name: 'Platform' });
+    const projectUpdates = jest.fn().mockResolvedValue({ nodes: [projectUpdateNode] });
+    const service = new LinearService({ project, projectUpdates } as never);
+
+    const result = await service.getProjectUpdates('project-1', 5);
+
+    expect(projectUpdates).toHaveBeenCalledWith({
+      first: 5,
+      filter: {
+        project: {
+          id: { eq: 'project-1' },
+        },
+      },
+    });
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: 'update-1',
+        diff: { health: { from: 'atRisk', to: 'onTrack' } },
+        diffMarkdown: '- Health changed from at risk to on track',
+        isDiffHidden: false,
+        url: 'https://linear.app/project/update/update-1',
+        slugId: 'update-1',
+        archivedAt: null,
+        editedAt: null,
+      }),
+    ]);
+  });
+
+  it('gets, archives, unarchives, and deletes project updates', async () => {
+    const projectUpdate = jest.fn().mockResolvedValue(projectUpdateNode);
+    const archiveProjectUpdate = jest.fn().mockResolvedValue({ success: true, entityId: 'update-1' });
+    const unarchiveProjectUpdate = jest.fn().mockResolvedValue({ success: true, entityId: 'update-1' });
+    const deleteProjectUpdate = jest.fn().mockResolvedValue({ success: true, entityId: 'update-1' });
+    const service = new LinearService({
+      projectUpdate,
+      archiveProjectUpdate,
+      unarchiveProjectUpdate,
+      deleteProjectUpdate,
+    } as never);
+
+    await expect(service.getProjectUpdateById('update-1')).resolves.toEqual(expect.objectContaining({
+      id: 'update-1',
+      diffMarkdown: '- Health changed from at risk to on track',
+      project: { id: 'project-1', name: 'Platform' },
+    }));
+    await expect(service.archiveProjectUpdate('update-1')).resolves.toEqual({ success: true, id: 'update-1' });
+    await expect(service.unarchiveProjectUpdate('update-1')).resolves.toEqual({ success: true, id: 'update-1' });
+    await expect(service.deleteProjectUpdate('update-1')).resolves.toEqual({ success: true, id: 'update-1' });
   });
 });
 
@@ -2064,9 +2538,13 @@ describe('LinearService future backlog batch coverage', () => {
       description: '',
       content: undefined,
       state: 'planned',
+      trashed: false,
+      slackChannelId: undefined,
+      microsoftTeamsChannelId: undefined,
       startDate: null,
       targetDate: null,
       lead: null,
+      teams: [],
       icon: undefined,
       color: '',
       url: 'https://linear.app/project-1',

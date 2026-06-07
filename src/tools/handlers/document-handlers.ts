@@ -2,10 +2,16 @@ import { LinearService } from '../../services/linear-service.js';
 import {
   isArchiveDocumentArgs,
   isCreateDocumentArgs,
+  isGetCycleDocumentsArgs,
   isGetDocumentByIdArgs,
   isGetDocumentContentHistoryArgs,
   isGetDocumentsArgs,
+  isGetInitiativeDocumentsArgs,
+  isGetIssueDocumentsArgs,
   isGetProjectDocumentsArgs,
+  isGetReleaseDocumentsArgs,
+  isGetTeamDocumentsArgs,
+  isGetTeamResourcesArgs,
   isSearchDocumentsArgs,
   isUnarchiveDocumentArgs,
   isUpdateDocumentArgs,
@@ -52,6 +58,96 @@ export function handleGetProjectDocuments(linearService: LinearService) {
       return await linearService.getProjectDocuments(args);
     } catch (error) {
       logError('Error getting project documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetInitiativeDocuments(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetInitiativeDocumentsArgs(args)) {
+        throw new Error('Invalid arguments for getInitiativeDocuments');
+      }
+
+      return await linearService.getInitiativeDocuments(args);
+    } catch (error) {
+      logError('Error getting initiative documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetTeamDocuments(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetTeamDocumentsArgs(args)) {
+        throw new Error('Invalid arguments for getTeamDocuments');
+      }
+
+      return await linearService.getTeamDocuments(args);
+    } catch (error) {
+      logError('Error getting team documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetIssueDocuments(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetIssueDocumentsArgs(args)) {
+        throw new Error('Invalid arguments for getIssueDocuments');
+      }
+
+      return await linearService.getIssueDocuments(args);
+    } catch (error) {
+      logError('Error getting issue documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetReleaseDocuments(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetReleaseDocumentsArgs(args)) {
+        throw new Error('Invalid arguments for getReleaseDocuments');
+      }
+
+      return await linearService.getReleaseDocuments(args);
+    } catch (error) {
+      logError('Error getting release documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetCycleDocuments(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetCycleDocumentsArgs(args)) {
+        throw new Error('Invalid arguments for getCycleDocuments');
+      }
+
+      return await linearService.getCycleDocuments(args);
+    } catch (error) {
+      logError('Error getting cycle documents', error);
+      throw error;
+    }
+  };
+}
+
+export function handleGetTeamResources(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetTeamResourcesArgs(args)) {
+        throw new Error('Invalid arguments for getTeamResources');
+      }
+
+      return await linearService.getTeamResources(args.teamId);
+    } catch (error) {
+      logError('Error getting team resources', error);
       throw error;
     }
   };

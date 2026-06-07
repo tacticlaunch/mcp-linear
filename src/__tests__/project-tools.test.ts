@@ -18,7 +18,11 @@ describe('project MCP tools', () => {
       expect.arrayContaining([
         'linear_createProjectUpdate',
         'linear_updateProjectUpdate',
+        'linear_getProjectUpdateById',
         'linear_getProjectUpdates',
+        'linear_archiveProjectUpdate',
+        'linear_unarchiveProjectUpdate',
+        'linear_deleteProjectUpdate',
         'linear_archiveProject',
         'linear_getProjectIssues',
       ]),
@@ -51,6 +55,34 @@ describe('project MCP tools', () => {
     });
   });
 
+  it('defines project update diff fields in the output schema', () => {
+    const getProjectUpdatesTool = allToolDefinitions.find((tool) => tool.name === 'linear_getProjectUpdates');
+    const createProjectUpdateTool = allToolDefinitions.find((tool) => tool.name === 'linear_createProjectUpdate');
+    const updateProjectUpdateTool = allToolDefinitions.find((tool) => tool.name === 'linear_updateProjectUpdate');
+    const getProjectUpdateByIdTool = allToolDefinitions.find((tool) => tool.name === 'linear_getProjectUpdateById');
+
+    expect(createProjectUpdateTool?.input_schema.properties).toMatchObject({
+      isDiffHidden: { type: 'boolean' },
+    });
+    expect(updateProjectUpdateTool?.input_schema.properties).toMatchObject({
+      isDiffHidden: { type: 'boolean' },
+    });
+    expect(getProjectUpdateByIdTool?.output_schema.properties).toMatchObject({
+      diff: { type: ['object', 'null'] },
+      diffMarkdown: { type: ['string', 'null'] },
+      isDiffHidden: { type: 'boolean' },
+      url: { type: ['string', 'null'] },
+      slugId: { type: ['string', 'null'] },
+    });
+    expect(getProjectUpdatesTool?.output_schema.items.properties).toMatchObject({
+      diff: { type: ['object', 'null'] },
+      diffMarkdown: { type: ['string', 'null'] },
+      isDiffHidden: { type: 'boolean' },
+      url: { type: ['string', 'null'] },
+      slugId: { type: ['string', 'null'] },
+    });
+  });
+
   it('routes createProjectUpdate calls to the linear service', async () => {
     const createProjectUpdate = jest.fn().mockResolvedValue({ id: 'update-1' });
     const handlers = registerToolHandlers({ createProjectUpdate } as unknown as LinearService);
@@ -60,6 +92,7 @@ describe('project MCP tools', () => {
         projectId: 'project-1',
         body: 'Weekly update',
         health: 'onTrack',
+        isDiffHidden: true,
       }),
     ).resolves.toEqual({ id: 'update-1' });
 
@@ -67,6 +100,7 @@ describe('project MCP tools', () => {
       projectId: 'project-1',
       body: 'Weekly update',
       health: 'onTrack',
+      isDiffHidden: true,
     });
   });
 
@@ -79,6 +113,7 @@ describe('project MCP tools', () => {
         id: 'update-1',
         body: 'Adjusted update',
         health: 'atRisk',
+        isDiffHidden: false,
       }),
     ).resolves.toEqual({ id: 'update-1' });
 
@@ -86,7 +121,40 @@ describe('project MCP tools', () => {
       id: 'update-1',
       body: 'Adjusted update',
       health: 'atRisk',
+      isDiffHidden: false,
     });
+  });
+
+  it('routes project update lifecycle calls to the linear service', async () => {
+    const getProjectUpdateById = jest.fn().mockResolvedValue({ id: 'update-1' });
+    const archiveProjectUpdate = jest.fn().mockResolvedValue({ success: true, id: 'update-1' });
+    const unarchiveProjectUpdate = jest.fn().mockResolvedValue({ success: true, id: 'update-1' });
+    const deleteProjectUpdate = jest.fn().mockResolvedValue({ success: true, id: 'update-1' });
+    const handlers = registerToolHandlers({
+      getProjectUpdateById,
+      archiveProjectUpdate,
+      unarchiveProjectUpdate,
+      deleteProjectUpdate,
+    } as unknown as LinearService);
+
+    await expect(handlers.linear_getProjectUpdateById({ id: 'update-1' })).resolves.toEqual({ id: 'update-1' });
+    await expect(handlers.linear_archiveProjectUpdate({ id: 'update-1' })).resolves.toEqual({
+      success: true,
+      id: 'update-1',
+    });
+    await expect(handlers.linear_unarchiveProjectUpdate({ id: 'update-1' })).resolves.toEqual({
+      success: true,
+      id: 'update-1',
+    });
+    await expect(handlers.linear_deleteProjectUpdate({ id: 'update-1' })).resolves.toEqual({
+      success: true,
+      id: 'update-1',
+    });
+
+    expect(getProjectUpdateById).toHaveBeenCalledWith('update-1');
+    expect(archiveProjectUpdate).toHaveBeenCalledWith('update-1');
+    expect(unarchiveProjectUpdate).toHaveBeenCalledWith('update-1');
+    expect(deleteProjectUpdate).toHaveBeenCalledWith('update-1');
   });
 
   it('routes getProjectUpdates calls to the linear service', async () => {
@@ -182,6 +250,19 @@ describe('project MCP tools', () => {
         limit: 5,
       }),
     ).rejects.toThrow('Invalid arguments for getProjectUpdates');
+
+    await expect(handlers.linear_getProjectUpdateById({})).rejects.toThrow(
+      'Invalid arguments for getProjectUpdateById',
+    );
+    await expect(handlers.linear_archiveProjectUpdate({})).rejects.toThrow(
+      'Invalid arguments for archiveProjectUpdate',
+    );
+    await expect(handlers.linear_unarchiveProjectUpdate({})).rejects.toThrow(
+      'Invalid arguments for unarchiveProjectUpdate',
+    );
+    await expect(handlers.linear_deleteProjectUpdate({})).rejects.toThrow(
+      'Invalid arguments for deleteProjectUpdate',
+    );
 
     await expect(handlers.linear_archiveProject({})).rejects.toThrow(
       'Invalid arguments for archiveProject',

@@ -74,6 +74,7 @@ These are reusable MCP prompt templates exposed by the server for PM-oriented Li
 | Tool Name              | Description                        | Status         |
 | ---------------------- | ---------------------------------- | -------------- |
 | `linear_getProjects`   | Get a list of projects from Linear | ✅ Implemented |
+| `linear_getProjectById` | Get details of a specific project  | ✅ Implemented |
 | `linear_createProject` | Create a new project in Linear     | ✅ Implemented |
 
 ### Milestone Tools
@@ -90,15 +91,21 @@ Linear exposes milestones as `ProjectMilestone` in the SDK/API. Archiving is imp
 
 ### Document Tools
 
-Linear exposes workspace and project docs as `Document` in the SDK/API.
+Linear exposes workspace, project, initiative, team, issue, release, and cycle docs as `Document` in the API. Team home resource sections use a narrow GraphQL query so MCP responses include richer pinned document/link details than the generated SDK fragment.
 
 | Tool Name                           | Description                                      | Status         |
 | ----------------------------------- | ------------------------------------------------ | -------------- |
 | `linear_getDocuments`               | Get workspace documents with optional filters    | ✅ Implemented |
 | `linear_getDocumentById`            | Get details of a specific document               | ✅ Implemented |
 | `linear_getProjectDocuments`        | Get documents for a specific project             | ✅ Implemented |
+| `linear_getInitiativeDocuments`     | Get documents for a specific initiative          | ✅ Implemented |
+| `linear_getTeamDocuments`           | Get documents associated with a specific team    | ✅ Implemented |
+| `linear_getIssueDocuments`          | Get documents associated with a specific issue   | ✅ Implemented |
+| `linear_getReleaseDocuments`        | Get documents associated with a specific release | ✅ Implemented |
+| `linear_getCycleDocuments`          | Get documents associated with a specific cycle   | ✅ Implemented |
+| `linear_getTeamResources`           | Get team home sections and pinned docs/links     | ✅ Implemented |
 | `linear_searchDocuments`            | Search Linear documents by term                  | ✅ Implemented |
-| `linear_getDocumentContentHistory`  | Get content history entries for a document       | ✅ Implemented |
+| `linear_getDocumentContentHistory`  | Get content history entries and metadata         | ✅ Implemented |
 | `linear_createDocument`             | Create a new Linear document                     | ✅ Implemented |
 | `linear_updateDocument`             | Update an existing Linear document               | ✅ Implemented |
 | `linear_archiveDocument`            | Archive (trash) a document                       | ✅ Implemented |
@@ -122,7 +129,7 @@ These are MCP-server observability helpers for tool-only clients.
 | `linear_searchIssues`     | Search for issues with various filters                   | ✅ Implemented |
 | `linear_createIssue`      | Create a new issue in Linear                             | ✅ Implemented |
 | `linear_updateIssue`      | Update an existing issue in Linear                       | ✅ Implemented |
-| `linear_createComment`    | Add a comment to an issue in Linear                      | ✅ Implemented |
+| `linear_createComment`    | Add a comment to an issue, project, initiative, update, document content, post, or thread | ✅ Implemented |
 | `linear_updateComment`    | Update an existing comment in Linear                     | ✅ Implemented |
 | `linear_deleteComment`    | Delete a comment in Linear                               | ✅ Implemented |
 | `linear_addIssueLabel`    | Add a label to an issue                                  | ✅ Implemented |
@@ -136,6 +143,7 @@ These are MCP-server observability helpers for tool-only clients.
 | `linear_subscribeToIssue`      | Subscribe to issue updates                                    | ✅ Implemented |
 | `linear_convertIssueToSubtask` | Convert an issue to a subtask                                 | ✅ Implemented |
 | `linear_createIssueRelation`   | Create relations between issues (blocks, is blocked by, etc.) | ✅ Implemented |
+| `linear_deleteIssueRelation`   | Delete an issue relation                                  | ✅ Implemented |
 | `linear_archiveIssue`          | Archive an issue                                              | ✅ Implemented |
 | `linear_setIssuePriority`      | Set the priority of an issue                                  | ✅ Implemented |
 | `linear_transferIssue`         | Transfer an issue to another team                             | ✅ Implemented |
@@ -154,16 +162,20 @@ These are MCP-server observability helpers for tool-only clients.
 
 | Tool Name            | Description                   | Status         |
 | -------------------- | ----------------------------- | -------------- |
-| `linear_getComments` | Get all comments for an issue | ✅ Implemented |
+| `linear_getComments` | Get comments for an issue, project, initiative, update, document content, or post with pagination | ✅ Implemented |
 
 ### Project Management Tools
 
 | Tool Name                       | Description                               | Status         |
 | ------------------------------- | ----------------------------------------- | -------------- |
-| `linear_updateProject`          | Update an existing project                | ✅ Implemented |
-| `linear_createProjectUpdate`    | Create a new update for a project         | ✅ Implemented |
-| `linear_updateProjectUpdate`    | Update an existing project update         | ✅ Implemented |
-| `linear_getProjectUpdates`      | Get updates for a project                 | ✅ Implemented |
+| `linear_updateProject`          | Update an existing project, including status, dates, members, lead, icon, and color | ✅ Implemented |
+| `linear_createProjectUpdate`    | Create a new update for a project with diff controls and fields in the response | ✅ Implemented |
+| `linear_updateProjectUpdate`    | Update an existing project update with diff controls and fields in the response | ✅ Implemented |
+| `linear_getProjectUpdateById`   | Get a specific project update, including diff metadata | ✅ Implemented |
+| `linear_getProjectUpdates`      | Get updates for a project, including Linear diff metadata | ✅ Implemented |
+| `linear_archiveProjectUpdate`   | Archive a project update                  | ✅ Implemented |
+| `linear_unarchiveProjectUpdate` | Restore an archived project update        | ✅ Implemented |
+| `linear_deleteProjectUpdate`    | Delete a project update                   | ✅ Implemented |
 | `linear_archiveProject`         | Archive a project                         | ✅ Implemented |
 | `linear_addIssueToProject`      | Add an existing issue to a project        | ✅ Implemented |
 | `linear_removeIssueFromProject` | Remove an existing issue from a project   | ✅ Implemented |
@@ -174,7 +186,7 @@ These are MCP-server observability helpers for tool-only clients.
 
 ### Release Management Tools
 
-This batch uses raw GraphQL instead of the installed SDK because the current public release schema is available but the local `@linear/sdk` package does not expose first-class release models yet. It now covers both the release/read note flows and the release pipeline/stage admin mutations exposed in the public alpha schema.
+Release and release pipeline tools use focused GraphQL where this server needs custom response shaping for release notes, pipeline stages, and admin mutations. The package now targets the current `@linear/sdk` baseline.
 
 | Tool Name                        | Description                                                              | Status         |
 | -------------------------------- | ------------------------------------------------------------------------ | -------------- |
@@ -247,6 +259,34 @@ This batch uses raw GraphQL instead of the installed SDK because the current pub
 | `linear_getInitiativeProjects`       | Get all projects in an initiative                                   | ✅ Implemented |
 | `linear_addProjectToInitiative`      | Add a project to an initiative                                      | ✅ Implemented |
 | `linear_removeProjectFromInitiative` | Remove a project from an initiative                                 | ✅ Implemented |
+| `linear_getInitiativeUpdateById`     | Get a specific initiative update, including diff metadata            | ✅ Implemented |
+| `linear_getInitiativeUpdates`        | Get updates for an initiative, including Linear diff metadata        | ✅ Implemented |
+| `linear_createInitiativeUpdate`      | Create a new initiative update                                      | ✅ Implemented |
+| `linear_updateInitiativeUpdate`      | Update an existing initiative update                                | ✅ Implemented |
+| `linear_archiveInitiativeUpdate`     | Archive an initiative update                                        | ✅ Implemented |
+| `linear_unarchiveInitiativeUpdate`   | Restore an archived initiative update                               | ✅ Implemented |
+
+### Customer Tools
+
+Linear exposes customer data and customer requests/needs through the SDK. Customer needs can be linked to issues or projects.
+
+| Tool Name                                      | Description                                      | Status         |
+| ---------------------------------------------- | ------------------------------------------------ | -------------- |
+| `linear_getCustomers`                          | Get customers with optional filters              | ✅ Implemented |
+| `linear_getCustomerById`                       | Get details of a specific customer               | ✅ Implemented |
+| `linear_createCustomer`                        | Create a customer                                | ✅ Implemented |
+| `linear_updateCustomer`                        | Update a customer                                | ✅ Implemented |
+| `linear_deleteCustomer`                        | Delete a customer                                | ✅ Implemented |
+| `linear_getCustomerNeeds`                      | Get customer needs with optional filters         | ✅ Implemented |
+| `linear_getCustomerNeedById`                   | Get details of a specific customer need          | ✅ Implemented |
+| `linear_createCustomerNeed`                    | Create a customer need linked to an issue or project | ✅ Implemented |
+| `linear_createCustomerNeedFromAttachment`      | Create a customer need from an attachment        | ✅ Implemented |
+| `linear_updateCustomerNeed`                    | Update a customer need                           | ✅ Implemented |
+| `linear_archiveCustomerNeed`                   | Archive a customer need                          | ✅ Implemented |
+| `linear_unarchiveCustomerNeed`                 | Restore an archived customer need                | ✅ Implemented |
+| `linear_deleteCustomerNeed`                    | Delete a customer need                           | ✅ Implemented |
+| `linear_getCustomerStatuses`                   | Get customer statuses                            | ✅ Implemented |
+| `linear_getCustomerTiers`                      | Get customer tiers                               | ✅ Implemented |
 
 ### Views and Filters
 
@@ -312,6 +352,17 @@ The following tools are recommended for future implementation based on the curre
 
 Items that looked conceptually mismatched with the current SDK or too speculative for this repo have been removed or moved to lower-priority sections.
 
+### Recent Linear Surfaces Without Stable Tool Parity
+
+These were reviewed against the current SDK/changelog but are intentionally not exposed as MCP tools yet because they do not have a stable SDK-backed request/response shape in this repo.
+
+| Surface | Current Status |
+| ------- | -------------- |
+| Linear Diffs review operations | Product feature is available in Linear, but review/diff mutations are not exposed as stable SDK primitives for this MCP surface |
+| Shared Linear Agent skills / `AgentSkill` migration | GraphQL types exist, but this repo does not yet expose an SDK-backed skills management surface |
+| Team resource section/pin writes | Team resource reads are implemented; section/pin creation and reordering remain SDK/schema-gap candidates |
+| GraphQL subscriptions and realtime updates | Supported by Linear's API, but not a good fit for this server's current stateless request/response tool model |
+
 ### Comment Management
 
 Comment CRUD is now covered.
@@ -351,6 +402,10 @@ Linear milestones currently appear to belong to a single project in the SDK. Rea
 ### Team Management
 
 Team settings, memberships, and team label management are now covered.
+
+### Customers and Customer Needs
+
+Customer records, customer statuses/tiers, and customer needs linked to issues or projects are now covered.
 
 ### Custom Fields
 

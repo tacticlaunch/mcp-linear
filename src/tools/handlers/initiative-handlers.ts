@@ -9,6 +9,10 @@ import {
   isGetInitiativeProjectsInput,
   isAddProjectToInitiativeInput,
   isRemoveProjectFromInitiativeInput,
+  isCreateInitiativeUpdateArgs,
+  isGetInitiativeUpdatesArgs,
+  isProjectUpdateIdArgs,
+  isUpdateInitiativeUpdateArgs,
 } from '../type-guards.js';
 import { logError } from '../../utils/config.js';
 
@@ -128,6 +132,96 @@ export function getInitiativeProjectsHandler(linearService: LinearService) {
       return await linearService.getInitiativeProjects(args.initiativeId, args.includeArchived);
     } catch (error) {
       logError('Error getting initiative projects', error);
+      throw error;
+    }
+  };
+}
+
+export function getInitiativeUpdateByIdHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid input for getInitiativeUpdateById');
+      }
+
+      return await linearService.getInitiativeUpdateById(args.id);
+    } catch (error) {
+      logError('Error getting initiative update by ID', error);
+      throw error;
+    }
+  };
+}
+
+export function getInitiativeUpdatesHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetInitiativeUpdatesArgs(args)) {
+        throw new Error('Invalid input for getInitiativeUpdates');
+      }
+
+      return await linearService.getInitiativeUpdates(args.initiativeId, args.limit);
+    } catch (error) {
+      logError('Error getting initiative updates', error);
+      throw error;
+    }
+  };
+}
+
+export function createInitiativeUpdateHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isCreateInitiativeUpdateArgs(args)) {
+        throw new Error('Invalid input for createInitiativeUpdate');
+      }
+
+      return await linearService.createInitiativeUpdate(args);
+    } catch (error) {
+      logError('Error creating initiative update', error);
+      throw error;
+    }
+  };
+}
+
+export function updateInitiativeUpdateHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isUpdateInitiativeUpdateArgs(args)) {
+        throw new Error('Invalid input for updateInitiativeUpdate');
+      }
+
+      return await linearService.updateInitiativeUpdate(args);
+    } catch (error) {
+      logError('Error updating initiative update', error);
+      throw error;
+    }
+  };
+}
+
+export function archiveInitiativeUpdateHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid input for archiveInitiativeUpdate');
+      }
+
+      return await linearService.archiveInitiativeUpdate(args.id);
+    } catch (error) {
+      logError('Error archiving initiative update', error);
+      throw error;
+    }
+  };
+}
+
+export function unarchiveInitiativeUpdateHandler(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isProjectUpdateIdArgs(args)) {
+        throw new Error('Invalid input for unarchiveInitiativeUpdate');
+      }
+
+      return await linearService.unarchiveInitiativeUpdate(args.id);
+    } catch (error) {
+      logError('Error unarchiving initiative update', error);
       throw error;
     }
   };

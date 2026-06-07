@@ -536,13 +536,38 @@ export const updateIssueToolDefinition: MCPToolDefinition = {
  */
 export const createCommentToolDefinition: MCPToolDefinition = {
   name: 'linear_createComment',
-  description: 'Add a comment to an issue in Linear (supports threaded replies)',
+  description:
+    'Add a comment to an issue, project, initiative, update, document content, or as a threaded reply',
   input_schema: {
     type: 'object',
     properties: {
       issueId: {
         type: 'string',
         description: 'ID or identifier of the issue to comment on (e.g., ABC-123)',
+      },
+      projectId: {
+        type: 'string',
+        description: 'ID of the project to comment on',
+      },
+      initiativeId: {
+        type: 'string',
+        description: 'ID of the initiative to comment on',
+      },
+      projectUpdateId: {
+        type: 'string',
+        description: 'ID of the project update to comment on',
+      },
+      initiativeUpdateId: {
+        type: 'string',
+        description: 'ID of the initiative update to comment on',
+      },
+      documentContentId: {
+        type: 'string',
+        description: 'ID of the document content to anchor an inline comment to',
+      },
+      postId: {
+        type: 'string',
+        description: 'ID of the post to comment on',
       },
       body: {
         type: 'string',
@@ -552,16 +577,33 @@ export const createCommentToolDefinition: MCPToolDefinition = {
         type: 'string',
         description: 'ID of the parent comment to reply to (for threaded comments)',
       },
+      quotedText: {
+        type: 'string',
+        description: 'Optional quoted text for inline comments',
+      },
+      subscriberIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Optional user IDs to subscribe to the comment target',
+      },
     },
-    required: ['issueId', 'body'],
+    required: ['body'],
   },
   output_schema: {
     type: 'object',
     properties: {
       id: { type: 'string' },
       body: { type: 'string' },
+      createdAt: { type: 'string' },
+      updatedAt: { type: 'string' },
       url: { type: 'string' },
       parentId: { type: 'string' },
+      issue: { type: ['object', 'null'] },
+      project: { type: ['object', 'null'] },
+      initiative: { type: ['object', 'null'] },
+      projectUpdate: { type: ['object', 'null'] },
+      initiativeUpdate: { type: ['object', 'null'] },
+      user: { type: ['object', 'null'] },
     },
   },
 };
@@ -822,6 +864,28 @@ export const createIssueRelationToolDefinition: MCPToolDefinition = {
   },
 };
 
+export const deleteIssueRelationToolDefinition: MCPToolDefinition = {
+  name: 'linear_deleteIssueRelation',
+  description: 'Delete an issue relation by ID',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        description: 'ID of the issue relation to delete',
+      },
+    },
+    required: ['id'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      id: { type: 'string' },
+    },
+  },
+};
+
 /**
  * Tool definition for archiving an issue
  */
@@ -1013,7 +1077,7 @@ export const getIssueHistoryToolDefinition: MCPToolDefinition = {
  */
 export const getCommentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getComments',
-  description: 'Get all comments for an issue',
+  description: 'Get comments for an issue, project, initiative, update, or document content',
   input_schema: {
     type: 'object',
     properties: {
@@ -1021,12 +1085,45 @@ export const getCommentsToolDefinition: MCPToolDefinition = {
         type: 'string',
         description: 'ID or identifier of the issue to get comments from (e.g., ABC-123)',
       },
+      projectId: {
+        type: 'string',
+        description: 'ID of the project to get comments from',
+      },
+      initiativeId: {
+        type: 'string',
+        description: 'ID of the initiative to get comments from',
+      },
+      projectUpdateId: {
+        type: 'string',
+        description: 'ID of the project update to get comments from',
+      },
+      initiativeUpdateId: {
+        type: 'string',
+        description: 'ID of the initiative update to get comments from',
+      },
+      documentContentId: {
+        type: 'string',
+        description: 'ID of the document content to get inline comments from',
+      },
+      postId: {
+        type: 'string',
+        description: 'ID of the post to get comments from',
+      },
       limit: {
-        type: 'number',
+        type: 'integer',
+        minimum: 1,
         description: 'Maximum number of comments to return (default: 25)',
       },
+      cursor: {
+        type: 'string',
+        description: 'Pagination cursor returned by Linear',
+      },
+      orderBy: {
+        type: 'string',
+        enum: ['createdAt', 'updatedAt'],
+        description: 'Sort comments by created or updated date',
+      },
     },
-    required: ['issueId'],
   },
   output_schema: {
     type: 'array',
@@ -1036,6 +1133,13 @@ export const getCommentsToolDefinition: MCPToolDefinition = {
         id: { type: 'string' },
         body: { type: 'string' },
         createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        quotedText: { type: ['string', 'null'] },
+        issue: { type: ['object', 'null'] },
+        project: { type: ['object', 'null'] },
+        initiative: { type: ['object', 'null'] },
+        projectUpdate: { type: ['object', 'null'] },
+        initiativeUpdate: { type: ['object', 'null'] },
         user: {
           type: 'object',
           properties: {

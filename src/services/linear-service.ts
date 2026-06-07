@@ -13,6 +13,15 @@ import {
 
 type JsonObject = Record<string, unknown>;
 
+const LINEAR_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ProjectStatusNode = {
+  id: string;
+  name?: string | null;
+  type?: string | null;
+  position?: number | null;
+};
+
 type FavoriteViewNode = {
   id: string;
   type: string;
@@ -67,11 +76,55 @@ type DocumentListArgs = {
   orderBy?: string;
   projectId?: string;
   initiativeId?: string;
+  teamId?: string;
+  issueId?: string;
+  releaseId?: string;
+  cycleId?: string;
   title?: string;
 };
 
 type ProjectDocumentListArgs = {
   projectId: string;
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  title?: string;
+};
+
+type InitiativeDocumentListArgs = {
+  initiativeId: string;
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  title?: string;
+};
+
+type TeamDocumentListArgs = {
+  teamId: string;
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  title?: string;
+};
+
+type IssueDocumentListArgs = {
+  issueId: string;
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  title?: string;
+};
+
+type ReleaseDocumentListArgs = {
+  releaseId: string;
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  title?: string;
+};
+
+type CycleDocumentListArgs = {
+  cycleId: string;
   limit?: number;
   includeArchived?: boolean;
   orderBy?: string;
@@ -95,6 +148,11 @@ type DocumentCreateArgs = {
   color?: string;
   projectId?: string;
   initiativeId?: string;
+  teamId?: string;
+  issueId?: string;
+  releaseId?: string;
+  cycleId?: string;
+  resourceFolderId?: string;
   lastAppliedTemplateId?: string;
   sortOrder?: number;
 };
@@ -108,6 +166,11 @@ type DocumentUpdateArgs = {
   hiddenAt?: string | null;
   projectId?: string | null;
   initiativeId?: string | null;
+  teamId?: string | null;
+  issueId?: string | null;
+  releaseId?: string | null;
+  cycleId?: string | null;
+  resourceFolderId?: string | null;
   lastAppliedTemplateId?: string | null;
   sortOrder?: number;
   trashed?: boolean;
@@ -194,6 +257,9 @@ type ReleaseCreateArgs = {
   stageId?: string;
   startDate?: string;
   targetDate?: string;
+  createdAt?: string;
+  startedAt?: string;
+  completedAt?: string;
 };
 
 type ReleaseUpdateArgs = {
@@ -206,7 +272,111 @@ type ReleaseUpdateArgs = {
   stageId?: string;
   startDate?: string;
   targetDate?: string;
+  startedAt?: string;
+  completedAt?: string;
   trashed?: boolean;
+};
+
+type CommentTargetArgs = {
+  issueId?: string;
+  projectId?: string;
+  initiativeId?: string;
+  projectUpdateId?: string;
+  initiativeUpdateId?: string;
+  documentContentId?: string;
+  postId?: string;
+};
+
+type CommentCreateArgs = CommentTargetArgs & {
+  body: string;
+  parentId?: string;
+  quotedText?: string;
+  subscriberIds?: string[];
+};
+
+type CommentListArgs = CommentTargetArgs & {
+  limit?: number;
+  cursor?: string;
+  orderBy?: string;
+};
+
+type InitiativeUpdateArgs = {
+  id?: string;
+  initiativeId?: string;
+  body?: string;
+  health?: 'onTrack' | 'atRisk' | 'offTrack';
+  isDiffHidden?: boolean;
+};
+
+type CustomerListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  name?: string;
+  domain?: string;
+  statusId?: string;
+  tierId?: string;
+  ownerId?: string;
+};
+
+type CustomerCreateArgs = {
+  name: string;
+  domains?: string[];
+  externalIds?: string[];
+  logoUrl?: string;
+  mainSourceId?: string;
+  ownerId?: string;
+  revenue?: number;
+  size?: number;
+  slackChannelId?: string;
+  statusId?: string;
+  tierId?: string;
+};
+
+type CustomerUpdateArgs = Partial<CustomerCreateArgs> & {
+  id: string;
+};
+
+type CustomerNeedListArgs = {
+  limit?: number;
+  includeArchived?: boolean;
+  orderBy?: string;
+  customerId?: string;
+  issueId?: string;
+  projectId?: string;
+  priority?: number;
+};
+
+type CustomerNeedCreateArgs = {
+  attachmentId?: string;
+  attachmentUrl?: string;
+  body?: string;
+  commentId?: string;
+  createdAt?: string;
+  customerExternalId?: string;
+  customerId?: string;
+  issueId?: string;
+  priority?: number;
+  projectId?: string;
+};
+
+type CustomerNeedUpdateArgs = {
+  id: string;
+  applyPriorityToRelatedNeeds?: boolean;
+  attachmentUrl?: string;
+  body?: string;
+  customerExternalId?: string;
+  customerId?: string;
+  issueId?: string;
+  priority?: number;
+  projectId?: string;
+};
+
+type CustomerNeedFromAttachmentArgs = {
+  attachmentId: string;
+  customerId?: string;
+  customerExternalId?: string;
+  priority?: number;
 };
 
 type ReleaseCompleteArgs = {
@@ -255,6 +425,49 @@ const FAVORITE_VIEWS_QUERY = `
         predefinedViewTeam {
           id
           name
+        }
+      }
+    }
+  }
+`;
+
+const TEAM_RESOURCES_QUERY = `
+  query LinearGetTeamResources($id: String!) {
+    team(id: $id) {
+      id
+      name
+      key
+      resourceSections {
+        id
+        title
+        sortOrder
+        createdAt
+        updatedAt
+      }
+      pinnedResources {
+        id
+        sortOrder
+        createdAt
+        updatedAt
+        section {
+          id
+          title
+        }
+        document {
+          id
+          title
+          url
+          slugId
+          icon
+          color
+          archivedAt
+        }
+        entityExternalLink {
+          id
+          label
+          url
+          sortOrder
+          archivedAt
         }
       }
     }
@@ -1162,6 +1375,47 @@ export class LinearService {
     return undefined;
   }
 
+  private normalizeProjectStatusLookupValue(value: string): string {
+    return value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  }
+
+  private async resolveProjectStatusId(state: string | undefined): Promise<string | undefined> {
+    const stateValue = this.nonEmptyString(state);
+
+    if (!stateValue) {
+      return undefined;
+    }
+
+    if (LINEAR_UUID_PATTERN.test(stateValue)) {
+      return stateValue;
+    }
+
+    const statusesConnection = await this.client.projectStatuses();
+    const statuses = Array.isArray(statusesConnection.nodes)
+      ? (statusesConnection.nodes as ProjectStatusNode[])
+      : [];
+    const lookupValue = this.normalizeProjectStatusLookupValue(stateValue);
+    const matchingStatus = statuses
+      .filter((status) => {
+        const name = status.name ? this.normalizeProjectStatusLookupValue(status.name) : undefined;
+        const type = status.type ? this.normalizeProjectStatusLookupValue(status.type) : undefined;
+        return name === lookupValue || type === lookupValue;
+      })
+      .sort((left, right) => (left.position ?? Number.MAX_SAFE_INTEGER) - (right.position ?? Number.MAX_SAFE_INTEGER))[0];
+
+    if (!matchingStatus) {
+      const availableStatuses = statuses
+        .map((status) => status.name ?? status.type)
+        .filter((value): value is string => typeof value === 'string' && value.length > 0)
+        .join(', ');
+      throw new Error(
+        `Project status "${stateValue}" not found. Use a project status ID or one of: ${availableStatuses || 'no project statuses available'}`,
+      );
+    }
+
+    return matchingStatus.id;
+  }
+
   private async normalizeUserReference(userFetch: LinearFetch<User> | undefined) {
     const user = userFetch ? await userFetch : null;
 
@@ -1198,6 +1452,97 @@ export class LinearService {
       : null;
   }
 
+  private async normalizeProjectReference(projectFetch: LinearFetch<any> | undefined) {
+    const project = projectFetch ? await projectFetch : null;
+
+    return project
+      ? {
+          id: project.id,
+          name: project.name ?? project.id,
+        }
+      : null;
+  }
+
+  private async normalizeInitiativeReference(initiativeFetch: LinearFetch<any> | undefined) {
+    const initiative = initiativeFetch ? await initiativeFetch : null;
+
+    return initiative
+      ? {
+          id: initiative.id,
+          name: initiative.name ?? initiative.id,
+        }
+      : null;
+  }
+
+  private async normalizeProjectUpdateReference(projectUpdateFetch: LinearFetch<any> | undefined) {
+    const projectUpdate = projectUpdateFetch ? await projectUpdateFetch : null;
+
+    return projectUpdate
+      ? {
+          id: projectUpdate.id,
+          body: projectUpdate.body ?? null,
+        }
+      : null;
+  }
+
+  private async normalizeInitiativeUpdateReference(initiativeUpdateFetch: LinearFetch<any> | undefined) {
+    const initiativeUpdate = initiativeUpdateFetch ? await initiativeUpdateFetch : null;
+
+    return initiativeUpdate
+      ? {
+          id: initiativeUpdate.id,
+          body: initiativeUpdate.body ?? null,
+        }
+      : null;
+  }
+
+  private async normalizeCustomerReference(customerFetch: LinearFetch<any> | undefined) {
+    const customer = customerFetch ? await customerFetch : null;
+
+    return customer
+      ? {
+          id: customer.id,
+          name: customer.name ?? customer.id,
+        }
+      : null;
+  }
+
+  private async normalizeIssueFetch(issueFetch: LinearFetch<any> | undefined) {
+    const issue = issueFetch ? await issueFetch : null;
+
+    return issue
+      ? {
+          id: issue.id,
+          identifier: issue.identifier ?? issue.id,
+          title: issue.title ?? '',
+        }
+      : null;
+  }
+
+  private async normalizeReleaseFetch(releaseFetch: LinearFetch<any> | undefined) {
+    const release = releaseFetch ? await releaseFetch : null;
+
+    return release
+      ? {
+          id: release.id,
+          name: release.name,
+          version: release.version ?? null,
+        }
+      : null;
+  }
+
+  private async normalizeCycleFetch(cycleFetch: LinearFetch<any> | undefined) {
+    const cycle = cycleFetch ? await cycleFetch : null;
+
+    return cycle
+      ? {
+          id: cycle.id,
+          name: cycle.name ?? null,
+          number: cycle.number ?? null,
+        }
+      : null;
+  }
+
   private normalizeSimpleUser(user: { id: string; name: string; email?: string | null; displayName?: string | null }) {
     return {
       id: user.id,
@@ -1208,9 +1553,16 @@ export class LinearService {
   }
 
   private async normalizeComment(comment: any) {
-    const user = comment.user ? await comment.user : null;
-    const issue = comment.issue ? await comment.issue : null;
-    const parent = comment.parent ? await comment.parent : null;
+    const [user, issue, project, initiative, projectUpdate, initiativeUpdate, parent] =
+      await Promise.all([
+        comment.user ? await comment.user : null,
+        this.normalizeIssueFetch(comment.issue),
+        this.normalizeProjectReference(comment.project),
+        this.normalizeInitiativeReference(comment.initiative),
+        this.normalizeProjectUpdateReference(comment.projectUpdate),
+        this.normalizeInitiativeUpdateReference(comment.initiativeUpdate),
+        comment.parent ? await comment.parent : null,
+      ]);
 
     return {
       id: comment.id,
@@ -1218,15 +1570,23 @@ export class LinearService {
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt ?? comment.createdAt,
       editedAt: comment.editedAt ?? null,
+      archivedAt: comment.archivedAt ?? null,
+      resolvedAt: comment.resolvedAt ?? null,
       quotedText: comment.quotedText ?? null,
+      documentContentId: comment.documentContentId ?? null,
+      initiativeId: comment.initiativeId ?? null,
+      initiativeUpdateId: comment.initiativeUpdateId ?? null,
+      issueId: comment.issueId ?? null,
+      parentId: comment.parentId ?? null,
+      projectId: comment.projectId ?? null,
+      projectUpdateId: comment.projectUpdateId ?? null,
+      resolvingCommentId: comment.resolvingCommentId ?? null,
       url: comment.url,
-      issue: issue
-        ? {
-            id: issue.id,
-            identifier: issue.identifier,
-            title: issue.title,
-          }
-        : null,
+      issue,
+      project,
+      initiative,
+      projectUpdate,
+      initiativeUpdate,
       parent: parent
         ? {
             id: parent.id,
@@ -1244,6 +1604,8 @@ export class LinearService {
   }
 
   private async normalizeTeam(team: any) {
+    const parent = team.parent ? await team.parent : null;
+
     return {
       id: team.id,
       name: team.name,
@@ -1252,6 +1614,14 @@ export class LinearService {
       color: team.color ?? null,
       icon: team.icon ?? null,
       private: team.private ?? false,
+      visibility: team.visibility ?? (team.private ? 'private' : 'public'),
+      parent: parent
+        ? {
+            id: parent.id,
+            name: parent.name,
+            key: parent.key,
+          }
+        : null,
       timezone: team.timezone ?? null,
       archivedAt: team.archivedAt ?? null,
     };
@@ -1291,6 +1661,107 @@ export class LinearService {
       completedScopeHistory: cycle.completedScopeHistory ?? [],
       completedIssueCountHistory: cycle.completedIssueCountHistory ?? [],
       issueCountHistory: cycle.issueCountHistory ?? [],
+    };
+  }
+
+  private normalizeCustomerStatus(status: any) {
+    return {
+      id: status.id,
+      name: status.name,
+      displayName: status.displayName ?? status.name,
+      type: status.type ?? null,
+      color: status.color ?? null,
+      description: status.description ?? null,
+      position: typeof status.position === 'number' ? status.position : null,
+      createdAt: status.createdAt ?? null,
+      updatedAt: status.updatedAt ?? null,
+      archivedAt: status.archivedAt ?? null,
+    };
+  }
+
+  private normalizeCustomerTier(tier: any) {
+    return {
+      id: tier.id,
+      name: tier.name,
+      displayName: tier.displayName ?? tier.name,
+      color: tier.color ?? null,
+      description: tier.description ?? null,
+      position: typeof tier.position === 'number' ? tier.position : null,
+      createdAt: tier.createdAt ?? null,
+      updatedAt: tier.updatedAt ?? null,
+      archivedAt: tier.archivedAt ?? null,
+    };
+  }
+
+  private async normalizeCustomer(customer: any) {
+    const [owner, status, tier] = await Promise.all([
+      customer.owner ? await customer.owner : null,
+      customer.status ? await customer.status : null,
+      customer.tier ? await customer.tier : null,
+    ]);
+
+    return {
+      id: customer.id,
+      name: customer.name,
+      slugId: customer.slugId ?? null,
+      domains: Array.isArray(customer.domains) ? customer.domains : [],
+      externalIds: Array.isArray(customer.externalIds) ? customer.externalIds : [],
+      logoUrl: customer.logoUrl ?? null,
+      mainSourceId: customer.mainSourceId ?? null,
+      revenue: typeof customer.revenue === 'number' ? customer.revenue : null,
+      size: typeof customer.size === 'number' ? customer.size : null,
+      slackChannelId: customer.slackChannelId ?? null,
+      approximateNeedCount:
+        typeof customer.approximateNeedCount === 'number' ? customer.approximateNeedCount : null,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt,
+      archivedAt: customer.archivedAt ?? null,
+      url: customer.url ?? null,
+      owner: owner ? this.normalizeSimpleUser(owner) : null,
+      status: status ? this.normalizeCustomerStatus(status) : null,
+      tier: tier ? this.normalizeCustomerTier(tier) : null,
+    };
+  }
+
+  private async normalizeCustomerNeed(need: any) {
+    const [customer, issue, originalIssue, project, creator] = await Promise.all([
+      this.normalizeCustomerReference(need.customer),
+      this.normalizeIssueFetch(need.issue),
+      this.normalizeIssueFetch(need.originalIssue),
+      this.normalizeProjectReference(need.project),
+      need.creator ? await need.creator : null,
+    ]);
+
+    return {
+      id: need.id,
+      body: need.body ?? null,
+      content: need.content ?? null,
+      priority: typeof need.priority === 'number' ? need.priority : null,
+      url: need.url ?? null,
+      attachmentId: need.attachmentId ?? null,
+      commentId: need.commentId ?? null,
+      customerId: need.customerId ?? customer?.id ?? null,
+      issueId: need.issueId ?? issue?.id ?? null,
+      originalIssueId: need.originalIssueId ?? originalIssue?.id ?? null,
+      projectId: need.projectId ?? project?.id ?? null,
+      createdAt: need.createdAt,
+      updatedAt: need.updatedAt,
+      archivedAt: need.archivedAt ?? null,
+      customer,
+      issue,
+      originalIssue,
+      project,
+      creator: creator ? this.normalizeSimpleUser(creator) : null,
+      projectAttachment: need.projectAttachment
+        ? {
+            id: need.projectAttachment.id,
+            title: need.projectAttachment.title ?? null,
+            subtitle: need.projectAttachment.subtitle ?? null,
+            source: need.projectAttachment.source ?? null,
+            sourceType: need.projectAttachment.sourceType ?? null,
+            url: need.projectAttachment.url ?? null,
+          }
+        : null,
     };
   }
 
@@ -1743,14 +2214,55 @@ export class LinearService {
     };
   }
 
+  private async normalizeProject(project: any) {
+    const teams = project.teams ? await project.teams() : { nodes: [] };
+    const lead = project.lead ? await project.lead : null;
+
+    return {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      content: project.content,
+      state: project.state,
+      trashed: project.trashed ?? null,
+      slackChannelId: project.slackChannelId ?? null,
+      microsoftTeamsChannelId: project.microsoftTeamsChannelId ?? null,
+      startDate: project.startDate ?? null,
+      targetDate: project.targetDate ?? null,
+      icon: project.icon ?? null,
+      color: project.color ?? null,
+      url: project.url ?? null,
+      lead: lead
+        ? {
+            id: lead.id,
+            name: lead.name,
+          }
+        : null,
+      teams: Array.isArray(teams.nodes)
+        ? teams.nodes.map((team: any) => ({
+            id: team.id,
+            name: team.name,
+          }))
+        : [],
+    };
+  }
+
   private buildDocumentFilter(args: {
     projectId?: string;
     initiativeId?: string;
+    teamId?: string;
+    issueId?: string;
+    releaseId?: string;
+    cycleId?: string;
     title?: string;
   }) {
     return this.compactObject({
       project: args.projectId ? { id: { eq: args.projectId } } : undefined,
       initiative: args.initiativeId ? { id: { eq: args.initiativeId } } : undefined,
+      team: args.teamId ? { id: { eq: args.teamId } } : undefined,
+      issue: args.issueId ? { id: { eq: args.issueId } } : undefined,
+      release: args.releaseId ? { id: { eq: args.releaseId } } : undefined,
+      cycle: args.cycleId ? { id: { eq: args.cycleId } } : undefined,
       title: this.nonEmptyString(args.title)
         ? { containsIgnoreCase: this.nonEmptyString(args.title) }
         : undefined,
@@ -1758,11 +2270,15 @@ export class LinearService {
   }
 
   private async normalizeDocument(document: LinearSdkDocument | any) {
-    const [creator, updatedBy, project, initiative, lastAppliedTemplate] = await Promise.all([
+    const [creator, updatedBy, project, initiative, team, issue, release, cycle, lastAppliedTemplate] = await Promise.all([
       this.normalizeUserReference(document.creator),
       this.normalizeUserReference(document.updatedBy),
       this.normalizeNamedReference(document.project),
       this.normalizeNamedReference(document.initiative),
+      this.normalizeNamedReference(document.team),
+      this.normalizeIssueFetch(document.issue),
+      this.normalizeReleaseFetch(document.release),
+      this.normalizeCycleFetch(document.cycle),
       this.normalizeNamedReference(document.lastAppliedTemplate),
     ]);
 
@@ -1785,6 +2301,11 @@ export class LinearService {
       updatedBy,
       project,
       initiative,
+      team,
+      issue,
+      release,
+      cycle,
+      resourceFolderId: document.resourceFolderId ?? null,
       lastAppliedTemplate,
     };
   }
@@ -1793,6 +2314,93 @@ export class LinearService {
     return {
       ...(await this.normalizeDocument(document)),
       metadata: document.metadata ?? null,
+    };
+  }
+
+  private async normalizeDocumentWithTeam(document: LinearSdkDocument | any, team: { id: string; name: string }) {
+    return {
+      ...(await this.normalizeDocument(document)),
+      team,
+    };
+  }
+
+  private async normalizeDocumentWithParent(
+    document: LinearSdkDocument | any,
+    parent:
+      | { type: 'initiative'; value: { id: string; name: string } }
+      | { type: 'issue'; value: { id: string; identifier: string; title: string } }
+      | { type: 'release'; value: { id: string; name: string; version?: string | null } }
+      | { type: 'cycle'; value: { id: string; name?: string | null; number?: number | null } },
+  ) {
+    return {
+      ...(await this.normalizeDocument(document)),
+      [parent.type]: parent.value,
+    };
+  }
+
+  private normalizePinnedResource(raw: Record<string, unknown>) {
+    const document = getFirstRecord(raw, ['document']);
+    const externalLink = getFirstRecord(raw, ['entityExternalLink']);
+    const section = getFirstRecord(raw, ['section']);
+
+    return {
+      id: getFirstString(raw, ['id']) ?? '',
+      type: document ? 'document' : externalLink ? 'externalLink' : 'unknown',
+      sortOrder: typeof raw.sortOrder === 'number' ? raw.sortOrder : 0,
+      createdAt: getFirstString(raw, ['createdAt']) ?? null,
+      updatedAt: getFirstString(raw, ['updatedAt']) ?? null,
+      section: section
+        ? {
+            id: getFirstString(section, ['id']) ?? '',
+            title: getFirstString(section, ['title']) ?? '',
+          }
+        : null,
+      document: document
+        ? {
+            id: getFirstString(document, ['id']) ?? '',
+            title: getFirstString(document, ['title']) ?? '',
+            url: getFirstString(document, ['url']) ?? null,
+            slugId: getFirstString(document, ['slugId']) ?? null,
+            icon: getFirstString(document, ['icon']) ?? null,
+            color: getFirstString(document, ['color']) ?? null,
+            archivedAt: getFirstString(document, ['archivedAt']) ?? null,
+          }
+        : null,
+      externalLink: externalLink
+        ? {
+            id: getFirstString(externalLink, ['id']) ?? '',
+            label: getFirstString(externalLink, ['label']) ?? '',
+            url: getFirstString(externalLink, ['url']) ?? '',
+            sortOrder: typeof externalLink.sortOrder === 'number' ? externalLink.sortOrder : 0,
+            archivedAt: getFirstString(externalLink, ['archivedAt']) ?? null,
+          }
+        : null,
+    };
+  }
+
+  private normalizeTeamResources(team: Record<string, unknown>) {
+    const resources = extractListItems(team.pinnedResources).map((resource) => this.normalizePinnedResource(resource));
+    const sections = extractListItems(team.resourceSections).map((section) => {
+      const sectionId = getFirstString(section, ['id']) ?? '';
+
+      return {
+        id: sectionId,
+        title: getFirstString(section, ['title']) ?? '',
+        sortOrder: typeof section.sortOrder === 'number' ? section.sortOrder : 0,
+        createdAt: getFirstString(section, ['createdAt']) ?? null,
+        updatedAt: getFirstString(section, ['updatedAt']) ?? null,
+        resources: resources.filter((resource) => resource.section?.id === sectionId),
+      };
+    });
+
+    return {
+      team: {
+        id: getFirstString(team, ['id']) ?? '',
+        name: getFirstString(team, ['name']) ?? '',
+        key: getFirstString(team, ['key']) ?? '',
+      },
+      sections,
+      unsectioned: resources.filter((resource) => !resource.section),
     };
   }
 
@@ -2796,6 +3404,7 @@ export class LinearService {
     timezone?: string;
     parentId?: string;
     private?: boolean;
+    visibility?: string;
   }) {
     const payload = await this.client.createTeam(this.compactObject({
       name: args.name,
@@ -2806,6 +3415,7 @@ export class LinearService {
       timezone: this.nonEmptyString(args.timezone),
       parentId: this.nonEmptyString(args.parentId),
       private: args.private,
+      visibility: this.nonEmptyString(args.visibility),
     }));
     if (!payload.success || !payload.team) {
       throw new Error('Failed to create team');
@@ -2824,6 +3434,7 @@ export class LinearService {
     timezone?: string;
     parentId?: string;
     private?: boolean;
+    visibility?: string;
   }) {
     const updateInput = this.compactObject({
       name: this.nonEmptyString(args.name),
@@ -2834,6 +3445,7 @@ export class LinearService {
       timezone: this.nonEmptyString(args.timezone),
       parentId: this.nonEmptyString(args.parentId),
       private: args.private,
+      visibility: this.nonEmptyString(args.visibility),
     });
     if (Object.keys(updateInput).length === 0) {
       throw new Error('At least one team field must be provided');
@@ -3016,24 +3628,7 @@ export class LinearService {
 
   async getProjects() {
     const projects = await this.client.projects();
-    return Promise.all(
-      projects.nodes.map(async (project) => {
-        // We need to fetch teams using the relationship
-        const teams = await project.teams();
-
-        return {
-          id: project.id,
-          name: project.name,
-          description: project.description,
-          content: project.content,
-          state: project.state,
-          teams: teams.nodes.map((team) => ({
-            id: team.id,
-            name: team.name,
-          })),
-        };
-      }),
-    );
+    return Promise.all(projects.nodes.map((project) => this.normalizeProject(project)));
   }
 
   async getProjectById(id: string) {
@@ -3042,20 +3637,7 @@ export class LinearService {
       throw new Error(`Project with ID ${id} not found`);
     }
 
-    const teams = await project.teams();
-
-    return {
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      content: project.content,
-      state: project.state,
-      url: project.url,
-      teams: teams.nodes.map((team) => ({
-        id: team.id,
-        name: team.name,
-      })),
-    };
+    return this.normalizeProject(project);
   }
 
   async getMilestones(args: MilestoneQueryArgs = {}) {
@@ -3154,6 +3736,159 @@ export class LinearService {
     );
 
     return await Promise.all(documents.nodes.map((document) => this.normalizeDocument(document)));
+  }
+
+  async getInitiativeDocuments(args: InitiativeDocumentListArgs) {
+    const initiative = await this.client.initiative(args.initiativeId);
+    if (!initiative) {
+      throw new Error(`Initiative with ID ${args.initiativeId} not found`);
+    }
+
+    const initiativeReference = { id: initiative.id, name: initiative.name };
+    const documents = await this.client.documents(
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.buildDocumentFilter({
+          initiativeId: args.initiativeId,
+          title: args.title,
+        }),
+      }),
+    );
+
+    return await Promise.all(
+      documents.nodes.map((document) =>
+        this.normalizeDocumentWithParent(document, { type: 'initiative', value: initiativeReference }),
+      ),
+    );
+  }
+
+  async getTeamDocuments(args: TeamDocumentListArgs) {
+    const team = await this.client.team(args.teamId);
+    if (!team) {
+      throw new Error(`Team with ID ${args.teamId} not found`);
+    }
+
+    const teamReference = { id: team.id, name: team.name };
+    const documents = await this.client.documents(
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.buildDocumentFilter({
+          teamId: args.teamId,
+          title: args.title,
+        }),
+      }),
+    );
+
+    return await Promise.all(
+      documents.nodes.map((document) => this.normalizeDocumentWithTeam(document, teamReference)),
+    );
+  }
+
+  async getIssueDocuments(args: IssueDocumentListArgs) {
+    const issue = await this.client.issue(args.issueId);
+    if (!issue) {
+      throw new Error(`Issue with ID ${args.issueId} not found`);
+    }
+
+    const issueReference = {
+      id: issue.id,
+      identifier: issue.identifier ?? issue.id,
+      title: issue.title ?? '',
+    };
+    const documents = await this.client.documents(
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.buildDocumentFilter({
+          issueId: issue.id,
+          title: args.title,
+        }),
+      }),
+    );
+
+    return await Promise.all(
+      documents.nodes.map((document) =>
+        this.normalizeDocumentWithParent(document, { type: 'issue', value: issueReference }),
+      ),
+    );
+  }
+
+  async getReleaseDocuments(args: ReleaseDocumentListArgs) {
+    const release = await this.client.release(args.releaseId);
+    if (!release) {
+      throw new Error(`Release with ID ${args.releaseId} not found`);
+    }
+
+    const releaseReference = {
+      id: release.id,
+      name: release.name,
+      version: (release as any).version ?? null,
+    };
+    const documents = await this.client.documents(
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.buildDocumentFilter({
+          releaseId: release.id,
+          title: args.title,
+        }),
+      }),
+    );
+
+    return await Promise.all(
+      documents.nodes.map((document) =>
+        this.normalizeDocumentWithParent(document, { type: 'release', value: releaseReference }),
+      ),
+    );
+  }
+
+  async getCycleDocuments(args: CycleDocumentListArgs) {
+    const cycle = await this.client.cycle(args.cycleId);
+    if (!cycle) {
+      throw new Error(`Cycle with ID ${args.cycleId} not found`);
+    }
+
+    const cycleReference = {
+      id: cycle.id,
+      name: cycle.name ?? null,
+      number: cycle.number ?? null,
+    };
+    const documents = await this.client.documents(
+      this.compactObject({
+        first: args.limit ?? 25,
+        includeArchived: args.includeArchived ?? false,
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter: this.buildDocumentFilter({
+          cycleId: cycle.id,
+          title: args.title,
+        }),
+      }),
+    );
+
+    return await Promise.all(
+      documents.nodes.map((document) =>
+        this.normalizeDocumentWithParent(document, { type: 'cycle', value: cycleReference }),
+      ),
+    );
+  }
+
+  async getTeamResources(teamId: string) {
+    const response = await this.requestGraphQL<{ team: Record<string, unknown> | null }>(
+      TEAM_RESOURCES_QUERY,
+      { id: teamId },
+    );
+
+    if (!response.team) {
+      throw new Error(`Team with ID ${teamId} not found`);
+    }
+
+    return this.normalizeTeamResources(response.team);
   }
 
   async searchDocuments(args: SearchDocumentsArgs) {
@@ -3371,6 +4106,7 @@ export class LinearService {
         actorIds: entry.actorIds ?? [],
         createdAt: entry.createdAt,
         contentDataSnapshotAt: entry.contentDataSnapshotAt,
+        metadata: entry.metadata ?? null,
       })),
     };
   }
@@ -3380,6 +4116,10 @@ export class LinearService {
     if (!title) {
       throw new Error('Document title is required');
     }
+    const team = args.teamId ? await this.client.team(args.teamId) : null;
+    if (args.teamId && !team) {
+      throw new Error(`Team with ID ${args.teamId} not found`);
+    }
 
     const createdDocument = await this.client.createDocument(this.compactObject({
       title,
@@ -3388,18 +4128,29 @@ export class LinearService {
       color: this.nonEmptyString(args.color),
       projectId: this.nonEmptyString(args.projectId),
       initiativeId: this.nonEmptyString(args.initiativeId),
+      teamId: this.nonEmptyString(args.teamId),
+      issueId: this.nonEmptyString(args.issueId),
+      releaseId: this.nonEmptyString(args.releaseId),
+      cycleId: this.nonEmptyString(args.cycleId),
+      resourceFolderId: this.nonEmptyString(args.resourceFolderId),
       lastAppliedTemplateId: this.nonEmptyString(args.lastAppliedTemplateId),
       sortOrder: args.sortOrder,
     }));
 
     if (createdDocument.success && createdDocument.document) {
-      return await this.normalizeDocument(await createdDocument.document);
+      const normalizedDocument = await this.normalizeDocument(await createdDocument.document);
+      return team ? { ...normalizedDocument, team: { id: team.id, name: team.name } } : normalizedDocument;
     }
 
     throw new Error('Failed to create document');
   }
 
   async updateDocument(args: DocumentUpdateArgs) {
+    const team = typeof args.teamId === 'string' ? await this.client.team(args.teamId) : null;
+    if (typeof args.teamId === 'string' && !team) {
+      throw new Error(`Team with ID ${args.teamId} not found`);
+    }
+
     const updateInput = this.compactObject({
       title: this.nonEmptyString(args.title),
       content: args.content,
@@ -3413,6 +4164,11 @@ export class LinearService {
             : undefined,
       projectId: this.nullableNonEmptyString(args.projectId),
       initiativeId: this.nullableNonEmptyString(args.initiativeId),
+      teamId: this.nullableNonEmptyString(args.teamId),
+      issueId: this.nullableNonEmptyString(args.issueId),
+      releaseId: this.nullableNonEmptyString(args.releaseId),
+      cycleId: this.nullableNonEmptyString(args.cycleId),
+      resourceFolderId: this.nullableNonEmptyString(args.resourceFolderId),
       lastAppliedTemplateId: this.nullableNonEmptyString(args.lastAppliedTemplateId),
       sortOrder: args.sortOrder,
       trashed: args.trashed,
@@ -3424,7 +4180,11 @@ export class LinearService {
 
     const updatedDocument = await this.client.updateDocument(args.id, updateInput);
     if (updatedDocument.success && updatedDocument.document) {
-      return await this.normalizeDocument(await updatedDocument.document);
+      const normalizedDocument = await this.normalizeDocument(await updatedDocument.document);
+      if (team) {
+        return { ...normalizedDocument, team: { id: team.id, name: team.name } };
+      }
+      return args.teamId === null ? { ...normalizedDocument, team: null } : normalizedDocument;
     }
 
     throw new Error('Failed to update document');
@@ -3901,6 +4661,9 @@ export class LinearService {
           stageId: this.nonEmptyString(args.stageId),
           startDate: this.nonEmptyString(args.startDate),
           targetDate: this.nonEmptyString(args.targetDate),
+          createdAt: this.nonEmptyString(args.createdAt),
+          startedAt: this.nonEmptyString(args.startedAt),
+          completedAt: this.nonEmptyString(args.completedAt),
         }),
       },
     );
@@ -3922,6 +4685,8 @@ export class LinearService {
       stageId: this.nonEmptyString(args.stageId),
       startDate: this.nonEmptyString(args.startDate),
       targetDate: this.nonEmptyString(args.targetDate),
+      startedAt: this.nonEmptyString(args.startedAt),
+      completedAt: this.nonEmptyString(args.completedAt),
       trashed: args.trashed,
     });
 
@@ -5097,22 +5862,338 @@ export class LinearService {
     };
   }
 
-  async createComment(args: { issueId: string; body: string; parentId?: string }) {
-    const createdComment = await this.client.createComment({
-      issueId: args.issueId,
-      body: args.body,
-      ...(this.nonEmptyString(args.parentId) ? { parentId: this.nonEmptyString(args.parentId) } : {}),
+  private buildCustomerFilter(args: CustomerListArgs) {
+    return this.compactObject({
+      name: this.nonEmptyString(args.name)
+        ? { containsIgnoreCase: this.nonEmptyString(args.name) }
+        : undefined,
+      domains: this.nonEmptyString(args.domain)
+        ? { some: { eqIgnoreCase: this.nonEmptyString(args.domain) } }
+        : undefined,
+      status: this.nonEmptyString(args.statusId)
+        ? { id: { eq: this.nonEmptyString(args.statusId) } }
+        : undefined,
+      tier: this.nonEmptyString(args.tierId)
+        ? { id: { eq: this.nonEmptyString(args.tierId) } }
+        : undefined,
+      owner: this.nonEmptyString(args.ownerId)
+        ? { id: { eq: this.nonEmptyString(args.ownerId) } }
+        : undefined,
+    });
+  }
+
+  private buildCustomerNeedFilter(args: CustomerNeedListArgs) {
+    return this.compactObject({
+      customer: this.nonEmptyString(args.customerId)
+        ? { id: { eq: this.nonEmptyString(args.customerId) } }
+        : undefined,
+      issue: this.nonEmptyString(args.issueId)
+        ? { id: { eq: this.nonEmptyString(args.issueId) } }
+        : undefined,
+      project: this.nonEmptyString(args.projectId)
+        ? { id: { eq: this.nonEmptyString(args.projectId) } }
+        : undefined,
+      priority: typeof args.priority === 'number' ? { eq: args.priority } : undefined,
+    });
+  }
+
+  private buildCustomerCreateInput(args: CustomerCreateArgs) {
+    return this.compactObject({
+      name: args.name,
+      domains: this.nonEmptyArray(args.domains),
+      externalIds: this.nonEmptyArray(args.externalIds),
+      logoUrl: this.nonEmptyString(args.logoUrl),
+      mainSourceId: this.nonEmptyString(args.mainSourceId),
+      ownerId: this.nonEmptyString(args.ownerId),
+      revenue: args.revenue,
+      size: args.size,
+      slackChannelId: this.nonEmptyString(args.slackChannelId),
+      statusId: this.nonEmptyString(args.statusId),
+      tierId: this.nonEmptyString(args.tierId),
+    });
+  }
+
+  private buildCustomerUpdateInput(args: CustomerUpdateArgs) {
+    return this.compactObject({
+      name: this.nonEmptyString(args.name),
+      domains: this.nonEmptyArray(args.domains),
+      externalIds: this.nonEmptyArray(args.externalIds),
+      logoUrl: this.nonEmptyString(args.logoUrl),
+      mainSourceId: this.nonEmptyString(args.mainSourceId),
+      ownerId: this.nonEmptyString(args.ownerId),
+      revenue: args.revenue,
+      size: args.size,
+      slackChannelId: this.nonEmptyString(args.slackChannelId),
+      statusId: this.nonEmptyString(args.statusId),
+      tierId: this.nonEmptyString(args.tierId),
+    });
+  }
+
+  private buildCustomerNeedCreateInput(args: CustomerNeedCreateArgs) {
+    return this.compactObject({
+      attachmentId: this.nonEmptyString(args.attachmentId),
+      attachmentUrl: this.nonEmptyString(args.attachmentUrl),
+      body: this.nonEmptyString(args.body),
+      commentId: this.nonEmptyString(args.commentId),
+      createdAt: this.nonEmptyString(args.createdAt) ? new Date(args.createdAt!) : undefined,
+      customerExternalId: this.nonEmptyString(args.customerExternalId),
+      customerId: this.nonEmptyString(args.customerId),
+      issueId: this.nonEmptyString(args.issueId),
+      priority: args.priority,
+      projectId: this.nonEmptyString(args.projectId),
+    });
+  }
+
+  private buildCustomerNeedUpdateInput(args: CustomerNeedUpdateArgs) {
+    return this.compactObject({
+      applyPriorityToRelatedNeeds: args.applyPriorityToRelatedNeeds,
+      attachmentUrl: this.nonEmptyString(args.attachmentUrl),
+      body: this.nonEmptyString(args.body),
+      customerExternalId: this.nonEmptyString(args.customerExternalId),
+      customerId: this.nonEmptyString(args.customerId),
+      issueId: this.nonEmptyString(args.issueId),
+      priority: args.priority,
+      projectId: this.nonEmptyString(args.projectId),
+    });
+  }
+
+  async getCustomers(args: CustomerListArgs = {}) {
+    const customers = await this.client.customers({
+      first: args.limit ?? 25,
+      includeArchived: args.includeArchived ?? false,
+      orderBy: this.normalizePaginationOrderBy(args.orderBy),
+      filter: this.buildCustomerFilter(args),
     });
 
+    return Promise.all(customers.nodes.map((customer) => this.normalizeCustomer(customer)));
+  }
+
+  async getCustomerById(id: string) {
+    const customer = await this.client.customer(id);
+    if (!customer) {
+      throw new Error(`Customer with ID ${id} not found`);
+    }
+
+    return this.normalizeCustomer(customer);
+  }
+
+  async createCustomer(args: CustomerCreateArgs) {
+    const payload = await this.client.createCustomer(this.buildCustomerCreateInput(args));
+    if (!payload.success || !payload.customer) {
+      throw new Error('Failed to create customer');
+    }
+
+    return this.normalizeCustomer(await payload.customer);
+  }
+
+  async updateCustomer(args: CustomerUpdateArgs) {
+    const updateInput = this.buildCustomerUpdateInput(args);
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one customer field must be provided');
+    }
+
+    const payload = await this.client.updateCustomer(args.id, updateInput);
+    if (!payload.success || !payload.customer) {
+      throw new Error(`Failed to update customer ${args.id}`);
+    }
+
+    return this.normalizeCustomer(await payload.customer);
+  }
+
+  async deleteCustomer(id: string) {
+    const payload = await this.client.deleteCustomer(id);
+    if (!payload.success) {
+      throw new Error(`Failed to delete customer ${id}`);
+    }
+
+    return { success: true, id: (payload as any).entityId ?? id };
+  }
+
+  async getCustomerNeeds(args: CustomerNeedListArgs = {}) {
+    const needs = await this.client.customerNeeds({
+      first: args.limit ?? 25,
+      includeArchived: args.includeArchived ?? false,
+      orderBy: this.normalizePaginationOrderBy(args.orderBy),
+      filter: this.buildCustomerNeedFilter(args),
+    });
+
+    return Promise.all(needs.nodes.map((need) => this.normalizeCustomerNeed(need)));
+  }
+
+  async getCustomerNeedById(id: string) {
+    const need = await this.client.customerNeed({ id });
+    if (!need) {
+      throw new Error(`Customer need with ID ${id} not found`);
+    }
+
+    return this.normalizeCustomerNeed(need);
+  }
+
+  async createCustomerNeed(args: CustomerNeedCreateArgs) {
+    const input = this.buildCustomerNeedCreateInput(args);
+    if (!input.issueId && !input.projectId) {
+      throw new Error('Customer needs require issueId or projectId');
+    }
+
+    const payload = await this.client.createCustomerNeed(input);
+    if (!payload.success || !payload.need) {
+      throw new Error('Failed to create customer need');
+    }
+
+    return this.normalizeCustomerNeed(await payload.need);
+  }
+
+  async createCustomerNeedFromAttachment(args: CustomerNeedFromAttachmentArgs) {
+    const payload = await this.client.customerNeedCreateFromAttachment(this.compactObject({
+      attachmentId: args.attachmentId,
+      customerId: this.nonEmptyString(args.customerId),
+      customerExternalId: this.nonEmptyString(args.customerExternalId),
+      priority: args.priority,
+    }));
+    if (!payload.success || !payload.need) {
+      throw new Error('Failed to create customer need from attachment');
+    }
+
+    return this.normalizeCustomerNeed(await payload.need);
+  }
+
+  async updateCustomerNeed(args: CustomerNeedUpdateArgs) {
+    const updateInput = this.buildCustomerNeedUpdateInput(args);
+    if (Object.keys(updateInput).length === 0) {
+      throw new Error('At least one customer need field must be provided');
+    }
+
+    const payload = await this.client.updateCustomerNeed(args.id, updateInput);
+    if (!payload.success || !payload.need) {
+      throw new Error(`Failed to update customer need ${args.id}`);
+    }
+
+    const need = await payload.need;
+    const normalizedNeed = await this.normalizeCustomerNeed(need);
+
+    return {
+      ...normalizedNeed,
+      updatedRelatedNeeds: Array.isArray((payload as any).updatedRelatedNeeds)
+        ? await Promise.all((payload as any).updatedRelatedNeeds.map((relatedNeed: any) =>
+            this.normalizeCustomerNeed(relatedNeed),
+          ))
+        : [],
+    };
+  }
+
+  async archiveCustomerNeed(id: string) {
+    const payload = await this.client.archiveCustomerNeed(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  async unarchiveCustomerNeed(id: string) {
+    const payload = await this.client.unarchiveCustomerNeed(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  async deleteCustomerNeed(id: string) {
+    const payload = await this.client.deleteCustomerNeed(id);
+    if (!payload.success) {
+      throw new Error(`Failed to delete customer need ${id}`);
+    }
+
+    return { success: true, id: (payload as any).entityId ?? id };
+  }
+
+  async getCustomerStatuses(args: { limit?: number; includeArchived?: boolean; orderBy?: string } = {}) {
+    const statuses = await this.client.customerStatuses({
+      first: args.limit ?? 25,
+      includeArchived: args.includeArchived ?? false,
+      orderBy: this.normalizePaginationOrderBy(args.orderBy),
+    });
+
+    return statuses.nodes.map((status) => this.normalizeCustomerStatus(status));
+  }
+
+  async getCustomerTiers(args: { limit?: number; includeArchived?: boolean; orderBy?: string } = {}) {
+    const tiers = await this.client.customerTiers({
+      first: args.limit ?? 25,
+      includeArchived: args.includeArchived ?? false,
+      orderBy: this.normalizePaginationOrderBy(args.orderBy),
+    });
+
+    return tiers.nodes.map((tier) => this.normalizeCustomerTier(tier));
+  }
+
+  private buildCommentTargetInput(args: CommentTargetArgs) {
+    return this.compactObject({
+      issueId: this.nonEmptyString(args.issueId),
+      projectId: this.nonEmptyString(args.projectId),
+      initiativeId: this.nonEmptyString(args.initiativeId),
+      projectUpdateId: this.nonEmptyString(args.projectUpdateId),
+      initiativeUpdateId: this.nonEmptyString(args.initiativeUpdateId),
+      documentContentId: this.nonEmptyString(args.documentContentId),
+      postId: this.nonEmptyString(args.postId),
+    });
+  }
+
+  private countCommentTargets(args: CommentTargetArgs) {
+    return Object.keys(this.buildCommentTargetInput(args)).length;
+  }
+
+  private async buildCommentFilter(args: CommentTargetArgs) {
+    const targetCount = this.countCommentTargets(args);
+    if (targetCount === 0) {
+      throw new Error('A comment target ID is required');
+    }
+    if (targetCount > 1) {
+      throw new Error('Only one comment target ID can be provided');
+    }
+
+    if (this.nonEmptyString(args.issueId)) {
+      const issue = await this.client.issue(args.issueId!);
+      if (!issue) {
+        throw new Error(`Issue with ID ${args.issueId} not found`);
+      }
+
+      return { issue: { id: { eq: issue.id } } };
+    }
+
+    if (this.nonEmptyString(args.projectId)) {
+      return { project: { id: { eq: args.projectId } } };
+    }
+    if (this.nonEmptyString(args.initiativeId)) {
+      return { initiative: { id: { eq: args.initiativeId } } };
+    }
+    if (this.nonEmptyString(args.projectUpdateId)) {
+      return { projectUpdate: { id: { eq: args.projectUpdateId } } };
+    }
+    if (this.nonEmptyString(args.initiativeUpdateId)) {
+      return { initiativeUpdate: { id: { eq: args.initiativeUpdateId } } };
+    }
+    if (this.nonEmptyString(args.documentContentId)) {
+      return { documentContent: { id: { eq: args.documentContentId } } };
+    }
+    return { post: { id: { eq: args.postId } } };
+  }
+
+  async createComment(args: CommentCreateArgs) {
+    const targetInput = this.buildCommentTargetInput(args);
+    const targetCount = Object.keys(targetInput).length;
+    const parentId = this.nonEmptyString(args.parentId);
+
+    if (!parentId && targetCount === 0) {
+      throw new Error('A comment target ID or parentId is required');
+    }
+    if (targetCount > 1) {
+      throw new Error('Only one comment target ID can be provided');
+    }
+
+    const createdComment = await this.client.createComment(this.compactObject({
+      ...targetInput,
+      body: args.body,
+      parentId,
+      quotedText: this.nonEmptyString(args.quotedText),
+      subscriberIds: this.nonEmptyArray(args.subscriberIds),
+    }));
+
     if (createdComment.success && createdComment.comment) {
-      const commentData = await createdComment.comment;
-      const parent = commentData.parent ? await commentData.parent : null;
-      return {
-        id: commentData.id,
-        body: commentData.body,
-        url: commentData.url,
-        parentId: parent?.id,
-      };
+      return this.normalizeComment(await createdComment.comment);
     } else {
       throw new Error('Failed to create comment');
     }
@@ -5138,13 +6219,14 @@ export class LinearService {
         ? args.memberIds
         : [args.memberIds]
       : undefined;
+    const statusId = await this.resolveProjectStatusId(args.state);
 
     const createdProject = await this.client.createProject({
       name: args.name,
       description: args.description,
       content: args.content,
       teamIds: teamIds,
-      state: args.state,
+      statusId,
       startDate: args.startDate ? new Date(args.startDate) : undefined,
       targetDate: args.targetDate ? new Date(args.targetDate) : undefined,
       leadId: args.leadId,
@@ -5156,26 +6238,7 @@ export class LinearService {
 
     if (createdProject.success && createdProject.project) {
       const projectData = await createdProject.project;
-      const leadData = projectData.lead ? await projectData.lead : null;
-
-      return {
-        id: projectData.id,
-        name: projectData.name,
-        description: projectData.description,
-        content: projectData.content,
-        state: projectData.state,
-        startDate: projectData.startDate,
-        targetDate: projectData.targetDate,
-        lead: leadData
-          ? {
-              id: leadData.id,
-              name: leadData.name,
-            }
-          : null,
-        icon: projectData.icon,
-        color: projectData.color,
-        url: projectData.url,
-      };
+      return this.normalizeProject(projectData);
     } else {
       throw new Error('Failed to create project');
     }
@@ -5472,6 +6535,15 @@ export class LinearService {
     }
   }
 
+  async deleteIssueRelation(id: string) {
+    const payload = await this.client.deleteIssueRelation(id);
+    if (!payload.success) {
+      throw new Error(`Failed to delete issue relation ${id}`);
+    }
+
+    return { success: true, id: (payload as any).entityId ?? id };
+  }
+
   /**
    * Archives an issue
    */
@@ -5599,7 +6671,7 @@ export class LinearService {
       // Create a new issue using the createIssue method of this service
       const newIssueData = await this.createIssue({
         title: `${issue.title} (Copy)`,
-        description: issue.description,
+        description: issue.description ?? undefined,
         teamId: teamData.id,
         // We'll have to implement getting these properties in a production environment
         // For now, we'll just create a basic copy with title and description
@@ -5678,42 +6750,23 @@ export class LinearService {
   }
 
   /**
-   * Get all comments for an issue
-   * @param issueId The ID or identifier of the issue
-   * @param limit Maximum number of comments to return
-   * @returns List of comments
+   * Get comments for an issue, project, initiative, update, or document content.
    */
-  async getComments(issueId: string, limit = 25) {
+  async getComments(argsOrIssueId: string | CommentListArgs, limit = 25) {
     try {
-      // Get the issue
-      const issue = await this.client.issue(issueId);
-      if (!issue) {
-        throw new Error(`Issue with ID ${issueId} not found`);
-      }
+      const args: CommentListArgs =
+        typeof argsOrIssueId === 'string'
+          ? { issueId: argsOrIssueId, limit }
+          : argsOrIssueId;
+      const filter = await this.buildCommentFilter(args);
+      const comments = await this.client.comments({
+        first: args.limit ?? 25,
+        after: this.nonEmptyString(args.cursor),
+        orderBy: this.normalizePaginationOrderBy(args.orderBy),
+        filter,
+      });
 
-      // Get comments
-      const comments = await issue.comments({ first: limit });
-
-      // Process comments
-      return Promise.all(
-        comments.nodes.map(async (comment) => {
-          const userData = comment.user ? await comment.user : null;
-
-          return {
-            id: comment.id,
-            body: comment.body,
-            createdAt: comment.createdAt,
-            user: userData
-              ? {
-                  id: userData.id,
-                  name: userData.name,
-                  displayName: userData.displayName,
-                }
-              : null,
-            url: comment.url,
-          };
-        }),
-      );
+      return Promise.all(comments.nodes.map((comment) => this.normalizeComment(comment)));
     } catch (error) {
       console.error('Error getting comments:', error);
       throw error;
@@ -5791,13 +6844,14 @@ export class LinearService {
           ? args.memberIds
           : [args.memberIds]
         : undefined;
+      const statusId = await this.resolveProjectStatusId(args.state);
 
       // Update the project using client.updateProject
       const updatePayload = await this.client.updateProject(args.id, {
         name: args.name,
         description: args.description,
         content: args.content,
-        state: args.state as any,
+        statusId,
         startDate: args.startDate ? new Date(args.startDate) : undefined,
         targetDate: args.targetDate ? new Date(args.targetDate) : undefined,
         leadId: args.leadId,
@@ -5810,27 +6864,8 @@ export class LinearService {
       if (updatePayload.success) {
         // Get the updated project data
         const updatedProject = await this.client.project(args.id);
-        const leadData = updatedProject.lead ? await updatedProject.lead : null;
 
-        // Return the updated project info
-        return {
-          id: updatedProject.id,
-          name: updatedProject.name,
-          description: updatedProject.description,
-          content: updatedProject.content,
-          state: updatedProject.state,
-          startDate: updatedProject.startDate,
-          targetDate: updatedProject.targetDate,
-          lead: leadData
-            ? {
-                id: leadData.id,
-                name: leadData.name,
-              }
-            : null,
-          icon: updatedProject.icon,
-          color: updatedProject.color,
-          url: updatedProject.url,
-        };
+        return this.normalizeProject(updatedProject);
       } else {
         throw new Error('Failed to update project');
       }
@@ -6497,6 +7532,40 @@ export class LinearService {
     }
   }
 
+  private async normalizeProjectUpdate(projectUpdate: any, projectOverride?: { id: string; name: string }) {
+    const [userData, projectData] = await Promise.all([
+      projectUpdate.user ? projectUpdate.user : null,
+      projectOverride ? Promise.resolve(projectOverride) : projectUpdate.project ? projectUpdate.project : null,
+    ]);
+
+    return {
+      id: projectUpdate.id,
+      body: projectUpdate.body,
+      health: projectUpdate.health,
+      diff: projectUpdate.diff ?? null,
+      diffMarkdown: projectUpdate.diffMarkdown ?? null,
+      isDiffHidden: projectUpdate.isDiffHidden ?? false,
+      url: projectUpdate.url ?? null,
+      slugId: projectUpdate.slugId ?? null,
+      archivedAt: projectUpdate.archivedAt ?? null,
+      editedAt: projectUpdate.editedAt ?? null,
+      createdAt: projectUpdate.createdAt,
+      updatedAt: projectUpdate.updatedAt,
+      user: userData
+        ? {
+            id: userData.id,
+            name: userData.name,
+          }
+        : null,
+      project: projectData
+        ? {
+            id: projectData.id,
+            name: projectData.name,
+          }
+        : null,
+    };
+  }
+
   /**
    * Creates a project update
    * @param args Project update parameters
@@ -6506,6 +7575,7 @@ export class LinearService {
     projectId: string;
     body: string;
     health?: 'onTrack' | 'atRisk' | 'offTrack';
+    isDiffHidden?: boolean;
   }) {
     try {
       // Get the project
@@ -6519,29 +7589,12 @@ export class LinearService {
         projectId: args.projectId,
         body: args.body,
         health: args.health as any,
+        isDiffHidden: args.isDiffHidden,
       });
 
       if (createPayload.success && createPayload.projectUpdate) {
         const updateData = await createPayload.projectUpdate;
-        const userData = updateData.user ? await updateData.user : null;
-
-        return {
-          id: updateData.id,
-          body: updateData.body,
-          health: updateData.health,
-          createdAt: updateData.createdAt,
-          updatedAt: updateData.updatedAt,
-          user: userData
-            ? {
-                id: userData.id,
-                name: userData.name,
-              }
-            : null,
-          project: {
-            id: project.id,
-            name: project.name,
-          },
-        };
+        return await this.normalizeProjectUpdate(updateData, { id: project.id, name: project.name });
       } else {
         throw new Error('Failed to create project update');
       }
@@ -6560,6 +7613,7 @@ export class LinearService {
     id: string;
     body?: string;
     health?: 'onTrack' | 'atRisk' | 'offTrack';
+    isDiffHidden?: boolean;
   }) {
     try {
       // Get the project update
@@ -6578,31 +7632,16 @@ export class LinearService {
       const updatePayload = await this.client.updateProjectUpdate(args.id, {
         body: args.body,
         health: args.health as any,
+        isDiffHidden: args.isDiffHidden,
       });
 
       if (updatePayload.success) {
         // Get the updated project update data
         const updatedProjectUpdate = await this.client.projectUpdate(args.id);
-        const userData = updatedProjectUpdate.user ? await updatedProjectUpdate.user : null;
-
-        // Return the updated project update info
-        return {
-          id: updatedProjectUpdate.id,
-          body: updatedProjectUpdate.body,
-          health: updatedProjectUpdate.health,
-          createdAt: updatedProjectUpdate.createdAt,
-          updatedAt: updatedProjectUpdate.updatedAt,
-          user: userData
-            ? {
-                id: userData.id,
-                name: userData.name,
-              }
-            : null,
-          project: {
-            id: projectData.id,
-            name: projectData.name,
-          },
-        };
+        return await this.normalizeProjectUpdate(updatedProjectUpdate, {
+          id: projectData.id,
+          name: projectData.name,
+        });
       } else {
         throw new Error('Failed to update project update');
       }
@@ -6610,6 +7649,15 @@ export class LinearService {
       console.error('Error updating project update:', error);
       throw error;
     }
+  }
+
+  async getProjectUpdateById(id: string) {
+    const projectUpdate = await this.client.projectUpdate(id);
+    if (!projectUpdate) {
+      throw new Error(`Project update with ID ${id} not found`);
+    }
+
+    return await this.normalizeProjectUpdate(projectUpdate);
   }
 
   /**
@@ -6638,32 +7686,168 @@ export class LinearService {
 
       // Process and return the updates
       return Promise.all(
-        updates.nodes.map(async (update) => {
-          const userData = update.user ? await update.user : null;
-
-          return {
-            id: update.id,
-            body: update.body,
-            health: update.health,
-            createdAt: update.createdAt,
-            updatedAt: update.updatedAt,
-            user: userData
-              ? {
-                  id: userData.id,
-                  name: userData.name,
-                }
-              : null,
-            project: {
-              id: project.id,
-              name: project.name,
-            },
-          };
-        }),
+        updates.nodes.map((update) =>
+          this.normalizeProjectUpdate(update, { id: project.id, name: project.name }),
+        ),
       );
     } catch (error) {
       console.error('Error getting project updates:', error);
       throw error;
     }
+  }
+
+  async archiveProjectUpdate(id: string) {
+    const payload = await this.client.archiveProjectUpdate(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  async unarchiveProjectUpdate(id: string) {
+    const payload = await this.client.unarchiveProjectUpdate(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  async deleteProjectUpdate(id: string) {
+    const payload = await this.client.deleteProjectUpdate(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  private async normalizeInitiativeUpdate(
+    initiativeUpdate: any,
+    initiativeOverride?: { id: string; name: string },
+  ) {
+    const [userData, initiativeData] = await Promise.all([
+      initiativeUpdate.user ? initiativeUpdate.user : null,
+      initiativeOverride
+        ? Promise.resolve(initiativeOverride)
+        : initiativeUpdate.initiative
+          ? initiativeUpdate.initiative
+          : null,
+    ]);
+
+    return {
+      id: initiativeUpdate.id,
+      body: initiativeUpdate.body,
+      health: initiativeUpdate.health,
+      diff: initiativeUpdate.diff ?? null,
+      diffMarkdown: initiativeUpdate.diffMarkdown ?? null,
+      isDiffHidden: initiativeUpdate.isDiffHidden ?? false,
+      isStale: initiativeUpdate.isStale ?? false,
+      commentCount: typeof initiativeUpdate.commentCount === 'number' ? initiativeUpdate.commentCount : null,
+      url: initiativeUpdate.url ?? null,
+      slugId: initiativeUpdate.slugId ?? null,
+      archivedAt: initiativeUpdate.archivedAt ?? null,
+      editedAt: initiativeUpdate.editedAt ?? null,
+      createdAt: initiativeUpdate.createdAt,
+      updatedAt: initiativeUpdate.updatedAt,
+      user: userData
+        ? {
+            id: userData.id,
+            name: userData.name,
+          }
+        : null,
+      initiative: initiativeData
+        ? {
+            id: initiativeData.id,
+            name: initiativeData.name,
+          }
+        : null,
+    };
+  }
+
+  async createInitiativeUpdate(args: {
+    initiativeId: string;
+    body: string;
+    health?: 'onTrack' | 'atRisk' | 'offTrack';
+    isDiffHidden?: boolean;
+  }) {
+    const initiative = await this.client.initiative(args.initiativeId);
+    if (!initiative) {
+      throw new Error(`Initiative with ID ${args.initiativeId} not found`);
+    }
+
+    const createPayload = await this.client.createInitiativeUpdate({
+      initiativeId: args.initiativeId,
+      body: args.body,
+      health: args.health as any,
+      isDiffHidden: args.isDiffHidden,
+    });
+
+    if (!createPayload.success || !createPayload.initiativeUpdate) {
+      throw new Error('Failed to create initiative update');
+    }
+
+    return this.normalizeInitiativeUpdate(await createPayload.initiativeUpdate, {
+      id: initiative.id,
+      name: initiative.name,
+    });
+  }
+
+  async updateInitiativeUpdate(args: {
+    id: string;
+    body?: string;
+    health?: 'onTrack' | 'atRisk' | 'offTrack';
+    isDiffHidden?: boolean;
+  }) {
+    const initiativeUpdate = await this.client.initiativeUpdate(args.id);
+    if (!initiativeUpdate) {
+      throw new Error(`Initiative update with ID ${args.id} not found`);
+    }
+
+    const updatePayload = await this.client.updateInitiativeUpdate(args.id, {
+      body: args.body,
+      health: args.health as any,
+      isDiffHidden: args.isDiffHidden,
+    });
+
+    if (!updatePayload.success) {
+      throw new Error(`Failed to update initiative update ${args.id}`);
+    }
+
+    const updatedInitiativeUpdate = updatePayload.initiativeUpdate
+      ? await updatePayload.initiativeUpdate
+      : await this.client.initiativeUpdate(args.id);
+    return this.normalizeInitiativeUpdate(updatedInitiativeUpdate);
+  }
+
+  async getInitiativeUpdateById(id: string) {
+    const initiativeUpdate = await this.client.initiativeUpdate(id);
+    if (!initiativeUpdate) {
+      throw new Error(`Initiative update with ID ${id} not found`);
+    }
+
+    return this.normalizeInitiativeUpdate(initiativeUpdate);
+  }
+
+  async getInitiativeUpdates(initiativeId: string, limit = 25) {
+    const initiative = await this.client.initiative(initiativeId);
+    if (!initiative) {
+      throw new Error(`Initiative with ID ${initiativeId} not found`);
+    }
+
+    const updates = await this.client.initiativeUpdates({
+      first: limit,
+      filter: {
+        initiative: {
+          id: { eq: initiativeId },
+        },
+      },
+    });
+
+    return Promise.all(
+      updates.nodes.map((update) =>
+        this.normalizeInitiativeUpdate(update, { id: initiative.id, name: initiative.name }),
+      ),
+    );
+  }
+
+  async archiveInitiativeUpdate(id: string) {
+    const payload = await this.client.archiveInitiativeUpdate(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
+  }
+
+  async unarchiveInitiativeUpdate(id: string) {
+    const payload = await this.client.unarchiveInitiativeUpdate(id);
+    return { success: payload.success, id: (payload as any).entityId ?? id };
   }
 
   /**

@@ -14,6 +14,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCPToolDefinition } from './types.js';
 import { convertToolDefinition } from './tool-schema.js';
+import { validateToolArguments } from './tools/argument-validation.js';
 import pkg from '../package.json' with { type: 'json' };
 
 /**
@@ -91,6 +92,8 @@ export async function runMCPServer(config: MCPServerConfig) {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     try {
       const { name, arguments: args = null } = request.params;
+
+      validateToolArguments(config.tools, name, args);
 
       // Call the handler
       const result = await config.handleRequest({ name, args });
