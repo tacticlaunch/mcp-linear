@@ -9,6 +9,13 @@ const criticalToolNames = [
   'linear_updateMilestone',
   'linear_updateSavedView',
   'linear_removeFromFavorites',
+  'linear_generateOAuthApplicationSetup',
+  'linear_generateOAuthAuthorizationUrl',
+  'linear_createOAuthClientCredentialsToken',
+  'linear_createManagedOAuthApplication',
+  'linear_getWebhookById',
+  'linear_updateWebhook',
+  'linear_rotateWebhookSecret',
 ];
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -46,6 +53,11 @@ async function main() {
       expectedToolNames,
       `MCP server advertised an unexpected tool set. Expected ${expectedToolNames.length} tools, got ${actualToolNames.length}.`,
     );
+    assert.equal(
+      new Set(actualToolNames).size,
+      actualToolNames.length,
+      'MCP server advertised duplicate tool names.',
+    );
 
     for (const tool of tools) {
       assert.equal(
@@ -65,6 +77,42 @@ async function main() {
     for (const toolName of criticalToolNames) {
       assert.ok(actualToolNames.includes(toolName), `Expected tool ${toolName} to be registered.`);
     }
+
+    const setupResult = await client.callTool({
+      name: 'linear_generateOAuthApplicationSetup',
+      arguments: {
+        name: 'MCP smoke agent',
+        developer: 'Tactic Launch',
+        developerUrl: 'https://example.com/linear',
+        redirectUris: ['https://example.com/oauth/callback'],
+        grantTypes: ['authorization_code', 'client_credentials'],
+      },
+    });
+    assert.equal(setupResult.isError, false, 'OAuth application setup generator should run without Linear I/O.');
+    const setupPayload = JSON.parse(setupResult.content[0].text);
+    assert.equal(setupPayload.requiresUserConfirmation, true);
+    assert.ok(setupPayload.creationUrl.startsWith('https://linear.app/settings/api/applications/new?'));
+
+    const authorizationResult = await client.callTool({
+      name: 'linear_generateOAuthAuthorizationUrl',
+      arguments: {
+        clientId: 'mcp-smoke-client',
+        redirectUri: 'https://example.com/oauth/callback',
+        scopes: ['issues:create'],
+        actor: 'app',
+        state: 'mcp-smoke-state',
+      },
+    });
+    assert.equal(authorizationResult.isError, false, 'OAuth authorization URL generator should run without Linear I/O.');
+    const authorizationPayload = JSON.parse(authorizationResult.content[0].text);
+    assert.deepEqual(authorizationPayload.scopes, ['read', 'issues:create']);
+
+    const rejectedSecretRotation = await client.callTool({
+      name: 'linear_rotateWebhookSecret',
+      arguments: { id: 'webhook-1', confirmSecretExposure: false },
+    });
+    assert.equal(rejectedSecretRotation.isError, true, 'Secret rotation must require explicit exposure acknowledgement.');
+    assert.ok(rejectedSecretRotation.content[0].text.includes('Invalid arguments for rotateWebhookSecret'));
 
     const { resources } = await client.listResources();
     const resourceUris = resources.map((resource) => resource.uri);

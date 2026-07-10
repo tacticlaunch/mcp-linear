@@ -110,8 +110,11 @@ import {
 } from './document-handlers.js';
 import { handleGetRateLimitStatus, handleGetServerStatus } from './server-handlers.js';
 import {
+  handleGetWebhookById,
   handleGetWebhooks,
   handleCreateWebhook,
+  handleUpdateWebhook,
+  handleRotateWebhookSecret,
   handleDeleteWebhook,
   handleGetAttachments,
   handleAddAttachment,
@@ -128,6 +131,18 @@ import {
   handleGetUserAuditEvents,
   handleGetIntegrations,
 } from './ops-handlers.js';
+import {
+  handleArchiveManagedOAuthApplication,
+  handleCreateManagedOAuthApplication,
+  handleCreateOAuthClientCredentialsToken,
+  handleGenerateOAuthApplicationSetup,
+  handleGenerateOAuthAuthorizationUrl,
+  handleGetManagedOAuthApplicationById,
+  handleGetManagedOAuthApplications,
+  handleRotateManagedOAuthApplicationSecret,
+  handleRotateManagedOAuthApplicationWebhookSecret,
+  handleUpdateManagedOAuthApplication,
+} from './oauth-handlers.js';
 import {
   handleAddToFavorites,
   handleCreateSavedView,
@@ -236,9 +251,25 @@ export function registerToolHandlers(
     linear_getRateLimitStatus: handleGetRateLimitStatus(options.getRateLimitStatus),
     linear_getServerStatus: handleGetServerStatus(options.getServerStatus),
 
+    // OAuth application tools
+    linear_generateOAuthApplicationSetup: handleGenerateOAuthApplicationSetup(linearService),
+    linear_generateOAuthAuthorizationUrl: handleGenerateOAuthAuthorizationUrl(linearService),
+    linear_createOAuthClientCredentialsToken: handleCreateOAuthClientCredentialsToken(linearService),
+    linear_getManagedOAuthApplications: handleGetManagedOAuthApplications(linearService),
+    linear_getManagedOAuthApplicationById: handleGetManagedOAuthApplicationById(linearService),
+    linear_createManagedOAuthApplication: handleCreateManagedOAuthApplication(linearService),
+    linear_updateManagedOAuthApplication: handleUpdateManagedOAuthApplication(linearService),
+    linear_archiveManagedOAuthApplication: handleArchiveManagedOAuthApplication(linearService),
+    linear_rotateManagedOAuthApplicationSecret: handleRotateManagedOAuthApplicationSecret(linearService),
+    linear_rotateManagedOAuthApplicationWebhookSecret:
+      handleRotateManagedOAuthApplicationWebhookSecret(linearService),
+
     // Ops tools
+    linear_getWebhookById: handleGetWebhookById(linearService),
     linear_getWebhooks: handleGetWebhooks(linearService),
     linear_createWebhook: handleCreateWebhook(linearService),
+    linear_updateWebhook: handleUpdateWebhook(linearService),
+    linear_rotateWebhookSecret: handleRotateWebhookSecret(linearService),
     linear_deleteWebhook: handleDeleteWebhook(linearService),
     linear_getAttachments: handleGetAttachments(linearService),
     linear_addAttachment: handleAddAttachment(linearService),
@@ -574,8 +605,21 @@ export {
   // Server handlers
   handleGetRateLimitStatus,
   handleGetServerStatus,
+  handleGenerateOAuthApplicationSetup,
+  handleGenerateOAuthAuthorizationUrl,
+  handleCreateOAuthClientCredentialsToken,
+  handleGetManagedOAuthApplications,
+  handleGetManagedOAuthApplicationById,
+  handleCreateManagedOAuthApplication,
+  handleUpdateManagedOAuthApplication,
+  handleArchiveManagedOAuthApplication,
+  handleRotateManagedOAuthApplicationSecret,
+  handleRotateManagedOAuthApplicationWebhookSecret,
+  handleGetWebhookById,
   handleGetWebhooks,
   handleCreateWebhook,
+  handleUpdateWebhook,
+  handleRotateWebhookSecret,
   handleDeleteWebhook,
   handleGetAttachments,
   handleAddAttachment,

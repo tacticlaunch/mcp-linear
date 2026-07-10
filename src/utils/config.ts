@@ -46,6 +46,43 @@ export function getLinearApiToken(): string | undefined {
   return tokenFromArgs || tokenFromEnv;
 }
 
+export type LinearAuthConfig =
+  | { type: 'oauth'; token: string }
+  | { type: 'apiKey'; token: string };
+
+/**
+ * Resolve both supported Linear authentication modes.
+ *
+ * Explicit CLI credentials take precedence over environment variables. Within
+ * each source, OAuth is preferred because managed OAuth application operations
+ * must be performed by an OAuth application identity. Legacy API-key flags and
+ * environment variables retain their existing behavior.
+ */
+export function getLinearAuthConfig(): LinearAuthConfig | undefined {
+  const oauthTokenFromArgs = getCommandLineArg('--oauth-token');
+  if (oauthTokenFromArgs) {
+    return { type: 'oauth', token: oauthTokenFromArgs };
+  }
+
+  const apiKeyFromArgs = getCommandLineArg('--token');
+  if (apiKeyFromArgs) {
+    return { type: 'apiKey', token: apiKeyFromArgs };
+  }
+
+  if (process.env.LINEAR_OAUTH_ACCESS_TOKEN) {
+    return { type: 'oauth', token: process.env.LINEAR_OAUTH_ACCESS_TOKEN };
+  }
+
+  const apiKeyFromEnv = process.env.LINEAR_API_TOKEN || process.env.LINEAR_API_KEY;
+  if (apiKeyFromEnv) {
+    return { type: 'apiKey', token: apiKeyFromEnv };
+  }
+
+  // Preserve the existing missing-token diagnostics without printing credential values.
+  getLinearApiToken();
+  return undefined;
+}
+
 export function isDebugLoggingEnabled(): boolean {
   return process.env.MCP_LINEAR_DEBUG === '1' || process.env.MCP_LINEAR_DEBUG === 'true';
 }

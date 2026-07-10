@@ -316,13 +316,47 @@ Linear calls these "saved views" in the product UI. The GraphQL API and SDK expo
 
 ### Webhook and Attachment Tools
 
-| Tool Name               | Description                             | Status         |
-| ----------------------- | --------------------------------------- | -------------- |
-| `linear_getWebhooks`    | Get a list of webhooks                  | ✅ Implemented |
-| `linear_createWebhook`  | Create a webhook for integration events | ✅ Implemented |
-| `linear_deleteWebhook`  | Delete a webhook                        | ✅ Implemented |
-| `linear_getAttachments` | Get attachments for an issue            | ✅ Implemented |
-| `linear_addAttachment`  | Add an attachment to an issue           | ✅ Implemented |
+| Tool Name                   | Description                                      | Status         |
+| --------------------------- | ------------------------------------------------ | -------------- |
+| `linear_getWebhooks`        | Get a list of workspace webhooks                 | ✅ Implemented |
+| `linear_getWebhookById`     | Get one workspace webhook                        | ✅ Implemented |
+| `linear_createWebhook`      | Create a workspace webhook                       | ✅ Implemented |
+| `linear_updateWebhook`      | Update a workspace webhook                       | ✅ Implemented |
+| `linear_rotateWebhookSecret` | Rotate and return a new webhook signing secret  | ✅ Implemented |
+| `linear_deleteWebhook`      | Delete a workspace webhook                       | ✅ Implemented |
+| `linear_getAttachments`     | Get attachments for an issue                     | ✅ Implemented |
+| `linear_addAttachment`      | Add an attachment to an issue                     | ✅ Implemented |
+
+Workspace webhooks are separate from the installation webhook configured on an OAuth application. Workspace webhook reads and mutations require a workspace administrator or an OAuth token with Linear's `admin` scope. Secret rotation returns the replacement secret once and invalidates the previous signing secret immediately; callers that let Linear generate a secret during creation can rotate it before enabling deliveries to capture a known value securely.
+
+Webhook destinations must be publicly reachable HTTPS URLs. Runtime validation rejects embedded URL credentials and obvious loopback, private-network, link-local, and local-hostname destinations.
+
+### OAuth Application Tools
+
+| Tool Name                                               | Description                                                                  | Status         |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------- |
+| `linear_generateOAuthApplicationSetup`                  | Generate an official manifest and pre-filled setup URL; a human confirms it | ✅ Implemented |
+| `linear_generateOAuthAuthorizationUrl`                  | Generate a validated OAuth authorization URL and scope request              | ✅ Implemented |
+| `linear_createOAuthClientCredentialsToken`              | Issue a scoped app-actor token for server-to-server pipelines               | ✅ Implemented |
+| `linear_getManagedOAuthApplications`                    | List child OAuth apps owned by the calling OAuth application                | ✅ Implemented |
+| `linear_getManagedOAuthApplicationById`                 | Get one child OAuth app owned by the calling OAuth application              | ✅ Implemented |
+| `linear_createManagedOAuthApplication`                  | Create a child OAuth app and return its one-time secrets                    | ✅ Implemented |
+| `linear_updateManagedOAuthApplication`                  | Update a child OAuth app                                                     | ✅ Implemented |
+| `linear_archiveManagedOAuthApplication`                 | Archive a child OAuth app                                                    | ✅ Implemented |
+| `linear_rotateManagedOAuthApplicationSecret`            | Rotate and return a child app's client secret                               | ✅ Implemented |
+| `linear_rotateManagedOAuthApplicationWebhookSecret`     | Rotate and return a child app's installation-webhook secret                 | ✅ Implemented |
+
+Linear exposes managed OAuth application lifecycle operations as an alpha GraphQL surface and does not yet include first-class methods for them in `@linear/sdk`; this server therefore uses minimal raw GraphQL for that slice. The operations only manage applications created by the calling OAuth application. Configure `LINEAR_OAUTH_ACCESS_TOKEN` or `--oauth-token` with an eligible managing application's access token; a personal API key has no calling OAuth application identity and cannot use these operations.
+
+One server process uses one Linear credential. When the managing app uses `actor=app` (which cannot receive `admin`), use separate MCP server entries for managed-child-app operations and admin-scoped workspace webhooks, or use an eligible user-actor OAuth token with `admin` for the webhook entry.
+
+For the common API-key workflow, `linear_generateOAuthApplicationSetup` does not claim to create anything. It returns a manifest plus Linear's official pre-filled creation URL, where a workspace administrator reviews and confirms the app. The manifest supports `authorization_code` and `client_credentials` grants and OAuth installation webhooks.
+
+Scopes are grants requested through `/oauth/authorize` or `/oauth/token`, not fields stored on an OAuth application. `linear_generateOAuthAuthorizationUrl` validates Linear's current user and app-actor scopes and rejects the unsupported `actor=app` plus `admin` combination. `linear_createOAuthClientCredentialsToken` completes the non-interactive pipeline flow by issuing an app-actor token directly from a client ID and secret.
+
+Client-credentials tokens normally last 30 days and do not include refresh tokens. Linear allows multiple active tokens only when they share the same scope set; requesting a different scope set revokes existing app-actor tokens. Token issuance therefore requires explicit acknowledgement of both secret exposure and scope-change risk. See Linear's [OAuth guide](https://linear.app/developers/oauth-2-0-authentication), [agent scopes](https://linear.app/developers/agents), and [manifest format](https://linear.app/developers/oauth-app-manifests).
+
+All operations that return a newly generated secret require `confirmSecretExposure: true`. Client secrets and signing secrets are one-time values and should be transferred directly to a secret manager.
 
 ### Notification and Session Tools
 
@@ -437,7 +471,7 @@ Bulk import/export is feasible, but it does not map cleanly to first-class SDK b
 
 These are directly supported by the current SDK and fit the repo well.
 
-Webhooks, attachment reads, and attachment creation are now covered.
+The workspace webhook lifecycle, attachment reads, and attachment creation are now covered.
 
 ### Integrations
 
@@ -502,7 +536,7 @@ Rich reporting support appears thin in the current SDK beyond export/report help
 
 ### Sessions and Authentication
 
-Session and audit reads are a better fit for this repo than broader API-key or OAuth-client admin flows.
+Session management and managed OAuth application workflows are covered. Personal API-key creation remains a Linear settings operation and is intentionally not exposed as an MCP tool.
 
 | Tool Name                        | Description                              | Priority | Status     |
 | -------------------------------- | ---------------------------------------- | -------- | ---------- |

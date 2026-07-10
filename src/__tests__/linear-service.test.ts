@@ -2692,7 +2692,7 @@ describe('LinearService future backlog batch coverage', () => {
     } as never);
 
     expect((await service.getWebhooks({ limit: 10 })).length).toBe(1);
-    expect((await service.createWebhook({ url: 'https://example.com', resourceTypes: ['Issue'] })).id).toBe('webhook-1');
+    expect((await service.createWebhook({ url: 'https://example.com', resourceTypes: ['Issue'], allPublicTeams: true })).id).toBe('webhook-1');
     expect(await service.deleteWebhook('webhook-1')).toEqual({ success: true, id: 'webhook-1' });
     expect((await service.getAttachments({ issueId: 'issue-1', limit: 10 })).length).toBe(1);
     expect((await service.addAttachment({ issueId: 'issue-1', title: 'Spec', url: 'https://example.com/spec' })).id).toBe('attachment-1');

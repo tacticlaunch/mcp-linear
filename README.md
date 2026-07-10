@@ -20,7 +20,9 @@ MCP Linear bridges AI assistants and Linear by implementing the MCP protocol. Wi
 - Retrieve issues, projects, teams, cycles, milestones, roadmaps, customers, customer needs, and workspace/project/initiative/team/issue/release/cycle documents
 - Create and update issues, change status, assign, and comment
 - Manage projects, full diff-aware project and initiative update lifecycles, milestones, roadmaps, saved views, and favorites
-- Work with templates, custom fields, webhooks, and attachments
+- Create and manage workspace webhooks, including updates and signing-secret rotation
+- Prepare OAuth app manifests and authorization URLs, issue scoped client-credentials tokens, or manage child OAuth apps when authenticated as a managing OAuth application
+- Work with templates, custom fields, and attachments
 - Work with customer records, customer statuses/tiers, and customer needs linked to issues or projects
 - Read notifications, subscriptions, sessions, audits, and integrations without leaving MCP
 - Inspect rate-limit and server health before running heavy planning sessions
@@ -50,10 +52,15 @@ Once connected, you can use prompts like:
 - "Get the latest project update diff and archive an outdated update"
 - "Show customer needs for this project and mark the important ones"
 - "Create an initiative update and hide the generated diff from the update body"
+- "Prepare a private OAuth app for my GitHub issue pipeline with client credentials enabled"
+- "Issue a narrowly scoped client-credentials token for that GitHub pipeline"
+- "Create a webhook for Issue and Comment events, then rotate its signing secret"
 
 ## Installation
 
-### Getting your Linear API token
+### Authentication
+
+#### Personal API key (default)
 
 1. Log in to your Linear account at [linear.app](https://linear.app)
 2. Click on your organization avatar (top-left corner)
@@ -62,6 +69,29 @@ Once connected, you can use prompts like:
 5. Under **Personal API Keys** click **New API Key**
 6. Give your key a name (e.g., `MCP Linear Integration`)
 7. Copy the generated API token and store it securely — you won't be able to see it again
+
+Personal API keys support the normal Linear and workspace-webhook tools. They cannot call Linear's alpha managed-child-OAuth-application API because that API requires the caller itself to be an OAuth application. With a personal API key, `linear_generateOAuthApplicationSetup` still prepares an official manifest and pre-filled Linear setup URL for an administrator to confirm.
+
+#### OAuth access token (managed OAuth applications)
+
+To let MCP actually create and manage child OAuth applications, authenticate it with an access token belonging to a Linear OAuth application that is eligible to manage those child applications:
+
+```bash
+export LINEAR_OAUTH_ACCESS_TOKEN=YOUR_OAUTH_ACCESS_TOKEN
+mcp-linear
+```
+
+Or pass `--oauth-token YOUR_OAUTH_ACCESS_TOKEN`. Explicit command-line credentials take precedence over environment variables; when both environment credential types are present, OAuth authentication is selected. See Linear's [OAuth documentation](https://linear.app/developers/oauth-2-0-authentication) and [OAuth application manifests](https://linear.app/developers/oauth-app-manifests).
+
+Each MCP server process uses one Linear credential. If the managing app token uses `actor=app` (which cannot receive `admin`) and you also need admin-scoped workspace-webhook tools, configure two MCP server entries: one with the managing OAuth token for child-app operations and one with a workspace administrator's personal API key for workspace webhooks. A user-actor OAuth token carrying `admin` can cover the webhook side instead.
+
+OAuth scopes are selected when an authorization URL or client-credentials token is requested; they are not mutable fields on an OAuth application. The MCP validates current Linear scopes, prepares authorization URLs, and can issue app-actor tokens with `linear_createOAuthClientCredentialsToken`. For GitHub-hosted pipelines, enable the `client_credentials` grant and request the narrowest useful scope, such as `issues:create`.
+
+Client-credentials tokens normally expire after 30 days and have no refresh token. Linear permits multiple active tokens only while they use the same scope set; requesting a different scope set revokes the application's existing app-actor tokens. The token tool therefore requires both `confirmSecretExposure: true` and `confirmScopeChangeRisk: true`.
+
+Creating an OAuth app and rotating OAuth or webhook secrets returns one-time secret material through MCP. Those tools require `confirmSecretExposure: true`; move returned values directly into a secret manager such as GitHub Actions secrets and do not paste them into source control or logs.
+
+Webhook URLs must be publicly reachable HTTPS endpoints. Validation rejects credentials in URLs and obvious loopback, private-network, link-local, and local-hostname destinations.
 
 ### Installing via [add-mcp](https://github.com/neondatabase/add-mcp) (Recommended)
 
@@ -102,9 +132,9 @@ Add the following to your MCP settings file:
 
 Prerequisites:
 
-- Node.js (v18+)
+- Node.js (v20+)
 - NPM or Yarn
-- Linear API token
+- Linear personal API key or OAuth access token
 
 ```bash
 # Install globally
@@ -123,6 +153,12 @@ Run the server with your Linear API token:
 
 ```bash
 mcp-linear --token YOUR_LINEAR_API_TOKEN
+```
+
+Or with a managing OAuth application's access token:
+
+```bash
+mcp-linear --oauth-token YOUR_OAUTH_ACCESS_TOKEN
 ```
 
 Or set the token in your environment and run without arguments:

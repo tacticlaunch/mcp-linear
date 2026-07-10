@@ -11,7 +11,7 @@ import { LinearService } from './services/linear-service.js';
 import { allToolDefinitions } from './tools/definitions/index.js';
 import { registerToolHandlers } from './tools/handlers/index.js';
 import { getLinearRateLimitSnapshot, installLinearRateLimitHandling } from './utils/linear-rate-limit.js';
-import { getLinearApiToken, logInfo, logError, isDebugLoggingEnabled } from './utils/config.js';
+import { getLinearAuthConfig, logInfo, logError, isDebugLoggingEnabled } from './utils/config.js';
 import pkg from '../package.json' with { type: 'json' }; // Import package.json to access version
 
 /**
@@ -22,19 +22,23 @@ async function runServer() {
     // Log package version
     logInfo(`MCP Linear version: ${pkg.version}`);
 
-    // Get Linear API token
-    const linearApiToken = getLinearApiToken();
+    // Resolve the configured Linear authentication mode.
+    const linearAuth = getLinearAuthConfig();
 
-    if (!linearApiToken) {
+    if (!linearAuth) {
       throw new Error(
-        'Linear API token not found. Please provide it via --token command line argument or LINEAR_API_TOKEN environment variable.',
+        'Linear credentials not found. Provide an OAuth access token via --oauth-token or LINEAR_OAUTH_ACCESS_TOKEN, or an API key via --token, LINEAR_API_TOKEN, or LINEAR_API_KEY.',
       );
     }
 
     logInfo(`Starting MCP Linear...`);
 
     // Initialize Linear client and service
-    const linearClient = new LinearClient({ apiKey: linearApiToken });
+    const linearClient = new LinearClient(
+      linearAuth.type === 'oauth'
+        ? { accessToken: linearAuth.token }
+        : { apiKey: linearAuth.token },
+    );
     installLinearRateLimitHandling(linearClient);
     const linearService = new LinearService(linearClient);
     const getRateLimitStatus = () => getLinearRateLimitSnapshot(linearClient);

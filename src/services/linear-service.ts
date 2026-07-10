@@ -13,6 +13,83 @@ import {
 
 type JsonObject = Record<string, unknown>;
 
+type OAuthApplicationGrantType = 'authorization_code' | 'client_credentials';
+
+type OAuthApplicationSetupArgs = {
+  name: string;
+  developer: string;
+  developerUrl?: string;
+  description?: string;
+  imageUrl?: string;
+  distribution?: 'private' | 'public';
+  redirectUris: string[];
+  grantTypes?: OAuthApplicationGrantType[];
+  webhookEnabled?: boolean;
+  webhookUrl?: string;
+  webhookResourceTypes?: string[];
+};
+
+type OAuthAuthorizationUrlArgs = {
+  clientId: string;
+  redirectUri: string;
+  scopes: string[];
+  actor?: 'user' | 'app';
+  state?: string;
+  promptConsent?: boolean;
+  codeChallenge?: string;
+};
+
+type OAuthClientCredentialsTokenArgs = {
+  clientId: string;
+  clientSecret: string;
+  scopes: string[];
+};
+
+type ManagedOAuthApplicationNode = {
+  id: string;
+  clientId: string;
+  name: string;
+  description?: string | null;
+  developer: string;
+  developerUrl?: string | null;
+  distribution: 'private' | 'public';
+  grantTypes: OAuthApplicationGrantType[];
+  imageUrl?: string | null;
+  redirectUris: string[];
+  webhookEnabled: boolean;
+  webhookUrl?: string | null;
+  webhookResourceTypes: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+type ManagedOAuthApplicationCreateArgs = {
+  name: string;
+  developer: string;
+  developerUrl?: string;
+  description?: string;
+  imageUrl?: string;
+  redirectUris: string[];
+  grantTypes?: OAuthApplicationGrantType[];
+  idempotencyKey?: string;
+  webhookUrl?: string;
+  webhookResourceTypes?: string[];
+};
+
+type ManagedOAuthApplicationUpdateArgs = {
+  id: string;
+  name?: string;
+  developer?: string;
+  developerUrl?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  redirectUris?: string[] | null;
+  grantTypes?: OAuthApplicationGrantType[] | null;
+  webhookEnabled?: boolean;
+  webhookUrl?: string | null;
+  webhookResourceTypes?: string[] | null;
+};
+
 const LINEAR_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ProjectStatusNode = {
@@ -546,6 +623,93 @@ const NOTIFICATION_SUMMARY_QUERY = `
           email
         }
       }
+    }
+  }
+`;
+
+const MANAGED_OAUTH_APPLICATION_FIELDS = `
+  id
+  clientId
+  name
+  description
+  developer
+  developerUrl
+  distribution
+  grantTypes
+  imageUrl
+  redirectUris
+  webhookEnabled
+  webhookUrl
+  webhookResourceTypes
+  createdAt
+  updatedAt
+`;
+
+// Linear exposes managed OAuth application operations as an ALPHA GraphQL surface.
+// They are not generated as LinearClient methods and only operate on applications
+// created by the calling OAuth application, so keep these requests narrow and explicit.
+const GET_MANAGED_OAUTH_APPLICATIONS_QUERY = `
+  query LinearGetManagedOAuthApplications {
+    oauthApplications {
+      ${MANAGED_OAUTH_APPLICATION_FIELDS}
+    }
+  }
+`;
+
+const GET_MANAGED_OAUTH_APPLICATION_QUERY = `
+  query LinearGetManagedOAuthApplication($id: String!) {
+    oauthApplication(id: $id) {
+      ${MANAGED_OAUTH_APPLICATION_FIELDS}
+    }
+  }
+`;
+
+const CREATE_MANAGED_OAUTH_APPLICATION_MUTATION = `
+  mutation LinearCreateManagedOAuthApplication($input: OAuthApplicationCreateInput!) {
+    oauthApplicationCreate(input: $input) {
+      success
+      clientSecret
+      webhookSecret
+      application {
+        ${MANAGED_OAUTH_APPLICATION_FIELDS}
+      }
+    }
+  }
+`;
+
+const UPDATE_MANAGED_OAUTH_APPLICATION_MUTATION = `
+  mutation LinearUpdateManagedOAuthApplication($id: String!, $input: OAuthApplicationUpdateInput!) {
+    oauthApplicationUpdate(id: $id, input: $input) {
+      success
+      application {
+        ${MANAGED_OAUTH_APPLICATION_FIELDS}
+      }
+    }
+  }
+`;
+
+const ARCHIVE_MANAGED_OAUTH_APPLICATION_MUTATION = `
+  mutation LinearArchiveManagedOAuthApplication($id: String!) {
+    oauthApplicationArchive(id: $id) {
+      success
+    }
+  }
+`;
+
+const ROTATE_MANAGED_OAUTH_APPLICATION_SECRET_MUTATION = `
+  mutation LinearRotateManagedOAuthApplicationSecret($id: String!) {
+    oauthApplicationRotateSecret(id: $id) {
+      success
+      clientSecret
+    }
+  }
+`;
+
+const ROTATE_MANAGED_OAUTH_APPLICATION_WEBHOOK_SECRET_MUTATION = `
+  mutation LinearRotateManagedOAuthApplicationWebhookSecret($id: String!) {
+    oauthApplicationRotateWebhookSecret(id: $id) {
+      success
+      webhookSecret
     }
   }
 `;
@@ -1862,6 +2026,26 @@ export class LinearService {
             key: team.key,
           }
         : null,
+    };
+  }
+
+  private normalizeManagedOAuthApplication(application: ManagedOAuthApplicationNode) {
+    return {
+      id: application.id,
+      clientId: application.clientId,
+      name: application.name,
+      description: application.description ?? null,
+      developer: application.developer,
+      developerUrl: application.developerUrl ?? null,
+      distribution: application.distribution,
+      grantTypes: [...application.grantTypes],
+      imageUrl: application.imageUrl ?? null,
+      redirectUris: [...application.redirectUris],
+      webhookEnabled: application.webhookEnabled,
+      webhookUrl: application.webhookUrl ?? null,
+      webhookResourceTypes: [...application.webhookResourceTypes],
+      createdAt: application.createdAt,
+      updatedAt: application.updatedAt,
     };
   }
 
@@ -3907,6 +4091,317 @@ export class LinearService {
     };
   }
 
+  generateOAuthApplicationSetup(args: OAuthApplicationSetupArgs) {
+    const grantTypes = args.grantTypes?.length
+      ? [...args.grantTypes]
+      : ['authorization_code' as const];
+    const display = this.compactObject({
+      description: this.nonEmptyString(args.description),
+      iconUrl: this.nonEmptyString(args.imageUrl),
+    });
+    const webhookUrl = this.nonEmptyString(args.webhookUrl);
+    const webhookResourceTypes = this.nonEmptyArray(args.webhookResourceTypes);
+
+    if (Boolean(webhookUrl) !== Boolean(webhookResourceTypes)) {
+      throw new Error('OAuth application webhook URL and resource types must be provided together');
+    }
+
+    const manifest = {
+      $schema: 'https://linear.app/.well-known/oauth-app-manifest.schema.json',
+      schemaVersion: '1.0.0',
+      distribution: args.distribution ?? 'private',
+      ...(Object.keys(display).length > 0 ? { display } : {}),
+      developer: { name: args.developer },
+      oauth: {
+        client_name: args.name,
+        ...(args.developerUrl ? { client_uri: args.developerUrl } : {}),
+        redirect_uris: [...args.redirectUris],
+        grant_types: grantTypes,
+      },
+      ...(webhookUrl && webhookResourceTypes
+        ? {
+            webhook: {
+              enabled: args.webhookEnabled ?? true,
+              url: webhookUrl,
+              resourceTypes: [...webhookResourceTypes],
+            },
+          }
+        : {}),
+    };
+
+    const creationUrl = new URL('https://linear.app/settings/api/applications/new');
+    creationUrl.searchParams.set('manifest', JSON.stringify(manifest));
+
+    return {
+      manifest,
+      creationUrl: creationUrl.toString(),
+      requiresUserConfirmation: true,
+    };
+  }
+
+  generateOAuthAuthorizationUrl(args: OAuthAuthorizationUrlArgs) {
+    const scopes = Array.from(
+      new Set(['read', ...args.scopes.filter((scope) => scope !== 'read')]),
+    );
+    const warnings: string[] = [];
+
+    if (!this.nonEmptyString(args.state)) {
+      warnings.push(
+        'No state value was provided; include one to protect the OAuth redirect from CSRF.',
+      );
+    }
+
+    const authorizationUrl = new URL('https://linear.app/oauth/authorize');
+    authorizationUrl.searchParams.set('response_type', 'code');
+    authorizationUrl.searchParams.set('client_id', args.clientId);
+    authorizationUrl.searchParams.set('redirect_uri', args.redirectUri);
+    authorizationUrl.searchParams.set('scope', scopes.join(','));
+
+    if (args.actor) {
+      authorizationUrl.searchParams.set('actor', args.actor);
+    }
+    if (args.state) {
+      authorizationUrl.searchParams.set('state', args.state);
+    }
+    if (args.promptConsent) {
+      authorizationUrl.searchParams.set('prompt', 'consent');
+    }
+    if (args.codeChallenge) {
+      authorizationUrl.searchParams.set('code_challenge', args.codeChallenge);
+      authorizationUrl.searchParams.set('code_challenge_method', 'S256');
+    }
+
+    return {
+      authorizationUrl: authorizationUrl.toString(),
+      scopes,
+      warnings,
+    };
+  }
+
+  async createOAuthClientCredentialsToken(args: OAuthClientCredentialsTokenArgs) {
+    const scopes = Array.from(
+      new Set(['read', ...args.scopes.filter((scope) => scope !== 'read')]),
+    );
+    const requestBody = new URLSearchParams({
+      grant_type: 'client_credentials',
+      scope: scopes.join(','),
+      client_id: args.clientId,
+      client_secret: args.clientSecret,
+    });
+
+    const response = await fetch('https://api.linear.app/oauth/token', {
+      method: 'POST',
+      redirect: 'error',
+      signal: AbortSignal.timeout(15_000),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: requestBody,
+    });
+
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error(`Linear OAuth token request returned invalid JSON (HTTP ${response.status})`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Linear OAuth token request failed (HTTP ${response.status})`);
+    }
+    if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+      throw new Error('Linear OAuth token response was incomplete');
+    }
+
+    const tokenPayload = payload as Record<string, unknown>;
+    const accessToken = tokenPayload.access_token;
+    const tokenType = tokenPayload.token_type;
+    const expiresIn = tokenPayload.expires_in;
+    const returnedScope = tokenPayload.scope;
+    const returnedScopes = Array.isArray(returnedScope)
+      ? returnedScope.filter((scope): scope is string => typeof scope === 'string')
+      : typeof returnedScope === 'string'
+        ? returnedScope.split(/[\s,]+/).filter(Boolean)
+        : [];
+
+    if (
+      typeof accessToken !== 'string' ||
+      !this.nonEmptyString(accessToken) ||
+      typeof tokenType !== 'string' ||
+      !this.nonEmptyString(tokenType) ||
+      typeof expiresIn !== 'number' ||
+      !Number.isFinite(expiresIn) ||
+      !Number.isInteger(expiresIn) ||
+      expiresIn <= 0 ||
+      returnedScopes.length === 0 ||
+      returnedScopes.some((scope) => !scopes.includes(scope))
+    ) {
+      throw new Error('Linear OAuth token response was incomplete');
+    }
+
+    return {
+      accessToken,
+      tokenType,
+      expiresIn,
+      scopes: Array.from(new Set(returnedScopes)),
+    };
+  }
+
+  async getManagedOAuthApplications() {
+    const response = await this.requestGraphQL<{
+      oauthApplications?: ManagedOAuthApplicationNode[] | null;
+    }>(GET_MANAGED_OAUTH_APPLICATIONS_QUERY);
+
+    if (!Array.isArray(response.oauthApplications)) {
+      throw new Error('Failed to list managed OAuth applications');
+    }
+
+    return response.oauthApplications.map((application) =>
+      this.normalizeManagedOAuthApplication(application),
+    );
+  }
+
+  async getManagedOAuthApplicationById(id: string) {
+    const response = await this.requestGraphQL<{
+      oauthApplication?: ManagedOAuthApplicationNode | null;
+    }>(GET_MANAGED_OAUTH_APPLICATION_QUERY, { id });
+
+    if (!response.oauthApplication) {
+      throw new Error(`Managed OAuth application ${id} not found`);
+    }
+
+    return this.normalizeManagedOAuthApplication(response.oauthApplication);
+  }
+
+  async createManagedOAuthApplication(args: ManagedOAuthApplicationCreateArgs) {
+    const input = this.compactObject({
+      name: args.name,
+      developer: args.developer,
+      developerUrl: this.nonEmptyString(args.developerUrl),
+      description: this.nonEmptyString(args.description),
+      imageUrl: this.nonEmptyString(args.imageUrl),
+      redirectUris: [...args.redirectUris],
+      grantTypes: this.nonEmptyArray(args.grantTypes),
+      idempotencyKey: this.nonEmptyString(args.idempotencyKey),
+      webhookUrl: this.nonEmptyString(args.webhookUrl),
+      webhookResourceTypes: this.nonEmptyArray(args.webhookResourceTypes),
+    });
+    const response = await this.requestGraphQL<{
+      oauthApplicationCreate?: {
+        success: boolean;
+        application?: ManagedOAuthApplicationNode | null;
+        clientSecret?: string | null;
+        webhookSecret?: string | null;
+      } | null;
+    }>(CREATE_MANAGED_OAUTH_APPLICATION_MUTATION, { input });
+    const payload = response.oauthApplicationCreate;
+
+    if (!payload?.success || !payload.application) {
+      throw new Error('Failed to create managed OAuth application');
+    }
+
+    return {
+      application: this.normalizeManagedOAuthApplication(payload.application),
+      clientSecret: payload.clientSecret ?? null,
+      webhookSecret: payload.webhookSecret ?? null,
+    };
+  }
+
+  async updateManagedOAuthApplication(args: ManagedOAuthApplicationUpdateArgs) {
+    const input = this.compactObject({
+      name: this.nonEmptyString(args.name),
+      developer: this.nonEmptyString(args.developer),
+      developerUrl: this.nullableNonEmptyString(args.developerUrl),
+      description: this.nullableNonEmptyString(args.description),
+      imageUrl: this.nullableNonEmptyString(args.imageUrl),
+      redirectUris: args.redirectUris === null ? null : this.nonEmptyArray(args.redirectUris),
+      grantTypes: args.grantTypes === null ? null : this.nonEmptyArray(args.grantTypes),
+      webhookEnabled: args.webhookEnabled,
+      webhookUrl: this.nullableNonEmptyString(args.webhookUrl),
+      webhookResourceTypes:
+        args.webhookResourceTypes === null ? null : this.nonEmptyArray(args.webhookResourceTypes),
+    });
+
+    if (Object.keys(input).length === 0) {
+      throw new Error('At least one managed OAuth application field must be provided');
+    }
+
+    const response = await this.requestGraphQL<{
+      oauthApplicationUpdate?: {
+        success: boolean;
+        application?: ManagedOAuthApplicationNode | null;
+      } | null;
+    }>(UPDATE_MANAGED_OAUTH_APPLICATION_MUTATION, { id: args.id, input });
+    const payload = response.oauthApplicationUpdate;
+
+    if (!payload?.success || !payload.application) {
+      throw new Error(`Failed to update managed OAuth application ${args.id}`);
+    }
+
+    return this.normalizeManagedOAuthApplication(payload.application);
+  }
+
+  async archiveManagedOAuthApplication(id: string) {
+    const response = await this.requestGraphQL<{
+      oauthApplicationArchive?: { success: boolean } | null;
+    }>(ARCHIVE_MANAGED_OAUTH_APPLICATION_MUTATION, { id });
+
+    if (!response.oauthApplicationArchive?.success) {
+      throw new Error(`Failed to archive managed OAuth application ${id}`);
+    }
+
+    return { success: true, id };
+  }
+
+  async rotateManagedOAuthApplicationSecret(id: string) {
+    const response = await this.requestGraphQL<{
+      oauthApplicationRotateSecret?: { success: boolean; clientSecret?: string | null } | null;
+    }>(ROTATE_MANAGED_OAUTH_APPLICATION_SECRET_MUTATION, { id });
+    const payload = response.oauthApplicationRotateSecret;
+
+    if (!payload?.success) {
+      throw new Error(`Failed to rotate managed OAuth application secret ${id}`);
+    }
+    if (!this.nonEmptyString(payload.clientSecret ?? undefined)) {
+      throw new Error(
+        `Managed OAuth application secret rotation ${id} did not return a client secret`,
+      );
+    }
+
+    return { success: true, id, clientSecret: payload.clientSecret as string };
+  }
+
+  async rotateManagedOAuthApplicationWebhookSecret(id: string) {
+    const response = await this.requestGraphQL<{
+      oauthApplicationRotateWebhookSecret?: {
+        success: boolean;
+        webhookSecret?: string | null;
+      } | null;
+    }>(ROTATE_MANAGED_OAUTH_APPLICATION_WEBHOOK_SECRET_MUTATION, { id });
+    const payload = response.oauthApplicationRotateWebhookSecret;
+
+    if (!payload?.success) {
+      throw new Error(`Failed to rotate managed OAuth application webhook secret ${id}`);
+    }
+    if (!this.nonEmptyString(payload.webhookSecret ?? undefined)) {
+      throw new Error(
+        `Managed OAuth application webhook secret rotation ${id} did not return a webhook secret`,
+      );
+    }
+
+    return { success: true, id, webhookSecret: payload.webhookSecret as string };
+  }
+
+  async getWebhookById(id: string) {
+    const webhook = await this.client.webhook(id);
+    if (!webhook) {
+      throw new Error(`Webhook with ID ${id} not found`);
+    }
+
+    return this.normalizeWebhook(webhook);
+  }
+
   async getWebhooks(args: { teamId?: string; limit?: number; includeArchived?: boolean; orderBy?: string } = {}) {
     const source = async () => {
       if (!args.teamId) {
@@ -3956,6 +4451,46 @@ export class LinearService {
     }
 
     return this.normalizeWebhook(await payload.webhook);
+  }
+
+  async updateWebhook(args: {
+    id: string;
+    url?: string;
+    label?: string | null;
+    enabled?: boolean;
+    resourceTypes?: string[];
+    secret?: string;
+  }) {
+    const updateInput = {
+      url: this.nonEmptyString(args.url),
+      label: this.nullableNonEmptyString(args.label),
+      enabled: args.enabled,
+      resourceTypes: this.nonEmptyArray(args.resourceTypes),
+      secret: this.nonEmptyString(args.secret),
+    };
+
+    if (!Object.values(updateInput).some((value) => value !== undefined)) {
+      throw new Error('At least one webhook field must be provided');
+    }
+
+    const payload = await this.client.updateWebhook(args.id, this.compactObject(updateInput));
+    if (!payload.success || !payload.webhook) {
+      throw new Error(`Failed to update webhook ${args.id}`);
+    }
+
+    return this.normalizeWebhook(await payload.webhook);
+  }
+
+  async rotateWebhookSecret(id: string) {
+    const payload = await this.client.rotateSecretWebhook(id);
+    if (!payload.success) {
+      throw new Error(`Failed to rotate webhook secret ${id}`);
+    }
+    if (!this.nonEmptyString(payload.secret)) {
+      throw new Error(`Webhook secret rotation ${id} did not return a secret`);
+    }
+
+    return { success: true, id, secret: payload.secret };
   }
 
   async deleteWebhook(id: string) {
@@ -7633,7 +8168,9 @@ export class LinearService {
         body: args.body,
         health: args.health as any,
         isDiffHidden: args.isDiffHidden,
-      });
+        // SDK 88 dropped this legacy input from its generated type. Preserve the
+        // existing v1.3 MCP contract until it can be changed in a major release.
+      } as any);
 
       if (updatePayload.success) {
         // Get the updated project update data
@@ -7797,7 +8334,9 @@ export class LinearService {
       body: args.body,
       health: args.health as any,
       isDiffHidden: args.isDiffHidden,
-    });
+      // SDK 88 dropped this legacy input from its generated type. Preserve the
+      // existing v1.3 MCP contract until it can be changed in a major release.
+    } as any);
 
     if (!updatePayload.success) {
       throw new Error(`Failed to update initiative update ${args.id}`);

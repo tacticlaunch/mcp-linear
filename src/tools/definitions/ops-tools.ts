@@ -1,4 +1,5 @@
 import { MCPToolDefinition } from '../../types.js';
+import { WEBHOOK_RESOURCE_TYPES } from '../oauth-constants.js';
 
 const positiveLimitSchema = { type: 'integer', minimum: 1 };
 const paginationOrderBySchema = { type: 'string', enum: ['createdAt', 'updatedAt'] };
@@ -120,7 +121,111 @@ const integrationOutputSchema = {
 };
 
 export const getWebhooksToolDefinition: MCPToolDefinition = { name: 'linear_getWebhooks', description: 'Get a list of webhooks', input_schema: { type: 'object', properties: { teamId: { type: 'string' }, limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } } }, output_schema: { type: 'array', items: webhookOutputSchema } };
-export const createWebhookToolDefinition: MCPToolDefinition = { name: 'linear_createWebhook', description: 'Create a webhook for integration events', input_schema: { type: 'object', properties: { url: { type: 'string' }, resourceTypes: { type: 'array', items: { type: 'string' } }, teamId: { type: 'string' }, enabled: { type: 'boolean' }, label: { type: 'string' }, secret: { type: 'string' }, allPublicTeams: { type: 'boolean' } }, required: ['url', 'resourceTypes'] }, output_schema: webhookOutputSchema };
+export const getWebhookByIdToolDefinition: MCPToolDefinition = {
+  name: 'linear_getWebhookById',
+  description: 'Get one ordinary workspace webhook by ID. Reading webhooks requires workspace-admin access or an OAuth user token with the admin scope.',
+  input_schema: {
+    type: 'object',
+    properties: { id: { type: 'string', minLength: 1 } },
+    required: ['id'],
+  },
+  output_schema: webhookOutputSchema,
+};
+export const createWebhookToolDefinition: MCPToolDefinition = {
+  name: 'linear_createWebhook',
+  description: 'Create an ordinary workspace webhook for integration events.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      url: {
+        type: 'string',
+        format: 'uri',
+        pattern: '^[Hh][Tt][Tt][Pp][Ss]://',
+        maxLength: 1000,
+      },
+      resourceTypes: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 22,
+        uniqueItems: true,
+        items: { type: 'string', enum: [...WEBHOOK_RESOURCE_TYPES] },
+      },
+      teamId: {
+        type: 'string',
+        minLength: 1,
+        description: 'Target one team. Required unless allPublicTeams is true; do not combine both scopes.',
+      },
+      enabled: { type: 'boolean' },
+      label: { type: 'string', minLength: 1 },
+      secret: { type: 'string', minLength: 1 },
+      allPublicTeams: {
+        type: 'boolean',
+        description: 'Set to true to target all public teams instead of supplying teamId.',
+      },
+    },
+    required: ['url', 'resourceTypes'],
+  },
+  output_schema: webhookOutputSchema,
+};
+export const updateWebhookToolDefinition: MCPToolDefinition = {
+  name: 'linear_updateWebhook',
+  description: 'Update an ordinary workspace webhook URL, label, enabled state, resource subscriptions, or caller-supplied signing secret.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', minLength: 1 },
+      url: {
+        type: 'string',
+        format: 'uri',
+        pattern: '^[Hh][Tt][Tt][Pp][Ss]://',
+        maxLength: 1000,
+      },
+      label: { type: ['string', 'null'], minLength: 1 },
+      enabled: { type: 'boolean' },
+      resourceTypes: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 22,
+        uniqueItems: true,
+        items: { type: 'string', enum: [...WEBHOOK_RESOURCE_TYPES] },
+      },
+      secret: { type: 'string', minLength: 1 },
+    },
+    required: ['id'],
+    anyOf: [
+      { required: ['url'] },
+      { required: ['label'] },
+      { required: ['enabled'] },
+      { required: ['resourceTypes'] },
+      { required: ['secret'] },
+    ],
+  },
+  output_schema: webhookOutputSchema,
+};
+export const rotateWebhookSecretToolDefinition: MCPToolDefinition = {
+  name: 'linear_rotateWebhookSecret',
+  description: 'Rotate an ordinary workspace webhook signing secret. The new one-time secret is exposed in the MCP tool result and the old secret is immediately invalidated.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', minLength: 1 },
+      confirmSecretExposure: {
+        type: 'boolean',
+        const: true,
+        description: 'Must be true to acknowledge that the new signing secret will be returned in the MCP tool result.',
+      },
+    },
+    required: ['id', 'confirmSecretExposure'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      id: { type: 'string' },
+      secret: { type: 'string' },
+    },
+  },
+};
 export const deleteWebhookToolDefinition: MCPToolDefinition = { name: 'linear_deleteWebhook', description: 'Delete a webhook', input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' } } } };
 export const getAttachmentsToolDefinition: MCPToolDefinition = { name: 'linear_getAttachments', description: 'Get attachments for an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } }, required: ['issueId'] }, output_schema: { type: 'array', items: attachmentOutputSchema } };
 export const addAttachmentToolDefinition: MCPToolDefinition = { name: 'linear_addAttachment', description: 'Add an attachment to an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, title: { type: 'string' }, url: { type: 'string' }, subtitle: { type: 'string' }, iconUrl: { type: 'string' }, metadata: { type: 'object', additionalProperties: true }, commentBody: { type: 'string' }, groupBySource: { type: 'boolean' } }, required: ['issueId', 'title', 'url'] }, output_schema: attachmentOutputSchema };

@@ -61,7 +61,7 @@ describe('future batch three MCP tools', () => {
     const handlers = registerToolHandlers(service);
 
     await expect(handlers.linear_getWebhooks({ limit: 10 })).resolves.toEqual([{ id: 'webhook-1' }]);
-    await expect(handlers.linear_createWebhook({ url: 'https://example.com', resourceTypes: ['Issue'] })).resolves.toEqual({ id: 'webhook-1' });
+    await expect(handlers.linear_createWebhook({ url: 'https://example.com', resourceTypes: ['Issue'], allPublicTeams: true })).resolves.toEqual({ id: 'webhook-1' });
     await expect(handlers.linear_deleteWebhook({ id: 'webhook-1' })).resolves.toEqual({ success: true, id: 'webhook-1' });
     await expect(handlers.linear_getAttachments({ issueId: 'ISS-1', limit: 10 })).resolves.toEqual([{ id: 'attachment-1' }]);
     await expect(handlers.linear_addAttachment({ issueId: 'ISS-1', title: 'Spec', url: 'https://example.com/spec' })).resolves.toEqual({ id: 'attachment-1' });

@@ -11,6 +11,7 @@ import {
   isGetOrganizationAuditEventsArgs,
   isGetSubscriptionsArgs,
   isGetUserAuditEventsArgs,
+  isGetWebhookByIdArgs,
   isGetWebhooksArgs,
   isLogoutAllSessionsArgs,
   isLogoutOtherSessionsArgs,
@@ -18,8 +19,46 @@ import {
   isMarkAllNotificationsAsReadArgs,
   isMarkNotificationAsReadArgs,
   isGetUnreadNotificationCountArgs,
+  isRotateWebhookSecretArgs,
+  isUpdateWebhookArgs,
 } from '../type-guards.js';
 
+function hasCallerProvidedWebhookSecret(args: unknown): boolean {
+  return typeof args === 'object' && args !== null && 'secret' in args;
+}
+
+function rethrowWebhookErrorWithoutSecret(action: string, error: unknown, args: unknown): never {
+  if (!hasCallerProvidedWebhookSecret(args)) {
+    logError(`Error ${action} webhook`, error);
+    throw error;
+  }
+
+  const safeError = new Error(
+    `Failed ${action} webhook; Linear error details were omitted because the request contained a signing secret`,
+  );
+  logError(`Error ${action} webhook`, safeError);
+  throw safeError;
+}
+
+function rethrowWebhookRotationError(): never {
+  const safeError = new Error(
+    'Failed rotating webhook secret; Linear error details were omitted because the response may contain a one-time secret',
+  );
+  logError('Error rotating webhook secret', safeError);
+  throw safeError;
+}
+
+export function handleGetWebhookById(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isGetWebhookByIdArgs(args)) throw new Error('Invalid arguments for getWebhookById');
+      return await linearService.getWebhookById(args.id);
+    } catch (error) {
+      logError('Error getting webhook', error);
+      throw error;
+    }
+  };
+}
 export function handleGetWebhooks(linearService: LinearService) {
   return async (args: unknown) => {
     try {
@@ -37,8 +76,31 @@ export function handleCreateWebhook(linearService: LinearService) {
       if (!isCreateWebhookArgs(args)) throw new Error('Invalid arguments for createWebhook');
       return await linearService.createWebhook(args);
     } catch (error) {
-      logError('Error creating webhook', error);
+      rethrowWebhookErrorWithoutSecret('creating', error, args);
+    }
+  };
+}
+export function handleUpdateWebhook(linearService: LinearService) {
+  return async (args: unknown) => {
+    try {
+      if (!isUpdateWebhookArgs(args)) throw new Error('Invalid arguments for updateWebhook');
+      return await linearService.updateWebhook(args);
+    } catch (error) {
+      rethrowWebhookErrorWithoutSecret('updating', error, args);
+    }
+  };
+}
+export function handleRotateWebhookSecret(linearService: LinearService) {
+  return async (args: unknown) => {
+    if (!isRotateWebhookSecretArgs(args)) {
+      const error = new Error('Invalid arguments for rotateWebhookSecret');
+      logError('Error rotating webhook secret', error);
       throw error;
+    }
+    try {
+      return await linearService.rotateWebhookSecret(args.id);
+    } catch {
+      rethrowWebhookRotationError();
     }
   };
 }
