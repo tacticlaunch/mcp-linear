@@ -51,7 +51,7 @@ type ManagedOAuthApplicationNode = {
   name: string;
   description?: string | null;
   developer: string;
-  developerUrl?: string | null;
+  developerUrl: string;
   distribution: 'private' | 'public';
   grantTypes: OAuthApplicationGrantType[];
   imageUrl?: string | null;
@@ -2036,7 +2036,7 @@ export class LinearService {
       name: application.name,
       description: application.description ?? null,
       developer: application.developer,
-      developerUrl: application.developerUrl ?? null,
+      developerUrl: application.developerUrl,
       distribution: application.distribution,
       grantTypes: [...application.grantTypes],
       imageUrl: application.imageUrl ?? null,

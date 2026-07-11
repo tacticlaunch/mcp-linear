@@ -1911,10 +1911,7 @@ export function isCreateWebhookArgs(args: unknown): args is {
     isPublicWebhookUrl((args as { url: unknown }).url) &&
     (args as { url: string }).url.length <= 1000 &&
     'resourceTypes' in args &&
-    isAllowedUniqueStringArray(
-      (args as { resourceTypes: unknown }).resourceTypes,
-      WEBHOOK_RESOURCE_TYPE_SET,
-    ) &&
+    isUniqueNonEmptyStringArray((args as { resourceTypes: unknown }).resourceTypes) &&
     (!('teamId' in args) || isNonEmptyString((args as { teamId: unknown }).teamId)) &&
     (!('enabled' in args) || typeof (args as { enabled: unknown }).enabled === 'boolean') &&
     (!('label' in args) || isNonEmptyString((args as { label: unknown }).label)) &&
@@ -2202,7 +2199,7 @@ export function isUpdateWebhookArgs(args: unknown): args is {
   url?: string;
   label?: string | null;
   enabled?: boolean;
-  resourceTypes?: WebhookResourceTypeValue[];
+  resourceTypes?: string[];
   secret?: string;
 } {
   if (
@@ -2222,8 +2219,7 @@ export function isUpdateWebhookArgs(args: unknown): args is {
     (!('url' in args) || (isPublicWebhookUrl(args.url) && args.url.length <= 1000)) &&
     (!('label' in args) || args.label === null || isNonEmptyString(args.label)) &&
     (!('enabled' in args) || typeof args.enabled === 'boolean') &&
-    (!('resourceTypes' in args) ||
-      isAllowedUniqueStringArray(args.resourceTypes, WEBHOOK_RESOURCE_TYPE_SET)) &&
+    (!('resourceTypes' in args) || isUniqueNonEmptyStringArray(args.resourceTypes)) &&
     (!('secret' in args) || isNonEmptyString(args.secret))
   );
 }
@@ -3096,6 +3092,15 @@ function isAllowedUniqueStringArray<T extends string>(
   );
 }
 
+function isUniqueNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => isNonEmptyString(item)) &&
+    new Set(value).size === value.length
+  );
+}
+
 function isAbsoluteHttpUrl(value: unknown, httpsOnly = false): value is string {
   if (!isNonEmptyString(value)) {
     return false;
@@ -3134,9 +3139,7 @@ function isPublicWebhookUrl(value: unknown): value is string {
     hostname.endsWith('.localhost') ||
     hostname.endsWith('.local') ||
     hostname.endsWith('.internal') ||
-    hostname.endsWith('.home.arpa') ||
-    hostname === 'linear.app' ||
-    hostname.endsWith('.linear.app')
+    hostname.endsWith('.home.arpa')
   ) {
     return false;
   }

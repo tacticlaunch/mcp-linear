@@ -1,5 +1,4 @@
 import { MCPToolDefinition } from '../../types.js';
-import { WEBHOOK_RESOURCE_TYPES } from '../oauth-constants.js';
 
 const positiveLimitSchema = { type: 'integer', minimum: 1 };
 const paginationOrderBySchema = { type: 'string', enum: ['createdAt', 'updatedAt'] };
@@ -146,9 +145,8 @@ export const createWebhookToolDefinition: MCPToolDefinition = {
       resourceTypes: {
         type: 'array',
         minItems: 1,
-        maxItems: 22,
         uniqueItems: true,
-        items: { type: 'string', enum: [...WEBHOOK_RESOURCE_TYPES] },
+        items: { type: 'string', minLength: 1 },
       },
       teamId: {
         type: 'string',
@@ -185,9 +183,8 @@ export const updateWebhookToolDefinition: MCPToolDefinition = {
       resourceTypes: {
         type: 'array',
         minItems: 1,
-        maxItems: 22,
         uniqueItems: true,
-        items: { type: 'string', enum: [...WEBHOOK_RESOURCE_TYPES] },
+        items: { type: 'string', minLength: 1 },
       },
       secret: { type: 'string', minLength: 1 },
     },

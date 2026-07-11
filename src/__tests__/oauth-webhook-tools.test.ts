@@ -144,7 +144,10 @@ describe('OAuth application and complete webhook management', () => {
       'User',
     ]);
     expect(createManaged?.output_schema.properties).toMatchObject({
-      application: { type: 'object' },
+      application: {
+        type: 'object',
+        properties: { developerUrl: { type: 'string' } },
+      },
       clientSecret: { type: ['string', 'null'] },
       webhookSecret: { type: ['string', 'null'] },
     });
@@ -155,6 +158,10 @@ describe('OAuth application and complete webhook management', () => {
     const updateWebhook = allToolDefinitions.find((tool) => tool.name === 'linear_updateWebhook');
     expect(updateWebhook?.input_schema.properties?.label).toMatchObject({
       type: ['string', 'null'],
+    });
+    expect(updateWebhook?.input_schema.properties?.resourceTypes.items).toEqual({
+      type: 'string',
+      minLength: 1,
     });
     const clientCredentials = allToolDefinitions.find(
       (tool) => tool.name === 'linear_createOAuthClientCredentialsToken',
@@ -307,6 +314,9 @@ describe('OAuth application and complete webhook management', () => {
 
     expect(isUpdateWebhookArgs({ id: 'webhook-1', enabled: false })).toBe(true);
     expect(isUpdateWebhookArgs({ id: 'webhook-1', label: null })).toBe(true);
+    expect(
+      isUpdateWebhookArgs({ id: 'webhook-1', resourceTypes: ['FutureWorkspaceEvent'] }),
+    ).toBe(true);
     expect(isUpdateWebhookArgs({ id: 'webhook-1' })).toBe(false);
     expect(isUpdateWebhookArgs({ id: 'webhook-1', resourceTypes: [] })).toBe(false);
     expect(isRotateWebhookSecretArgs({ id: 'webhook-1', confirmSecretExposure: true })).toBe(true);
@@ -356,8 +366,6 @@ describe('OAuth application and complete webhook management', () => {
       'https://10.0.0.8/webhooks/linear',
       'https://[::1]/webhooks/linear',
       'https://user:password@example.com/webhooks/linear',
-      'https://linear.app/webhooks/linear',
-      'https://api.linear.app/webhooks/linear',
     ]) {
       expect(
         isCreateWebhookArgs({
@@ -384,6 +392,19 @@ describe('OAuth application and complete webhook management', () => {
         webhookEnabled: true,
         webhookUrl: 'https://localhost/webhooks/linear',
         webhookResourceTypes: ['Issue'],
+      }),
+    ).toBe(false);
+    expect(
+      isCreateWebhookArgs({
+        url: 'https://linear.app/public-webhook-target',
+        resourceTypes: ['FutureWorkspaceEvent'],
+        teamId: 'team-1',
+      }),
+    ).toBe(true);
+    expect(
+      isCreateManagedOAuthApplicationArgs({
+        ...createArgs,
+        webhookResourceTypes: ['FutureWorkspaceEvent'],
       }),
     ).toBe(false);
   });

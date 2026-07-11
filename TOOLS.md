@@ -329,6 +329,8 @@ Linear calls these "saved views" in the product UI. The GraphQL API and SDK expo
 
 Workspace webhooks are separate from the installation webhook configured on an OAuth application. Workspace webhook reads and mutations require a workspace administrator or an OAuth token with Linear's `admin` scope. Secret rotation returns the replacement secret once and invalidates the previous signing secret immediately; callers that let Linear generate a secret during creation can rotate it before enabling deliveries to capture a known value securely.
 
+Linear types ordinary workspace-webhook `resourceTypes` as a list of strings, so those tools accept unique non-empty resource names without freezing the surface to today's OAuth installation-webhook enum. OAuth application webhooks remain validated against Linear's current 22-value manifest/GraphQL enum.
+
 Webhook destinations must be publicly reachable HTTPS URLs. Runtime validation rejects embedded URL credentials and obvious loopback, private-network, link-local, and local-hostname destinations.
 
 ### OAuth Application Tools

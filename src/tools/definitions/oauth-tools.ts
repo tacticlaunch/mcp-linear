@@ -58,7 +58,7 @@ const managedOAuthApplicationOutputSchema = {
     name: { type: 'string' },
     description: { type: ['string', 'null'] },
     developer: { type: 'string' },
-    developerUrl: { type: ['string', 'null'] },
+    developerUrl: { type: 'string' },
     distribution: { type: 'string', enum: ['private', 'public'] },
     grantTypes: { type: 'array', items: { type: 'string', enum: [...OAUTH_APPLICATION_GRANT_TYPES] } },
     imageUrl: { type: ['string', 'null'] },
