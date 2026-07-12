@@ -53,7 +53,9 @@ Once connected, you can use prompts like:
 
 ## Installation
 
-### Getting your Linear API token
+### Authentication
+
+#### Personal API key (default)
 
 1. Log in to your Linear account at [linear.app](https://linear.app)
 2. Click on your organization avatar (top-left corner)
@@ -62,6 +64,29 @@ Once connected, you can use prompts like:
 5. Under **Personal API Keys** click **New API Key**
 6. Give your key a name (e.g., `MCP Linear Integration`)
 7. Copy the generated API token and store it securely — you won't be able to see it again
+
+Pass the key with `--token`, or set `LINEAR_API_TOKEN` (or `LINEAR_API_KEY`) in the environment.
+
+#### Interactive OAuth login (no pasted keys)
+
+Instead of pasting a token, you can sign in once and let the server manage its own credential:
+
+```bash
+mcp-linear auth login --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
+```
+
+The client id and secret can also come from `LINEAR_OAUTH_CLIENT_ID` / `LINEAR_OAUTH_CLIENT_SECRET`. They belong to an OAuth application you create at **Settings → API → Applications** with the redirect URI `http://localhost:8734/callback` (override the port with `--redirect-port`, which must match a registered redirect URI). Request different scopes with `--scopes read,write,issues:create`.
+
+`auth login` starts a loopback server on 127.0.0.1, opens your browser to Linear's consent page (PKCE S256 plus a random `state`), exchanges the authorization code, and saves the credentials to `~/.config/mcp-linear/credentials.json` (`$XDG_CONFIG_HOME` and `MCP_LINEAR_CONFIG_DIR` are honored). The file and its directory are created with owner-only permissions (0600/0700), and token values are never printed or logged.
+
+When the server starts without an explicit `--token` flag or `LINEAR_API_TOKEN`/`LINEAR_API_KEY` variable, it uses the stored credentials automatically. Explicit CLI and environment credentials always take precedence over the store. Linear access tokens expire and refresh tokens rotate; the server refreshes the access token automatically (at startup and mid-session) and atomically persists each rotated refresh token.
+
+```bash
+mcp-linear auth status  # shows scopes, expiry, and a masked token suffix
+mcp-linear auth logout  # best-effort revocation, then deletes the stored file
+```
+
+`auth logout` still removes the local credentials even when the revocation request fails (for example, offline).
 
 ### Installing via [add-mcp](https://github.com/neondatabase/add-mcp) (Recommended)
 
@@ -129,6 +154,13 @@ Or set the token in your environment and run without arguments:
 
 ```bash
 export LINEAR_API_TOKEN=YOUR_LINEAR_API_TOKEN
+mcp-linear
+```
+
+Or sign in interactively once and run without any token at all (see [Interactive OAuth login](#interactive-oauth-login-no-pasted-keys)):
+
+```bash
+mcp-linear auth login --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
 mcp-linear
 ```
 

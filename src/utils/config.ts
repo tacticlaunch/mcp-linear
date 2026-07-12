@@ -46,6 +46,31 @@ export function getLinearApiToken(): string | undefined {
   return tokenFromArgs || tokenFromEnv;
 }
 
+export type LinearAuthConfig =
+  | { type: 'oauth'; token: string }
+  | { type: 'apiKey'; token: string };
+
+/**
+ * Resolve only explicitly supplied credentials (the --token CLI flag or the
+ * LINEAR_API_TOKEN / LINEAR_API_KEY environment variables), without emitting
+ * missing-credential diagnostics. Callers that support additional credential
+ * sources (such as the OAuth credentials stored by `mcp-linear auth login`)
+ * use this to keep the explicit-over-implicit precedence intact.
+ */
+export function getExplicitLinearAuthConfig(): LinearAuthConfig | undefined {
+  const apiKeyFromArgs = getCommandLineArg('--token');
+  if (apiKeyFromArgs) {
+    return { type: 'apiKey', token: apiKeyFromArgs };
+  }
+
+  const apiKeyFromEnv = process.env.LINEAR_API_TOKEN || process.env.LINEAR_API_KEY;
+  if (apiKeyFromEnv) {
+    return { type: 'apiKey', token: apiKeyFromEnv };
+  }
+
+  return undefined;
+}
+
 export function isDebugLoggingEnabled(): boolean {
   return process.env.MCP_LINEAR_DEBUG === '1' || process.env.MCP_LINEAR_DEBUG === 'true';
 }

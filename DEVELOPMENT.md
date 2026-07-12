@@ -14,6 +14,10 @@ npm install
 npm run dev -- --token YOUR_LINEAR_API_TOKEN
 ```
 
+### Interactive OAuth login
+
+The `auth` subcommands (`mcp-linear auth login|status|logout`) live in `src/auth/`. `login` runs a PKCE authorization-code flow against `https://linear.app/oauth/authorize` with a loopback callback server (default port 8734) and stores tokens in `$XDG_CONFIG_HOME/mcp-linear/credentials.json`. Set `MCP_LINEAR_CONFIG_DIR` to point the credential store somewhere else — the tests use this to write only inside a temp directory. The server falls back to the store when no explicit `--token` flag or `LINEAR_API_TOKEN`/`LINEAR_API_KEY` variable is provided and refreshes expired access tokens automatically, persisting Linear's rotated refresh tokens atomically (temp file plus rename). Never log token or secret values; errors must stay sanitized (HTTP status only).
+
 ### Validation
 
 Use the following checks before merging or publishing:
