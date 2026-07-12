@@ -1,4 +1,9 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const positiveLimitSchema = {
   type: 'integer',
@@ -102,6 +107,7 @@ const cycleOutputSchema = {
  */
 export const getCyclesToolDefinition: MCPToolDefinition = {
   name: 'linear_getCycles',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of all cycles',
   input_schema: {
     type: 'object',
@@ -129,6 +135,7 @@ export const getCyclesToolDefinition: MCPToolDefinition = {
  */
 export const getActiveCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_getActiveCycle',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get the currently active cycle for a team',
   input_schema: {
     type: 'object',
@@ -153,6 +160,7 @@ export const getActiveCycleToolDefinition: MCPToolDefinition = {
 
 export const getCycleByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getCycleById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific cycle',
   input_schema: {
     type: 'object',
@@ -166,6 +174,7 @@ export const getCycleByIdToolDefinition: MCPToolDefinition = {
 
 export const createCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_createCycle',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new cycle',
   input_schema: {
     type: 'object',
@@ -184,6 +193,7 @@ export const createCycleToolDefinition: MCPToolDefinition = {
 
 export const updateCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_updateCycle',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing cycle. Provide id plus at least one other field to change.',
   input_schema: {
     type: 'object',
@@ -202,6 +212,7 @@ export const updateCycleToolDefinition: MCPToolDefinition = {
 
 export const completeCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_completeCycle',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Mark a cycle as complete',
   input_schema: {
     type: 'object',
@@ -215,6 +226,7 @@ export const completeCycleToolDefinition: MCPToolDefinition = {
 
 export const getCycleStatsToolDefinition: MCPToolDefinition = {
   name: 'linear_getCycleStats',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get statistics for a cycle',
   input_schema: {
     type: 'object',
@@ -242,7 +254,9 @@ export const getCycleStatsToolDefinition: MCPToolDefinition = {
 
 export const getCycleIssuesToolDefinition: MCPToolDefinition = {
   name: 'linear_getCycleIssues',
-  description: 'Get issues in a cycle, with PM-friendly filters like state, assignee, labels, and completion status',
+  annotations: readOnlyToolAnnotations(),
+  description:
+    'Get issues in a cycle, with PM-friendly filters like state, assignee, labels, and completion status',
   input_schema: {
     type: 'object',
     properties: {
@@ -292,6 +306,7 @@ export const getCycleIssuesToolDefinition: MCPToolDefinition = {
  */
 export const addIssueToCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_addIssueToCycle',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add an issue to a cycle',
   input_schema: {
     type: 'object',
@@ -336,6 +351,7 @@ export const addIssueToCycleToolDefinition: MCPToolDefinition = {
  */
 export const removeIssueFromCycleToolDefinition: MCPToolDefinition = {
   name: 'linear_removeIssueFromCycle',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove an issue from a cycle',
   input_schema: {
     type: 'object',

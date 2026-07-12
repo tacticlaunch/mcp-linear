@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const initiativeUpdateOutputSchema = {
   type: 'object',
@@ -33,6 +39,7 @@ const initiativeUpdateArchiveOutputSchema = {
 export const initiativeToolDefinitions: MCPToolDefinition[] = [
   {
     name: 'linear_getInitiatives',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get a list of all initiatives from Linear',
     input_schema: {
       type: 'object',
@@ -78,6 +85,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getInitiativeById',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get details of a specific initiative by ID',
     input_schema: {
       type: 'object',
@@ -131,6 +139,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_createInitiative',
+    annotations: additiveToolAnnotations(),
     description: 'Create a new initiative',
     input_schema: {
       type: 'object',
@@ -184,6 +193,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_updateInitiative',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Update an existing initiative',
     input_schema: {
       type: 'object',
@@ -241,6 +251,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_archiveInitiative',
+    annotations: destructiveToolAnnotations(),
     description: 'Archive an initiative',
     input_schema: {
       type: 'object',
@@ -261,6 +272,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_unarchiveInitiative',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Unarchive an initiative',
     input_schema: {
       type: 'object',
@@ -281,6 +293,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_deleteInitiative',
+    annotations: destructiveToolAnnotations(),
     description: 'Delete an initiative (move to trash)',
     input_schema: {
       type: 'object',
@@ -301,6 +314,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getInitiativeProjects',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get all projects associated with an initiative',
     input_schema: {
       type: 'object',
@@ -346,6 +360,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getInitiativeUpdateById',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get a specific initiative update by ID',
     input_schema: {
       type: 'object',
@@ -358,6 +373,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getInitiativeUpdates',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get updates for an initiative',
     input_schema: {
       type: 'object',
@@ -378,6 +394,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_createInitiativeUpdate',
+    annotations: additiveToolAnnotations(),
     description: 'Create a new initiative update',
     input_schema: {
       type: 'object',
@@ -400,6 +417,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_updateInitiativeUpdate',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Update an existing initiative update',
     input_schema: {
       type: 'object',
@@ -422,6 +440,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_archiveInitiativeUpdate',
+    annotations: destructiveToolAnnotations(),
     description: 'Archive an initiative update',
     input_schema: {
       type: 'object',
@@ -434,6 +453,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_unarchiveInitiativeUpdate',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Restore an archived initiative update',
     input_schema: {
       type: 'object',
@@ -446,6 +466,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_addProjectToInitiative',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Add a project to an initiative',
     input_schema: {
       type: 'object',
@@ -484,6 +505,7 @@ export const initiativeToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_removeProjectFromInitiative',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Remove a project from an initiative',
     input_schema: {
       type: 'object',

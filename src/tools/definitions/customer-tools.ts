@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const positiveLimitSchema = { type: 'integer', minimum: 1 };
 const orderBySchema = { type: 'string', enum: ['createdAt', 'updatedAt'] };
@@ -123,6 +129,7 @@ const customerNeedCreateProperties = {
 export const customerToolDefinitions: MCPToolDefinition[] = [
   {
     name: 'linear_getCustomers',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get customers from Linear',
     input_schema: {
       type: 'object',
@@ -141,6 +148,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getCustomerById',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get a customer by ID',
     input_schema: {
       type: 'object',
@@ -151,6 +159,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_createCustomer',
+    annotations: additiveToolAnnotations(),
     description: 'Create a customer',
     input_schema: {
       type: 'object',
@@ -161,6 +170,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_updateCustomer',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Update a customer',
     input_schema: {
       type: 'object',
@@ -174,6 +184,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_deleteCustomer',
+    annotations: destructiveToolAnnotations(),
     description: 'Delete a customer',
     input_schema: {
       type: 'object',
@@ -184,6 +195,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getCustomerNeeds',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get customer needs from Linear',
     input_schema: {
       type: 'object',
@@ -201,6 +213,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getCustomerNeedById',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get a customer need by ID',
     input_schema: {
       type: 'object',
@@ -211,6 +224,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_createCustomerNeed',
+    annotations: additiveToolAnnotations(),
     description: 'Create a customer need linked to an issue or project',
     input_schema: {
       type: 'object',
@@ -220,6 +234,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_createCustomerNeedFromAttachment',
+    annotations: additiveToolAnnotations(),
     description: 'Create or unarchive a customer need from an existing attachment',
     input_schema: {
       type: 'object',
@@ -235,6 +250,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_updateCustomerNeed',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Update a customer need',
     input_schema: {
       type: 'object',
@@ -258,6 +274,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_archiveCustomerNeed',
+    annotations: destructiveToolAnnotations(),
     description: 'Archive a customer need',
     input_schema: {
       type: 'object',
@@ -268,6 +285,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_unarchiveCustomerNeed',
+    annotations: idempotentMutationToolAnnotations(),
     description: 'Restore an archived customer need',
     input_schema: {
       type: 'object',
@@ -278,6 +296,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_deleteCustomerNeed',
+    annotations: destructiveToolAnnotations(),
     description: 'Delete a customer need',
     input_schema: {
       type: 'object',
@@ -288,6 +307,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getCustomerStatuses',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get customer statuses from Linear',
     input_schema: {
       type: 'object',
@@ -301,6 +321,7 @@ export const customerToolDefinitions: MCPToolDefinition[] = [
   },
   {
     name: 'linear_getCustomerTiers',
+    annotations: readOnlyToolAnnotations(),
     description: 'Get customer tiers from Linear',
     input_schema: {
       type: 'object',

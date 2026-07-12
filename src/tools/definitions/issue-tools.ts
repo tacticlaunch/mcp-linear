@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const jsonValueSchema = {
   anyOf: [
@@ -55,6 +61,7 @@ const issueCustomFieldValueSchema = {
  */
 export const getIssuesToolDefinition: MCPToolDefinition = {
   name: 'linear_getIssues',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of recent issues from Linear',
   input_schema: {
     type: 'object',
@@ -117,6 +124,7 @@ export const getIssuesToolDefinition: MCPToolDefinition = {
  */
 export const getIssueByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getIssueById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a specific issue by ID or identifier (e.g., ABC-123)',
   input_schema: {
     type: 'object',
@@ -178,6 +186,7 @@ export const getIssueByIdToolDefinition: MCPToolDefinition = {
  */
 export const getCustomFieldsToolDefinition: MCPToolDefinition = {
   name: 'linear_getCustomFields',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get the custom field definitions available in the authenticated Linear workspace',
   input_schema: {
     type: 'object',
@@ -195,6 +204,7 @@ export const getCustomFieldsToolDefinition: MCPToolDefinition = {
  */
 export const getIssueCustomFieldsToolDefinition: MCPToolDefinition = {
   name: 'linear_getIssueCustomFields',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get the custom field values that are currently set on a specific issue',
   input_schema: {
     type: 'object',
@@ -224,6 +234,7 @@ export const getIssueCustomFieldsToolDefinition: MCPToolDefinition = {
  */
 export const updateIssueCustomFieldToolDefinition: MCPToolDefinition = {
   name: 'linear_updateIssueCustomField',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Set or clear a custom field value on an issue. Pass null as value to clear it.',
   input_schema: {
     type: 'object',
@@ -262,6 +273,7 @@ export const updateIssueCustomFieldToolDefinition: MCPToolDefinition = {
  */
 export const searchIssuesToolDefinition: MCPToolDefinition = {
   name: 'linear_searchIssues',
+  annotations: readOnlyToolAnnotations(),
   description: 'Search for issues with various filters',
   input_schema: {
     type: 'object',
@@ -346,6 +358,7 @@ export const searchIssuesToolDefinition: MCPToolDefinition = {
  */
 export const createIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_createIssue',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new issue in Linear',
   input_schema: {
     type: 'object',
@@ -436,6 +449,7 @@ export const createIssueToolDefinition: MCPToolDefinition = {
  */
 export const updateIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_updateIssue',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing issue in Linear',
   input_schema: {
     type: 'object',
@@ -536,6 +550,7 @@ export const updateIssueToolDefinition: MCPToolDefinition = {
  */
 export const createCommentToolDefinition: MCPToolDefinition = {
   name: 'linear_createComment',
+  annotations: additiveToolAnnotations(),
   description:
     'Add a comment to an issue, project, initiative, update, document content, or as a threaded reply',
   input_schema: {
@@ -610,6 +625,7 @@ export const createCommentToolDefinition: MCPToolDefinition = {
 
 export const updateCommentToolDefinition: MCPToolDefinition = {
   name: 'linear_updateComment',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing comment',
   input_schema: {
     type: 'object',
@@ -619,8 +635,15 @@ export const updateCommentToolDefinition: MCPToolDefinition = {
       quotedText: { type: 'string', description: 'Optional quoted text for inline comments' },
       resolvingCommentId: { type: 'string', description: 'Optional resolving comment ID' },
       resolvingUserId: { type: 'string', description: 'Optional resolving user ID' },
-      subscriberIds: { type: 'array', items: { type: 'string' }, description: 'Optional subscriber IDs' },
-      doNotSubscribeToIssue: { type: 'boolean', description: 'Prevent auto subscription on update' },
+      subscriberIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Optional subscriber IDs',
+      },
+      doNotSubscribeToIssue: {
+        type: 'boolean',
+        description: 'Prevent auto subscription on update',
+      },
     },
     required: ['id'],
   },
@@ -643,6 +666,7 @@ export const updateCommentToolDefinition: MCPToolDefinition = {
 
 export const deleteCommentToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteComment',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete a comment',
   input_schema: {
     type: 'object',
@@ -665,6 +689,7 @@ export const deleteCommentToolDefinition: MCPToolDefinition = {
  */
 export const addIssueLabelToolDefinition: MCPToolDefinition = {
   name: 'linear_addIssueLabel',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add a label to an issue in Linear',
   input_schema: {
     type: 'object',
@@ -695,6 +720,7 @@ export const addIssueLabelToolDefinition: MCPToolDefinition = {
  */
 export const removeIssueLabelToolDefinition: MCPToolDefinition = {
   name: 'linear_removeIssueLabel',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove a label from an issue in Linear',
   input_schema: {
     type: 'object',
@@ -725,6 +751,7 @@ export const removeIssueLabelToolDefinition: MCPToolDefinition = {
  */
 export const assignIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_assignIssue',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Assign an issue to a user',
   input_schema: {
     type: 'object',
@@ -763,6 +790,7 @@ export const assignIssueToolDefinition: MCPToolDefinition = {
  */
 export const subscribeToIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_subscribeToIssue',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Subscribe to issue updates',
   input_schema: {
     type: 'object',
@@ -788,6 +816,7 @@ export const subscribeToIssueToolDefinition: MCPToolDefinition = {
  */
 export const convertIssueToSubtaskToolDefinition: MCPToolDefinition = {
   name: 'linear_convertIssueToSubtask',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Convert an issue to a subtask',
   input_schema: {
     type: 'object',
@@ -826,6 +855,7 @@ export const convertIssueToSubtaskToolDefinition: MCPToolDefinition = {
  */
 export const createIssueRelationToolDefinition: MCPToolDefinition = {
   name: 'linear_createIssueRelation',
+  annotations: additiveToolAnnotations(),
   description: 'Create relations between issues (blocks, is blocked by, etc.)',
   input_schema: {
     type: 'object',
@@ -866,6 +896,7 @@ export const createIssueRelationToolDefinition: MCPToolDefinition = {
 
 export const deleteIssueRelationToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteIssueRelation',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete an issue relation by ID',
   input_schema: {
     type: 'object',
@@ -891,6 +922,7 @@ export const deleteIssueRelationToolDefinition: MCPToolDefinition = {
  */
 export const archiveIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveIssue',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive an issue',
   input_schema: {
     type: 'object',
@@ -916,6 +948,7 @@ export const archiveIssueToolDefinition: MCPToolDefinition = {
  */
 export const setIssuePriorityToolDefinition: MCPToolDefinition = {
   name: 'linear_setIssuePriority',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Set the priority of an issue',
   input_schema: {
     type: 'object',
@@ -955,6 +988,7 @@ export const setIssuePriorityToolDefinition: MCPToolDefinition = {
  */
 export const transferIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_transferIssue',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Transfer an issue to another team',
   input_schema: {
     type: 'object',
@@ -993,6 +1027,7 @@ export const transferIssueToolDefinition: MCPToolDefinition = {
  */
 export const duplicateIssueToolDefinition: MCPToolDefinition = {
   name: 'linear_duplicateIssue',
+  annotations: additiveToolAnnotations(),
   description: 'Duplicate an issue',
   input_schema: {
     type: 'object',
@@ -1034,6 +1069,7 @@ export const duplicateIssueToolDefinition: MCPToolDefinition = {
  */
 export const getIssueHistoryToolDefinition: MCPToolDefinition = {
   name: 'linear_getIssueHistory',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get the history of changes made to an issue',
   input_schema: {
     type: 'object',
@@ -1077,6 +1113,7 @@ export const getIssueHistoryToolDefinition: MCPToolDefinition = {
  */
 export const getCommentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getComments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get comments for an issue, project, initiative, update, or document content',
   input_schema: {
     type: 'object',

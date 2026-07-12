@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const positiveLimitSchema = {
   type: 'integer',
@@ -90,6 +96,7 @@ const documentOutputSchema = {
 
 export const getDocumentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getDocuments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get workspace documents from Linear',
   input_schema: {
     type: 'object',
@@ -144,6 +151,7 @@ export const getDocumentsToolDefinition: MCPToolDefinition = {
 
 export const getDocumentByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getDocumentById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific Linear document',
   input_schema: {
     type: 'object',
@@ -160,6 +168,7 @@ export const getDocumentByIdToolDefinition: MCPToolDefinition = {
 
 export const getProjectDocumentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectDocuments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get documents for a specific Linear project',
   input_schema: {
     type: 'object',
@@ -195,6 +204,7 @@ export const getProjectDocumentsToolDefinition: MCPToolDefinition = {
 
 export const getInitiativeDocumentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getInitiativeDocuments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get documents for a specific Linear initiative',
   input_schema: {
     type: 'object',
@@ -230,6 +240,7 @@ export const getInitiativeDocumentsToolDefinition: MCPToolDefinition = {
 
 export const getTeamDocumentsToolDefinition: MCPToolDefinition = {
   name: 'linear_getTeamDocuments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get documents associated with a specific Linear team',
   input_schema: {
     type: 'object',
@@ -271,6 +282,8 @@ function createParentDocumentToolDefinition(
 ): MCPToolDefinition {
   return {
     name,
+    // Every parent-scoped document tool is a pure read.
+    annotations: readOnlyToolAnnotations(),
     description,
     input_schema: {
       type: 'object',
@@ -368,6 +381,7 @@ const pinnedResourceSchema = {
 
 export const getTeamResourcesToolDefinition: MCPToolDefinition = {
   name: 'linear_getTeamResources',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get team home resource sections and pinned documents or external links',
   input_schema: {
     type: 'object',
@@ -417,6 +431,7 @@ export const getTeamResourcesToolDefinition: MCPToolDefinition = {
 
 export const searchDocumentsToolDefinition: MCPToolDefinition = {
   name: 'linear_searchDocuments',
+  annotations: readOnlyToolAnnotations(),
   description: 'Search Linear documents by term',
   input_schema: {
     type: 'object',
@@ -472,6 +487,7 @@ export const searchDocumentsToolDefinition: MCPToolDefinition = {
 
 export const getDocumentContentHistoryToolDefinition: MCPToolDefinition = {
   name: 'linear_getDocumentContentHistory',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get content history entries for a Linear document content record',
   input_schema: {
     type: 'object',
@@ -505,6 +521,7 @@ export const getDocumentContentHistoryToolDefinition: MCPToolDefinition = {
 
 export const createDocumentToolDefinition: MCPToolDefinition = {
   name: 'linear_createDocument',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new Linear document',
   input_schema: {
     type: 'object',
@@ -514,13 +531,22 @@ export const createDocumentToolDefinition: MCPToolDefinition = {
       icon: { type: 'string', description: 'Icon for the document' },
       color: { type: 'string', description: 'Icon color for the document' },
       projectId: { type: 'string', description: 'Optional project associated with the document' },
-      initiativeId: { type: 'string', description: 'Optional initiative associated with the document' },
+      initiativeId: {
+        type: 'string',
+        description: 'Optional initiative associated with the document',
+      },
       teamId: { type: 'string', description: 'Optional team associated with the document' },
       issueId: { type: 'string', description: 'Optional issue associated with the document' },
       releaseId: { type: 'string', description: 'Optional release associated with the document' },
       cycleId: { type: 'string', description: 'Optional cycle associated with the document' },
-      resourceFolderId: { type: 'string', description: 'Optional resource folder containing the document' },
-      lastAppliedTemplateId: { type: 'string', description: 'Optional template last applied to the document' },
+      resourceFolderId: {
+        type: 'string',
+        description: 'Optional resource folder containing the document',
+      },
+      lastAppliedTemplateId: {
+        type: 'string',
+        description: 'Optional template last applied to the document',
+      },
       sortOrder: { type: 'number', description: 'Optional sort order in the resources list' },
     },
     required: ['title'],
@@ -530,7 +556,9 @@ export const createDocumentToolDefinition: MCPToolDefinition = {
 
 export const updateDocumentToolDefinition: MCPToolDefinition = {
   name: 'linear_updateDocument',
-  description: 'Update an existing Linear document. Provide id plus at least one other field to change.',
+  annotations: idempotentMutationToolAnnotations(),
+  description:
+    'Update an existing Linear document. Provide id plus at least one other field to change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -594,6 +622,7 @@ export const updateDocumentToolDefinition: MCPToolDefinition = {
 
 export const archiveDocumentToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveDocument',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive (trash) a Linear document',
   input_schema: {
     type: 'object',
@@ -613,6 +642,7 @@ export const archiveDocumentToolDefinition: MCPToolDefinition = {
 
 export const unarchiveDocumentToolDefinition: MCPToolDefinition = {
   name: 'linear_unarchiveDocument',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Restore a previously archived Linear document',
   input_schema: {
     type: 'object',

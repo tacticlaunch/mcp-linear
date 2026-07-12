@@ -1,10 +1,12 @@
 import { MCPToolDefinition } from '../../types.js';
+import { readOnlyToolAnnotations } from '../../tool-annotations.js';
 
 /**
  * Tool definition for getting the current viewer's information
  */
 export const getViewerToolDefinition: MCPToolDefinition = {
   name: 'linear_getViewer',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get information about the currently authenticated user',
   input_schema: {
     type: 'object',
@@ -34,6 +36,7 @@ export const getViewerToolDefinition: MCPToolDefinition = {
  */
 export const getOrganizationToolDefinition: MCPToolDefinition = {
   name: 'linear_getOrganization',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get information about the current Linear organization',
   input_schema: {
     type: 'object',
@@ -55,6 +58,7 @@ export const getOrganizationToolDefinition: MCPToolDefinition = {
  */
 export const getUsersToolDefinition: MCPToolDefinition = {
   name: 'linear_getUsers',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of users in the Linear organization',
   input_schema: {
     type: 'object',
@@ -80,6 +84,7 @@ export const getUsersToolDefinition: MCPToolDefinition = {
  */
 export const getLabelsToolDefinition: MCPToolDefinition = {
   name: 'linear_getLabels',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of issue labels from Linear',
   input_schema: {
     type: 'object',

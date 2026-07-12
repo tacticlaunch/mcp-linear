@@ -78,7 +78,80 @@ async function main() {
           `Tool ${tool.name} exposes disallowed top-level schema key ${key}.`,
         );
       }
+
+      assert.ok(tool.annotations, `Tool ${tool.name} must advertise annotations.`);
+      for (const hint of ['readOnlyHint', 'destructiveHint', 'idempotentHint', 'openWorldHint']) {
+        assert.equal(
+          typeof tool.annotations[hint],
+          'boolean',
+          `Tool ${tool.name} must advertise an explicit boolean ${hint}.`,
+        );
+      }
+
+      assert.ok(tool.outputSchema, `Tool ${tool.name} must advertise an outputSchema.`);
+      assert.equal(
+        tool.outputSchema.type,
+        'object',
+        `Tool ${tool.name} must expose a top-level object output schema.`,
+      );
     }
+
+    const toolsByName = new Map(tools.map((tool) => [tool.name, tool]));
+    const expectedAnnotations = [
+      [
+        'linear_getIssues',
+        { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      ],
+      [
+        'linear_createIssue',
+        {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      ],
+      [
+        'linear_deleteWebhook',
+        { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      ],
+      [
+        'linear_logoutAllSessions',
+        { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      ],
+      [
+        'linear_updateIssue',
+        { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      ],
+    ];
+    for (const [toolName, annotations] of expectedAnnotations) {
+      assert.deepEqual(
+        toolsByName.get(toolName)?.annotations,
+        annotations,
+        `Tool ${toolName} advertised unexpected annotations.`,
+      );
+    }
+
+    const openWorldToolNames = tools
+      .filter((tool) => tool.annotations.openWorldHint)
+      .map((tool) => tool.name);
+    assert.deepEqual(
+      openWorldToolNames,
+      [],
+      'Every tool talks only to the configured Linear workspace, so none may advertise openWorldHint.',
+    );
+
+    const arrayOutputTool = toolsByName.get('linear_getIssues');
+    assert.equal(
+      arrayOutputTool.outputSchema.properties.items.type,
+      'array',
+      'Array-producing tools must advertise their array schema wrapped under an items envelope.',
+    );
+    assert.deepEqual(
+      arrayOutputTool.outputSchema.required,
+      ['items'],
+      'The items envelope must be required for array-producing tools.',
+    );
 
     for (const toolName of criticalToolNames) {
       assert.ok(actualToolNames.includes(toolName), `Expected tool ${toolName} to be registered.`);
@@ -97,6 +170,28 @@ async function main() {
       statusPayload.version ?? '',
       /^\d+\.\d+\.\d+/,
       'Server status must report a semver version.',
+    );
+    // The SDK client has already validated structuredContent against the advertised
+    // outputSchema during callTool; here we pin that it mirrors the text payload.
+    assert.deepEqual(
+      statusResult.structuredContent,
+      statusPayload,
+      'structuredContent must mirror the JSON text payload for object-producing tools.',
+    );
+
+    const rateLimitResult = await client.callTool({
+      name: 'linear_getRateLimitStatus',
+      arguments: {},
+    });
+    assert.equal(
+      rateLimitResult.isError,
+      false,
+      'Rate-limit status should run without Linear I/O.',
+    );
+    assert.deepEqual(
+      rateLimitResult.structuredContent,
+      JSON.parse(rateLimitResult.content[0].text),
+      'structuredContent must mirror the JSON text payload for linear_getRateLimitStatus.',
     );
 
     const rejectedArguments = await client.callTool({
@@ -118,6 +213,11 @@ async function main() {
         'Unknown argument(s) for linear_getServerStatus: unexpectedArgument',
       ),
     );
+    assert.equal(
+      rejectedArguments.structuredContent,
+      undefined,
+      'Error results must stay text-only without structuredContent.',
+    );
 
     const unknownToolResult = await client.callTool({
       name: 'linear_toolThatDoesNotExist',
@@ -128,12 +228,20 @@ async function main() {
       true,
       'Unknown tools must surface an in-band error result rather than a protocol error.',
     );
-    assert.ok(unknownToolResult.content[0].text.includes('Unknown tool: linear_toolThatDoesNotExist'));
+    assert.ok(
+      unknownToolResult.content[0].text.includes('Unknown tool: linear_toolThatDoesNotExist'),
+    );
 
     const { resources } = await client.listResources();
     const resourceUris = resources.map((resource) => resource.uri);
-    assert.ok(resourceUris.includes('linear://viewer'), 'Expected linear://viewer resource to be registered.');
-    assert.ok(resourceUris.includes('linear://rate-limit'), 'Expected linear://rate-limit resource to be registered.');
+    assert.ok(
+      resourceUris.includes('linear://viewer'),
+      'Expected linear://viewer resource to be registered.',
+    );
+    assert.ok(
+      resourceUris.includes('linear://rate-limit'),
+      'Expected linear://rate-limit resource to be registered.',
+    );
 
     const guideResource = await client.readResource({ uri: 'linear://resource-guide' });
     assert.ok(guideResource.contents[0].text.includes('linear://project/{id}'));

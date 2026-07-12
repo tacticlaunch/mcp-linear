@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const paginationSchema = {
   type: 'integer',
@@ -199,6 +205,7 @@ const releasePipelineDetailSchema = {
 
 export const getReleasePipelinesToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleasePipelines',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get release pipelines from Linear',
   input_schema: {
     type: 'object',
@@ -225,6 +232,7 @@ export const getReleasePipelinesToolDefinition: MCPToolDefinition = {
 
 export const getReleasePipelineByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleasePipelineById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific release pipeline',
   input_schema: {
     type: 'object',
@@ -241,6 +249,7 @@ export const getReleasePipelineByIdToolDefinition: MCPToolDefinition = {
 
 export const createReleasePipelineToolDefinition: MCPToolDefinition = {
   name: 'linear_createReleasePipeline',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new release pipeline',
   input_schema: {
     type: 'object',
@@ -279,6 +288,7 @@ export const createReleasePipelineToolDefinition: MCPToolDefinition = {
 
 export const updateReleasePipelineToolDefinition: MCPToolDefinition = {
   name: 'linear_updateReleasePipeline',
+  annotations: idempotentMutationToolAnnotations(),
   description:
     'Update an existing release pipeline. Provide id plus at least one other field to change.',
   input_schema: {
@@ -322,6 +332,7 @@ export const updateReleasePipelineToolDefinition: MCPToolDefinition = {
 
 export const archiveReleasePipelineToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveReleasePipeline',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a release pipeline',
   input_schema: {
     type: 'object',
@@ -344,6 +355,7 @@ export const archiveReleasePipelineToolDefinition: MCPToolDefinition = {
 
 export const unarchiveReleasePipelineToolDefinition: MCPToolDefinition = {
   name: 'linear_unarchiveReleasePipeline',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Unarchive a release pipeline',
   input_schema: {
     type: 'object',
@@ -366,6 +378,7 @@ export const unarchiveReleasePipelineToolDefinition: MCPToolDefinition = {
 
 export const deleteReleasePipelineToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteReleasePipeline',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete a release pipeline',
   input_schema: {
     type: 'object',
@@ -388,6 +401,7 @@ export const deleteReleasePipelineToolDefinition: MCPToolDefinition = {
 
 export const getReleasesToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleases',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get releases from Linear with optional pipeline and stage filters',
   input_schema: {
     type: 'object',
@@ -422,6 +436,7 @@ export const getReleasesToolDefinition: MCPToolDefinition = {
 
 export const getReleaseByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleaseById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific release',
   input_schema: {
     type: 'object',
@@ -451,6 +466,7 @@ export const getReleaseByIdToolDefinition: MCPToolDefinition = {
 
 export const searchReleasesToolDefinition: MCPToolDefinition = {
   name: 'linear_searchReleases',
+  annotations: readOnlyToolAnnotations(),
   description: 'Search releases by term, version, or pipeline name',
   input_schema: {
     type: 'object',
@@ -485,6 +501,7 @@ export const searchReleasesToolDefinition: MCPToolDefinition = {
 
 export const getReleaseStagesToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleaseStages',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get release stages from Linear',
   input_schema: {
     type: 'object',
@@ -515,6 +532,7 @@ export const getReleaseStagesToolDefinition: MCPToolDefinition = {
 
 export const createReleaseStageToolDefinition: MCPToolDefinition = {
   name: 'linear_createReleaseStage',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new release stage in a pipeline',
   input_schema: {
     type: 'object',
@@ -555,6 +573,7 @@ export const createReleaseStageToolDefinition: MCPToolDefinition = {
 
 export const updateReleaseStageToolDefinition: MCPToolDefinition = {
   name: 'linear_updateReleaseStage',
+  annotations: idempotentMutationToolAnnotations(),
   description:
     'Update an existing release stage. Provide id plus at least one other field to change.',
   input_schema: {
@@ -588,6 +607,7 @@ export const updateReleaseStageToolDefinition: MCPToolDefinition = {
 
 export const archiveReleaseStageToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveReleaseStage',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a release stage',
   input_schema: {
     type: 'object',
@@ -610,6 +630,7 @@ export const archiveReleaseStageToolDefinition: MCPToolDefinition = {
 
 export const unarchiveReleaseStageToolDefinition: MCPToolDefinition = {
   name: 'linear_unarchiveReleaseStage',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Unarchive a release stage',
   input_schema: {
     type: 'object',
@@ -632,6 +653,7 @@ export const unarchiveReleaseStageToolDefinition: MCPToolDefinition = {
 
 export const getReleaseNotesToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleaseNotes',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get release notes from Linear',
   input_schema: {
     type: 'object',
@@ -658,6 +680,7 @@ export const getReleaseNotesToolDefinition: MCPToolDefinition = {
 
 export const getReleaseNoteByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getReleaseNoteById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific release note',
   input_schema: {
     type: 'object',
@@ -677,6 +700,7 @@ export const getReleaseNoteByIdToolDefinition: MCPToolDefinition = {
 
 export const createReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_createRelease',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new release in a release pipeline',
   input_schema: {
     type: 'object',
@@ -733,6 +757,7 @@ export const createReleaseToolDefinition: MCPToolDefinition = {
 
 export const updateReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_updateRelease',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing release. Provide id plus at least one other field to change.',
   input_schema: {
     type: 'object',
@@ -793,6 +818,7 @@ export const updateReleaseToolDefinition: MCPToolDefinition = {
 
 export const completeReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_completeRelease',
+  annotations: idempotentMutationToolAnnotations(),
   description:
     'Mark a release as completed within a pipeline. The target pipeline must already have a completed release stage configured.',
   input_schema: {
@@ -814,6 +840,7 @@ export const completeReleaseToolDefinition: MCPToolDefinition = {
 
 export const archiveReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveRelease',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a release',
   input_schema: {
     type: 'object',
@@ -836,6 +863,7 @@ export const archiveReleaseToolDefinition: MCPToolDefinition = {
 
 export const unarchiveReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_unarchiveRelease',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Unarchive a release',
   input_schema: {
     type: 'object',
@@ -858,6 +886,7 @@ export const unarchiveReleaseToolDefinition: MCPToolDefinition = {
 
 export const addIssueToReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_addIssueToRelease',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add an issue to a release',
   input_schema: {
     type: 'object',
@@ -885,6 +914,7 @@ export const addIssueToReleaseToolDefinition: MCPToolDefinition = {
 
 export const removeIssueFromReleaseToolDefinition: MCPToolDefinition = {
   name: 'linear_removeIssueFromRelease',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove an issue from a release',
   input_schema: {
     type: 'object',
@@ -912,6 +942,7 @@ export const removeIssueFromReleaseToolDefinition: MCPToolDefinition = {
 
 export const createReleaseNoteToolDefinition: MCPToolDefinition = {
   name: 'linear_createReleaseNote',
+  annotations: additiveToolAnnotations(),
   description:
     'Create a release note using either explicit release IDs or a release range within a pipeline',
   input_schema: {
@@ -946,6 +977,7 @@ export const createReleaseNoteToolDefinition: MCPToolDefinition = {
 
 export const updateReleaseNoteToolDefinition: MCPToolDefinition = {
   name: 'linear_updateReleaseNote',
+  annotations: idempotentMutationToolAnnotations(),
   description:
     'Update a release note using either explicit release IDs or a release range. Provide id plus at least one other field to change.',
   input_schema: {
@@ -980,6 +1012,7 @@ export const updateReleaseNoteToolDefinition: MCPToolDefinition = {
 
 export const deleteReleaseNoteToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteReleaseNote',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete a release note',
   input_schema: {
     type: 'object',

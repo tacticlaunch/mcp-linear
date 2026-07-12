@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const milestoneOrderBySchema = {
   type: 'string',
@@ -12,7 +18,9 @@ const milestoneStatusSchema = {
 
 export const getMilestonesToolDefinition: MCPToolDefinition = {
   name: 'linear_getMilestones',
-  description: 'Get project milestones from Linear, with PM-friendly filters for project, team, and milestone status',
+  annotations: readOnlyToolAnnotations(),
+  description:
+    'Get project milestones from Linear, with PM-friendly filters for project, team, and milestone status',
   input_schema: {
     type: 'object',
     properties: {
@@ -74,6 +82,7 @@ export const getMilestonesToolDefinition: MCPToolDefinition = {
 
 export const getMilestoneByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getMilestoneById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific project milestone by ID',
   input_schema: {
     type: 'object',
@@ -111,6 +120,7 @@ export const getMilestoneByIdToolDefinition: MCPToolDefinition = {
 
 export const createMilestoneToolDefinition: MCPToolDefinition = {
   name: 'linear_createMilestone',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new project milestone in Linear',
   input_schema: {
     type: 'object',
@@ -164,7 +174,9 @@ export const createMilestoneToolDefinition: MCPToolDefinition = {
 
 export const updateMilestoneToolDefinition: MCPToolDefinition = {
   name: 'linear_updateMilestone',
-  description: 'Update an existing project milestone in Linear. Provide id plus at least one other field to change.',
+  annotations: idempotentMutationToolAnnotations(),
+  description:
+    'Update an existing project milestone in Linear. Provide id plus at least one other field to change.',
   input_schema: {
     type: 'object',
     properties: {
@@ -221,6 +233,7 @@ export const updateMilestoneToolDefinition: MCPToolDefinition = {
 
 export const archiveMilestoneToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveMilestone',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a project milestone',
   input_schema: {
     type: 'object',

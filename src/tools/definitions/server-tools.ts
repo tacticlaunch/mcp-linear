@@ -1,7 +1,9 @@
 import { MCPToolDefinition } from '../../types.js';
+import { readOnlyToolAnnotations } from '../../tool-annotations.js';
 
 export const getRateLimitStatusToolDefinition: MCPToolDefinition = {
   name: 'linear_getRateLimitStatus',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get the shared MCP-side Linear rate-limit cooldown and retry snapshot',
   input_schema: {
     type: 'object',
@@ -21,6 +23,7 @@ export const getRateLimitStatusToolDefinition: MCPToolDefinition = {
 
 export const getServerStatusToolDefinition: MCPToolDefinition = {
   name: 'linear_getServerStatus',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get MCP Linear server runtime status, counts, and current rate-limit snapshot',
   input_schema: {
     type: 'object',
