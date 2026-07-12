@@ -37,6 +37,19 @@ async function main() {
   try {
     await client.connect(transport);
 
+    const serverVersion = client.getServerVersion();
+    assert.equal(serverVersion?.name, 'linear', 'Server must identify itself as "linear".');
+    assert.match(
+      serverVersion?.version ?? '',
+      /^\d+\.\d+\.\d+/,
+      'Server must report a semver version during initialization.',
+    );
+
+    const serverCapabilities = client.getServerCapabilities();
+    assert.ok(serverCapabilities?.tools, 'Server must declare the tools capability.');
+    assert.ok(serverCapabilities?.resources, 'Server must declare the resources capability.');
+    assert.ok(serverCapabilities?.prompts, 'Server must declare the prompts capability.');
+
     const { tools } = await client.listTools();
     const actualToolNames = tools.map((tool) => tool.name).sort();
     const expectedToolNames = allToolDefinitions.map((tool) => tool.name).sort();
@@ -45,6 +58,11 @@ async function main() {
       actualToolNames,
       expectedToolNames,
       `MCP server advertised an unexpected tool set. Expected ${expectedToolNames.length} tools, got ${actualToolNames.length}.`,
+    );
+    assert.equal(
+      new Set(actualToolNames).size,
+      actualToolNames.length,
+      'MCP server advertised duplicate tool names.',
     );
 
     for (const tool of tools) {
@@ -65,6 +83,52 @@ async function main() {
     for (const toolName of criticalToolNames) {
       assert.ok(actualToolNames.includes(toolName), `Expected tool ${toolName} to be registered.`);
     }
+
+    const statusResult = await client.callTool({
+      name: 'linear_getServerStatus',
+      arguments: {},
+    });
+    assert.equal(statusResult.isError, false, 'Server status tool should run without Linear I/O.');
+    assert.ok(Array.isArray(statusResult.content), 'Tool results must carry a content array.');
+    assert.equal(statusResult.content[0].type, 'text', 'Tool results must be text content items.');
+    const statusPayload = JSON.parse(statusResult.content[0].text);
+    assert.equal(statusPayload.toolCount, actualToolNames.length);
+    assert.match(
+      statusPayload.version ?? '',
+      /^\d+\.\d+\.\d+/,
+      'Server status must report a semver version.',
+    );
+
+    const rejectedArguments = await client.callTool({
+      name: 'linear_getServerStatus',
+      arguments: { unexpectedArgument: true },
+    });
+    assert.equal(
+      rejectedArguments.isError,
+      true,
+      'Unknown arguments must surface an in-band error result rather than a protocol error.',
+    );
+    assert.equal(
+      rejectedArguments.content[0].type,
+      'text',
+      'Error results must be text content items, not protocol-level errors.',
+    );
+    assert.ok(
+      rejectedArguments.content[0].text.includes(
+        'Unknown argument(s) for linear_getServerStatus: unexpectedArgument',
+      ),
+    );
+
+    const unknownToolResult = await client.callTool({
+      name: 'linear_toolThatDoesNotExist',
+      arguments: {},
+    });
+    assert.equal(
+      unknownToolResult.isError,
+      true,
+      'Unknown tools must surface an in-band error result rather than a protocol error.',
+    );
+    assert.ok(unknownToolResult.content[0].text.includes('Unknown tool: linear_toolThatDoesNotExist'));
 
     const { resources } = await client.listResources();
     const resourceUris = resources.map((resource) => resource.uri);

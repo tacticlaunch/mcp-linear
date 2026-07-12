@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@linear/sdk": "^86.0.0",
-    "@modelcontextprotocol/sdk": "^1.6.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "cors": "^2.8.5",
