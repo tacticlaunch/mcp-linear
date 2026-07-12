@@ -72,8 +72,12 @@ export function handleGetWebhooks(linearService: LinearService) {
 }
 export function handleCreateWebhook(linearService: LinearService) {
   return async (args: unknown) => {
+    if (!isCreateWebhookArgs(args)) {
+      const error = new Error('Invalid arguments for createWebhook');
+      logError('Error creating webhook', error);
+      throw error;
+    }
     try {
-      if (!isCreateWebhookArgs(args)) throw new Error('Invalid arguments for createWebhook');
       return await linearService.createWebhook(args);
     } catch (error) {
       rethrowWebhookErrorWithoutSecret('creating', error, args);
@@ -82,8 +86,12 @@ export function handleCreateWebhook(linearService: LinearService) {
 }
 export function handleUpdateWebhook(linearService: LinearService) {
   return async (args: unknown) => {
+    if (!isUpdateWebhookArgs(args)) {
+      const error = new Error('Invalid arguments for updateWebhook');
+      logError('Error updating webhook', error);
+      throw error;
+    }
     try {
-      if (!isUpdateWebhookArgs(args)) throw new Error('Invalid arguments for updateWebhook');
       return await linearService.updateWebhook(args);
     } catch (error) {
       rethrowWebhookErrorWithoutSecret('updating', error, args);

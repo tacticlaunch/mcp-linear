@@ -21,7 +21,7 @@ const redirectUrisSchema = {
 const grantTypesSchema = {
   type: 'array',
   minItems: 1,
-  maxItems: 2,
+  maxItems: OAUTH_APPLICATION_GRANT_TYPES.length,
   uniqueItems: true,
   items: { type: 'string', enum: [...OAUTH_APPLICATION_GRANT_TYPES] },
   contains: { const: 'authorization_code' },
@@ -30,7 +30,7 @@ const grantTypesSchema = {
 const webhookResourceTypesSchema = {
   type: 'array',
   minItems: 1,
-  maxItems: 22,
+  maxItems: WEBHOOK_RESOURCE_TYPES.length,
   uniqueItems: true,
   items: { type: 'string', enum: [...WEBHOOK_RESOURCE_TYPES] },
 };
@@ -150,7 +150,7 @@ export const generateOAuthApplicationSetupToolDefinition: MCPToolDefinition = {
 export const generateOAuthAuthorizationUrlToolDefinition: MCPToolDefinition = {
   name: 'linear_generateOAuthAuthorizationUrl',
   description:
-    'Generate a Linear OAuth authorization URL. Scopes are requested during authorization; this tool does not create, grant, approve, persist, or modify scopes.',
+    'Generate a Linear OAuth authorization URL. Scopes are requested during authorization; this tool does not create, grant, approve, persist, or modify scopes. Actor/scope rules: with actor: "app" the admin scope is rejected, and the agent-only scopes (app:assignable, app:mentionable, customer:read, customer:write, initiative:read, initiative:write) require actor: "app".',
   input_schema: {
     type: 'object',
     properties: {
@@ -165,6 +165,8 @@ export const generateOAuthAuthorizationUrlToolDefinition: MCPToolDefinition = {
         minItems: 1,
         uniqueItems: true,
         items: { type: 'string', enum: [...OAUTH_AUTHORIZATION_SCOPES] },
+        description:
+          'Scopes to request. The read scope is always included. app:assignable, app:mentionable, customer:*, and initiative:* scopes require actor: "app"; admin is unavailable with actor: "app".',
       },
       actor: { type: 'string', enum: ['user', 'app'] },
       state: { type: 'string', minLength: 1 },

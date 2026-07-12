@@ -132,7 +132,8 @@ export const getWebhookByIdToolDefinition: MCPToolDefinition = {
 };
 export const createWebhookToolDefinition: MCPToolDefinition = {
   name: 'linear_createWebhook',
-  description: 'Create an ordinary workspace webhook for integration events.',
+  description:
+    'Create an ordinary workspace webhook for integration events. Exactly one of teamId or allPublicTeams: true must be provided. The URL must be a publicly reachable HTTPS endpoint (localhost, private-network, and credential-bearing URLs are rejected).',
   input_schema: {
     type: 'object',
     properties: {
@@ -141,6 +142,7 @@ export const createWebhookToolDefinition: MCPToolDefinition = {
         format: 'uri',
         pattern: '^[Hh][Tt][Tt][Pp][Ss]://',
         maxLength: 1000,
+        description: 'Publicly reachable HTTPS webhook destination.',
       },
       resourceTypes: {
         type: 'array',
@@ -162,7 +164,11 @@ export const createWebhookToolDefinition: MCPToolDefinition = {
       },
     },
     required: ['url', 'resourceTypes'],
-  },
+    anyOf: [
+      { required: ['teamId'] },
+      { properties: { allPublicTeams: { const: true } }, required: ['allPublicTeams'] },
+    ],
+  } as MCPToolDefinition['input_schema'],
   output_schema: webhookOutputSchema,
 };
 export const updateWebhookToolDefinition: MCPToolDefinition = {
@@ -177,6 +183,7 @@ export const updateWebhookToolDefinition: MCPToolDefinition = {
         format: 'uri',
         pattern: '^[Hh][Tt][Tt][Pp][Ss]://',
         maxLength: 1000,
+        description: 'Publicly reachable HTTPS webhook destination.',
       },
       label: { type: ['string', 'null'], minLength: 1 },
       enabled: { type: 'boolean' },

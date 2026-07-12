@@ -409,6 +409,104 @@ describe('OAuth application and complete webhook management', () => {
     ).toBe(false);
   });
 
+  it('rejects every non-public webhook destination class and accepts public ones', () => {
+    const rejectedUrls = [
+      'http://example.com/webhooks/linear', // plain http
+      'https://0.0.0.0/webhooks/linear', // "this network"
+      'https://100.64.0.1/webhooks/linear', // CGNAT
+      'https://100.127.255.254/webhooks/linear', // CGNAT upper bound
+      'https://169.254.169.254/webhooks/linear', // link-local / metadata
+      'https://172.16.0.1/webhooks/linear', // RFC 1918
+      'https://172.31.255.254/webhooks/linear', // RFC 1918 upper bound
+      'https://192.0.0.8/webhooks/linear', // IETF protocol assignments
+      'https://192.0.2.1/webhooks/linear', // TEST-NET-1
+      'https://192.168.1.10/webhooks/linear', // RFC 1918
+      'https://198.18.0.1/webhooks/linear', // benchmarking
+      'https://198.51.100.7/webhooks/linear', // TEST-NET-2
+      'https://203.0.113.9/webhooks/linear', // TEST-NET-3
+      'https://224.0.0.1/webhooks/linear', // multicast
+      'https://255.255.255.255/webhooks/linear', // broadcast
+      'https://internal.corp.local/webhooks/linear', // .local
+      'https://vault.internal/webhooks/linear', // .internal
+      'https://nas.home.arpa/webhooks/linear', // .home.arpa
+      'https://sub.example.localhost/webhooks/linear', // .localhost
+      'https://localhost./webhooks/linear', // trailing dot
+      'https://[::]/webhooks/linear', // unspecified IPv6
+      'https://[fc00::1]/webhooks/linear', // unique local
+      'https://[fd12:3456::1]/webhooks/linear', // unique local
+      'https://[fe80::1]/webhooks/linear', // link-local IPv6
+      'https://[ff02::1]/webhooks/linear', // multicast IPv6
+      'https://[::ffff:127.0.0.1]/webhooks/linear', // IPv4-mapped
+    ];
+    for (const url of rejectedUrls) {
+      expect(isCreateWebhookArgs({ url, resourceTypes: ['Issue'], teamId: 'team-1' })).toBe(false);
+      expect(isUpdateWebhookArgs({ id: 'webhook-1', url })).toBe(false);
+    }
+
+    const acceptedUrls = [
+      'https://example.com/webhooks/linear',
+      'https://192.0.32.10/webhooks/linear', // publicly routable, outside 192.0.0/24 and TEST-NET-1
+      'https://198.20.0.1/webhooks/linear', // outside the 198.18/15 benchmarking block
+      'https://[2606:4700::6810:1]/webhooks/linear', // public IPv6
+    ];
+    for (const url of acceptedUrls) {
+      expect(isCreateWebhookArgs({ url, resourceTypes: ['Issue'], teamId: 'team-1' })).toBe(true);
+      expect(isUpdateWebhookArgs({ id: 'webhook-1', url })).toBe(true);
+    }
+  });
+
+  it('reports HTTP failures and invalid JSON from the token endpoint without echoing credentials', async () => {
+    const fetchSpy = jest.spyOn(global, 'fetch');
+    const service = makeService({});
+    const request = {
+      clientId: 'client-1',
+      clientSecret: 'client-secret-once',
+      scopes: ['read'] as string[],
+    };
+
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: 'invalid_client', error_description: 'client-secret-once' }),
+    } as Response);
+    await expect(service.createOAuthClientCredentialsToken(request)).rejects.toThrow(
+      /^Linear OAuth token request failed \(HTTP 401\)$/,
+    );
+
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      json: async () => {
+        throw new SyntaxError('Unexpected token < in JSON');
+      },
+    } as unknown as Response);
+    await expect(service.createOAuthClientCredentialsToken(request)).rejects.toThrow(
+      /^Linear OAuth token request returned invalid JSON \(HTTP 502\)$/,
+    );
+  });
+
+  it('labels invalid webhook arguments as invalid even when the request carries a signing secret', async () => {
+    const service = {
+      createWebhook: jest.fn(),
+      updateWebhook: jest.fn(),
+    } as unknown as LinearService;
+    const handlers = registerToolHandlers(service);
+
+    await expect(
+      handlers.linear_createWebhook({
+        url: 'https://example.com/webhooks/linear',
+        resourceTypes: ['Issue'],
+        teamId: 'team-1',
+        secret: '',
+      }),
+    ).rejects.toThrow('Invalid arguments for createWebhook');
+    await expect(
+      handlers.linear_updateWebhook({ id: 'webhook-1', secret: '' }),
+    ).rejects.toThrow('Invalid arguments for updateWebhook');
+    expect((service.createWebhook as jest.Mock).mock.calls).toHaveLength(0);
+    expect((service.updateWebhook as jest.Mock).mock.calls).toHaveLength(0);
+  });
+
   it('generates an official manifest setup link and an OAuth authorization URL without inventing scope CRUD', () => {
     const service = makeService({});
     const setup = service.generateOAuthApplicationSetup({
