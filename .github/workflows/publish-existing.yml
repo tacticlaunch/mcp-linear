@@ -1,0 +1,42 @@
+name: Publish existing npm release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing package version to publish (for example, 1.4.1)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify package version
+        run: test "$(node -p \"require('./package.json').version\")" = "${{ inputs.version }}"
+
+      - name: Publish to npm
+        run: npm publish --access public
