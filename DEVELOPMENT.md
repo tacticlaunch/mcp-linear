@@ -14,6 +14,14 @@ npm install
 npm run dev -- --token YOUR_LINEAR_API_TOKEN
 ```
 
+To exercise the alpha managed OAuth application tools, use an eligible managing OAuth application's access token instead:
+
+```bash
+npm run dev -- --oauth-token YOUR_LINEAR_OAUTH_ACCESS_TOKEN
+```
+
+Do not use production OAuth applications for destructive live tests. Use temporary child-app and webhook names, capture one-time secrets without logging them, and archive/delete every created resource before finishing.
+
 ### Validation
 
 Use the following checks before merging or publishing:
