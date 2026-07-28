@@ -36,7 +36,9 @@ jobs:
         run: npm run build
 
       - name: Verify package version
-        run: test "$(node -p 'require(\"./package.json\").version')" = "${{ inputs.version }}"
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: node -e "if (require('./package.json').version !== process.env.EXPECTED_VERSION) process.exit(1)"
 
       - name: Publish to npm
         run: npm publish --access public
