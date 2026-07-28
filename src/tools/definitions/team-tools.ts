@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const positiveLimitSchema = { type: 'integer', minimum: 1 };
 const paginationOrderBySchema = { type: 'string', enum: ['createdAt', 'updatedAt'] };
@@ -63,6 +69,7 @@ const teamLabelOutputSchema = {
  */
 export const getTeamsToolDefinition: MCPToolDefinition = {
   name: 'linear_getTeams',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of teams from Linear',
   input_schema: {
     type: 'object',
@@ -97,6 +104,7 @@ export const getTeamsToolDefinition: MCPToolDefinition = {
  */
 export const getWorkflowStatesToolDefinition: MCPToolDefinition = {
   name: 'linear_getWorkflowStates',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get workflow states for a team',
   input_schema: {
     type: 'object',
@@ -130,6 +138,7 @@ export const getWorkflowStatesToolDefinition: MCPToolDefinition = {
 
 export const createWorkflowStateToolDefinition: MCPToolDefinition = {
   name: 'linear_createWorkflowState',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new workflow state',
   input_schema: {
     type: 'object',
@@ -148,6 +157,7 @@ export const createWorkflowStateToolDefinition: MCPToolDefinition = {
 
 export const updateWorkflowStateToolDefinition: MCPToolDefinition = {
   name: 'linear_updateWorkflowState',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update a workflow state. Provide id plus at least one other field to change.',
   input_schema: {
     type: 'object',
@@ -165,6 +175,7 @@ export const updateWorkflowStateToolDefinition: MCPToolDefinition = {
 
 export const updateTeamToolDefinition: MCPToolDefinition = {
   name: 'linear_updateTeam',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update team settings',
   input_schema: {
     type: 'object',
@@ -187,14 +198,21 @@ export const updateTeamToolDefinition: MCPToolDefinition = {
 
 export const getTeamMembershipsToolDefinition: MCPToolDefinition = {
   name: 'linear_getTeamMemberships',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get team memberships',
   input_schema: {
     type: 'object',
     properties: {
       teamId: { type: 'string', description: 'ID of the team to inspect' },
-      limit: { ...positiveLimitSchema, description: 'Maximum number of memberships to return (default: 25)' },
+      limit: {
+        ...positiveLimitSchema,
+        description: 'Maximum number of memberships to return (default: 25)',
+      },
       includeArchived: { type: 'boolean', description: 'Include archived memberships' },
-      orderBy: { ...paginationOrderBySchema, description: 'Sort memberships by created or updated date' },
+      orderBy: {
+        ...paginationOrderBySchema,
+        description: 'Sort memberships by created or updated date',
+      },
     },
     required: ['teamId'],
   },
@@ -203,6 +221,7 @@ export const getTeamMembershipsToolDefinition: MCPToolDefinition = {
 
 export const createTeamToolDefinition: MCPToolDefinition = {
   name: 'linear_createTeam',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new team',
   input_schema: {
     type: 'object',
@@ -224,13 +243,22 @@ export const createTeamToolDefinition: MCPToolDefinition = {
 
 export const archiveTeamToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveTeam',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a team',
-  input_schema: { type: 'object', properties: { id: { type: 'string', description: 'ID of the team to archive' } }, required: ['id'] },
-  output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' } } },
+  input_schema: {
+    type: 'object',
+    properties: { id: { type: 'string', description: 'ID of the team to archive' } },
+    required: ['id'],
+  },
+  output_schema: {
+    type: 'object',
+    properties: { success: { type: 'boolean' }, id: { type: 'string' } },
+  },
 };
 
 export const addUserToTeamToolDefinition: MCPToolDefinition = {
   name: 'linear_addUserToTeam',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add a user to a team',
   input_schema: {
     type: 'object',
@@ -247,22 +275,35 @@ export const addUserToTeamToolDefinition: MCPToolDefinition = {
 
 export const removeUserFromTeamToolDefinition: MCPToolDefinition = {
   name: 'linear_removeUserFromTeam',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove a user from a team',
   input_schema: {
     type: 'object',
     properties: {
       teamId: { type: 'string', description: 'ID of the team to update' },
       userId: { type: 'string', description: 'ID of the user to remove' },
-      alsoLeaveParentTeams: { type: 'boolean', description: 'Also leave parent teams when removing membership' },
+      alsoLeaveParentTeams: {
+        type: 'boolean',
+        description: 'Also leave parent teams when removing membership',
+      },
     },
     required: ['teamId', 'userId'],
   },
-  output_schema: { type: 'object', properties: { success: { type: 'boolean' }, teamId: { type: 'string' }, userId: { type: 'string' } } },
+  output_schema: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean' },
+      teamId: { type: 'string' },
+      userId: { type: 'string' },
+    },
+  },
 };
 
 export const updateTeamMembershipToolDefinition: MCPToolDefinition = {
   name: 'linear_updateTeamMembership',
-  description: 'Update a user\'s role in a team. Provide id plus at least one other field to change.',
+  annotations: idempotentMutationToolAnnotations(),
+  description:
+    "Update a user's role in a team. Provide id plus at least one other field to change.",
   input_schema: {
     type: 'object',
     properties: {
@@ -277,14 +318,21 @@ export const updateTeamMembershipToolDefinition: MCPToolDefinition = {
 
 export const getTeamLabelsToolDefinition: MCPToolDefinition = {
   name: 'linear_getTeamLabels',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get labels for a specific team',
   input_schema: {
     type: 'object',
     properties: {
       teamId: { type: 'string', description: 'ID of the team to inspect' },
-      limit: { ...positiveLimitSchema, description: 'Maximum number of labels to return (default: 25)' },
+      limit: {
+        ...positiveLimitSchema,
+        description: 'Maximum number of labels to return (default: 25)',
+      },
       includeArchived: { type: 'boolean', description: 'Include archived labels' },
-      orderBy: { ...paginationOrderBySchema, description: 'Sort labels by created or updated date' },
+      orderBy: {
+        ...paginationOrderBySchema,
+        description: 'Sort labels by created or updated date',
+      },
     },
     required: ['teamId'],
   },
@@ -293,6 +341,7 @@ export const getTeamLabelsToolDefinition: MCPToolDefinition = {
 
 export const createTeamLabelToolDefinition: MCPToolDefinition = {
   name: 'linear_createTeamLabel',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new label for a team',
   input_schema: {
     type: 'object',

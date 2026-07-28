@@ -43,7 +43,10 @@ describe('Linear MCP resources', () => {
         lastOperation: null,
       }),
     });
-    expect(viewer.contents[0]).toMatchObject({ uri: 'linear://viewer', mimeType: 'application/json' });
+    expect(viewer.contents[0]).toMatchObject({
+      uri: 'linear://viewer',
+      mimeType: 'application/json',
+    });
 
     await readLinearResource('linear://project/project-1', {
       linearService,
@@ -92,6 +95,10 @@ describe('Linear MCP resources', () => {
         lastOperation: 'request',
       }),
     });
-    expect(rateLimit.contents[0].text).toContain('"isBlocked": true');
+    const rateLimitContent = rateLimit.contents[0];
+    if (!('text' in rateLimitContent)) {
+      throw new Error('Expected linear://rate-limit to return text contents.');
+    }
+    expect(rateLimitContent.text).toContain('"isBlocked": true');
   });
 });

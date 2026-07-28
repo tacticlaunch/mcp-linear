@@ -13,7 +13,7 @@ import {
   type Resource,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCPToolDefinition } from './types.js';
-import { convertToolDefinition } from './tool-schema.js';
+import { buildStructuredContent, convertToolDefinition } from './tool-schema.js';
 import { validateToolArguments } from './tools/argument-validation.js';
 import pkg from '../package.json' with { type: 'json' };
 
@@ -62,6 +62,7 @@ export async function runMCPServer(config: MCPServerConfig) {
 
   // Convert our tool definitions to the SDK format
   const sdkTools = config.tools.map(convertToolDefinition);
+  const toolDefinitionsByName = new Map(config.tools.map((toolDef) => [toolDef.name, toolDef]));
 
   // Handle list tools request
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -98,8 +99,14 @@ export async function runMCPServer(config: MCPServerConfig) {
       // Call the handler
       const result = await config.handleRequest({ name, args });
 
+      // Mirror the JSON text payload as structuredContent matching the
+      // advertised outputSchema (array results are wrapped as { items }).
+      const toolDef = toolDefinitionsByName.get(name);
+      const structuredContent = toolDef ? buildStructuredContent(toolDef, result) : undefined;
+
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        ...(structuredContent !== undefined ? { structuredContent } : {}),
         isError: false,
       };
     } catch (error) {

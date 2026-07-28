@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const issueOrderBySchema = {
   type: 'string',
@@ -110,6 +116,7 @@ const projectOutputSchema = {
  */
 export const getProjectsToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjects',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of projects from Linear',
   input_schema: {
     type: 'object',
@@ -123,6 +130,7 @@ export const getProjectsToolDefinition: MCPToolDefinition = {
 
 export const getProjectByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details for a specific Linear project by ID',
   input_schema: {
     type: 'object',
@@ -136,15 +144,22 @@ export const getProjectByIdToolDefinition: MCPToolDefinition = {
 
 export const getProjectMembersToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectMembers',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get members assigned to a project',
   input_schema: {
     type: 'object',
     properties: {
       projectId: { type: 'string', description: 'ID of the project to inspect' },
-      limit: { ...positiveLimitSchema, description: 'Maximum number of members to return (default: 25)' },
+      limit: {
+        ...positiveLimitSchema,
+        description: 'Maximum number of members to return (default: 25)',
+      },
       includeArchived: { type: 'boolean', description: 'Include archived members' },
       includeDisabled: { type: 'boolean', description: 'Include disabled users' },
-      orderBy: { ...issueOrderBySchema, description: 'Sort members by created or updated date when supported' },
+      orderBy: {
+        ...issueOrderBySchema,
+        description: 'Sort members by created or updated date when supported',
+      },
     },
     required: ['projectId'],
   },
@@ -164,6 +179,7 @@ export const getProjectMembersToolDefinition: MCPToolDefinition = {
 
 export const addProjectMemberToolDefinition: MCPToolDefinition = {
   name: 'linear_addProjectMember',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add a member to a project',
   input_schema: {
     type: 'object',
@@ -185,6 +201,7 @@ export const addProjectMemberToolDefinition: MCPToolDefinition = {
 
 export const removeProjectMemberToolDefinition: MCPToolDefinition = {
   name: 'linear_removeProjectMember',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove a member from a project',
   input_schema: {
     type: 'object',
@@ -209,6 +226,7 @@ export const removeProjectMemberToolDefinition: MCPToolDefinition = {
  */
 export const createProjectToolDefinition: MCPToolDefinition = {
   name: 'linear_createProject',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new project in Linear',
   input_schema: {
     type: 'object',
@@ -277,6 +295,7 @@ export const createProjectToolDefinition: MCPToolDefinition = {
  */
 export const updateProjectToolDefinition: MCPToolDefinition = {
   name: 'linear_updateProject',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing project in Linear',
   input_schema: {
     type: 'object',
@@ -387,6 +406,7 @@ const archiveProjectUpdateOutputSchema = {
  */
 export const createProjectUpdateToolDefinition: MCPToolDefinition = {
   name: 'linear_createProjectUpdate',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new project update for a Linear project',
   input_schema: {
     type: 'object',
@@ -419,6 +439,7 @@ export const createProjectUpdateToolDefinition: MCPToolDefinition = {
  */
 export const updateProjectUpdateToolDefinition: MCPToolDefinition = {
   name: 'linear_updateProjectUpdate',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing project update in Linear',
   input_schema: {
     type: 'object',
@@ -448,6 +469,7 @@ export const updateProjectUpdateToolDefinition: MCPToolDefinition = {
 
 export const getProjectUpdateByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectUpdateById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a specific Linear project update by ID',
   input_schema: {
     type: 'object',
@@ -464,6 +486,7 @@ export const getProjectUpdateByIdToolDefinition: MCPToolDefinition = {
 
 export const archiveProjectUpdateToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveProjectUpdate',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a Linear project update',
   input_schema: {
     type: 'object',
@@ -477,6 +500,7 @@ export const archiveProjectUpdateToolDefinition: MCPToolDefinition = {
 
 export const unarchiveProjectUpdateToolDefinition: MCPToolDefinition = {
   name: 'linear_unarchiveProjectUpdate',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Restore an archived Linear project update',
   input_schema: {
     type: 'object',
@@ -490,6 +514,7 @@ export const unarchiveProjectUpdateToolDefinition: MCPToolDefinition = {
 
 export const deleteProjectUpdateToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteProjectUpdate',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete a Linear project update',
   input_schema: {
     type: 'object',
@@ -506,6 +531,7 @@ export const deleteProjectUpdateToolDefinition: MCPToolDefinition = {
  */
 export const getProjectUpdatesToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectUpdates',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get all updates associated with a project',
   input_schema: {
     type: 'object',
@@ -532,6 +558,7 @@ export const getProjectUpdatesToolDefinition: MCPToolDefinition = {
  */
 export const archiveProjectToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveProject',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a project',
   input_schema: {
     type: 'object',
@@ -565,6 +592,7 @@ export const archiveProjectToolDefinition: MCPToolDefinition = {
  */
 export const addIssueToProjectToolDefinition: MCPToolDefinition = {
   name: 'linear_addIssueToProject',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Add an existing issue to a project',
   input_schema: {
     type: 'object',
@@ -608,6 +636,7 @@ export const addIssueToProjectToolDefinition: MCPToolDefinition = {
  */
 export const removeIssueFromProjectToolDefinition: MCPToolDefinition = {
   name: 'linear_removeIssueFromProject',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Remove an existing issue from a project',
   input_schema: {
     type: 'object',
@@ -651,7 +680,9 @@ export const removeIssueFromProjectToolDefinition: MCPToolDefinition = {
  */
 export const getProjectIssuesToolDefinition: MCPToolDefinition = {
   name: 'linear_getProjectIssues',
-  description: 'Get issues associated with a project, with PM-friendly filters like state, assignee, labels, cycle, and milestone',
+  annotations: readOnlyToolAnnotations(),
+  description:
+    'Get issues associated with a project, with PM-friendly filters like state, assignee, labels, cycle, and milestone',
   input_schema: {
     type: 'object',
     properties: {

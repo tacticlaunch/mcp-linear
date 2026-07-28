@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 const roadmapUserSchema = {
   type: ['object', 'null'],
@@ -36,6 +42,7 @@ const roadmapProperties = {
 
 export const getRoadmapsToolDefinition: MCPToolDefinition = {
   name: 'linear_getRoadmaps',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get a list of roadmaps from Linear',
   input_schema: {
     type: 'object',
@@ -68,6 +75,7 @@ export const getRoadmapsToolDefinition: MCPToolDefinition = {
 
 export const getRoadmapByIdToolDefinition: MCPToolDefinition = {
   name: 'linear_getRoadmapById',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get details of a specific roadmap by ID',
   input_schema: {
     type: 'object',
@@ -93,6 +101,7 @@ export const getRoadmapByIdToolDefinition: MCPToolDefinition = {
 
 export const createRoadmapToolDefinition: MCPToolDefinition = {
   name: 'linear_createRoadmap',
+  annotations: additiveToolAnnotations(),
   description: 'Create a new roadmap in Linear',
   input_schema: {
     type: 'object',
@@ -134,6 +143,7 @@ export const createRoadmapToolDefinition: MCPToolDefinition = {
 
 export const updateRoadmapToolDefinition: MCPToolDefinition = {
   name: 'linear_updateRoadmap',
+  annotations: idempotentMutationToolAnnotations(),
   description: 'Update an existing roadmap',
   input_schema: {
     type: 'object',
@@ -179,6 +189,7 @@ export const updateRoadmapToolDefinition: MCPToolDefinition = {
 
 export const archiveRoadmapToolDefinition: MCPToolDefinition = {
   name: 'linear_archiveRoadmap',
+  annotations: destructiveToolAnnotations(),
   description: 'Archive a roadmap',
   input_schema: {
     type: 'object',

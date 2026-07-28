@@ -1,4 +1,10 @@
 import { MCPToolDefinition } from '../../types.js';
+import {
+  additiveToolAnnotations,
+  destructiveToolAnnotations,
+  idempotentMutationToolAnnotations,
+  readOnlyToolAnnotations,
+} from '../../tool-annotations.js';
 
 // Linear calls these saved views in the UI, but the GraphQL API and SDK expose them as CustomView.
 
@@ -61,6 +67,7 @@ const savedViewOutputItemSchema = {
 
 export const getSavedViewsToolDefinition: MCPToolDefinition = {
   name: 'linear_getSavedViews',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get Linear saved views (API: CustomView)',
   input_schema: {
     type: 'object',
@@ -86,6 +93,7 @@ export const getSavedViewsToolDefinition: MCPToolDefinition = {
 
 export const createSavedViewToolDefinition: MCPToolDefinition = {
   name: 'linear_createSavedView',
+  annotations: additiveToolAnnotations(),
   description: 'Create a Linear saved view (API: createCustomView)',
   input_schema: {
     type: 'object',
@@ -142,6 +150,7 @@ export const createSavedViewToolDefinition: MCPToolDefinition = {
 
 export const updateSavedViewToolDefinition: MCPToolDefinition = {
   name: 'linear_updateSavedView',
+  annotations: idempotentMutationToolAnnotations(),
   description:
     'Update a Linear saved view (API: updateCustomView). Provide id plus at least one other field to change.',
   input_schema: {
@@ -185,7 +194,8 @@ export const updateSavedViewToolDefinition: MCPToolDefinition = {
       },
       filters: {
         ...nullableObjectSchema,
-        description: 'Updated raw filters object to store on the saved view. Pass null to clear it.',
+        description:
+          'Updated raw filters object to store on the saved view. Pass null to clear it.',
       },
       filterData: {
         ...nullableObjectSchema,
@@ -203,6 +213,7 @@ export const updateSavedViewToolDefinition: MCPToolDefinition = {
 
 export const deleteSavedViewToolDefinition: MCPToolDefinition = {
   name: 'linear_deleteSavedView',
+  annotations: destructiveToolAnnotations(),
   description: 'Delete a Linear saved view (API: deleteCustomView)',
   input_schema: {
     type: 'object',
@@ -225,6 +236,7 @@ export const deleteSavedViewToolDefinition: MCPToolDefinition = {
 
 export const getFavoriteViewsToolDefinition: MCPToolDefinition = {
   name: 'linear_getFavoriteViews',
+  annotations: readOnlyToolAnnotations(),
   description: 'Get favorite Linear views, including saved views and predefined views',
   input_schema: {
     type: 'object',
@@ -319,7 +331,8 @@ const favoriteMutationOutputSchema = {
 
 export const addToFavoritesToolDefinition: MCPToolDefinition = {
   name: 'linear_addToFavorites',
-  description: 'Add an entity to the current user\'s Linear favorites',
+  annotations: idempotentMutationToolAnnotations(),
+  description: "Add an entity to the current user's Linear favorites",
   input_schema: {
     type: 'object',
     properties: {
@@ -335,8 +348,9 @@ export const addToFavoritesToolDefinition: MCPToolDefinition = {
 
 export const removeFromFavoritesToolDefinition: MCPToolDefinition = {
   name: 'linear_removeFromFavorites',
+  annotations: idempotentMutationToolAnnotations(),
   description:
-    'Remove an entity or favorite entry from the current user\'s Linear favorites. Provide either favoriteId or entityId.',
+    "Remove an entity or favorite entry from the current user's Linear favorites. Provide either favoriteId or entityId.",
   input_schema: {
     type: 'object',
     properties: {
