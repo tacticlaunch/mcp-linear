@@ -126,7 +126,37 @@ const integrationOutputSchema = {
 };
 
 export const getWebhooksToolDefinition: MCPToolDefinition = { name: 'linear_getWebhooks', annotations: readOnlyToolAnnotations(), description: 'Get a list of webhooks', input_schema: { type: 'object', properties: { teamId: { type: 'string' }, limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } } }, output_schema: { type: 'array', items: webhookOutputSchema } };
+export const getWebhookByIdToolDefinition: MCPToolDefinition = {
+  name: 'linear_getWebhookById',
+  annotations: readOnlyToolAnnotations(),
+  description: 'Get one ordinary workspace webhook by ID.',
+  input_schema: { type: 'object', properties: { id: { type: 'string', minLength: 1 } }, required: ['id'] },
+  output_schema: webhookOutputSchema,
+};
 export const createWebhookToolDefinition: MCPToolDefinition = { name: 'linear_createWebhook', annotations: additiveToolAnnotations(), description: 'Create a webhook for integration events', input_schema: { type: 'object', properties: { url: { type: 'string' }, resourceTypes: { type: 'array', items: { type: 'string' } }, teamId: { type: 'string' }, enabled: { type: 'boolean' }, label: { type: 'string' }, secret: { type: 'string' }, allPublicTeams: { type: 'boolean' } }, required: ['url', 'resourceTypes'] }, output_schema: webhookOutputSchema };
+export const updateWebhookToolDefinition: MCPToolDefinition = {
+  name: 'linear_updateWebhook',
+  annotations: idempotentMutationToolAnnotations(),
+  description: 'Update an ordinary workspace webhook.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', minLength: 1 }, url: { type: 'string', format: 'uri' },
+      label: { type: ['string', 'null'] }, enabled: { type: 'boolean' },
+      resourceTypes: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string', minLength: 1 } },
+      secret: { type: 'string', minLength: 1 },
+    },
+    required: ['id'],
+  },
+  output_schema: webhookOutputSchema,
+};
+export const rotateWebhookSecretToolDefinition: MCPToolDefinition = {
+  name: 'linear_rotateWebhookSecret',
+  annotations: destructiveToolAnnotations({ idempotentHint: false }),
+  description: 'Rotate an ordinary workspace webhook signing secret.',
+  input_schema: { type: 'object', properties: { id: { type: 'string', minLength: 1 }, confirmSecretExposure: { type: 'boolean', const: true } }, required: ['id', 'confirmSecretExposure'] },
+  output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' }, secret: { type: 'string' } } },
+};
 export const deleteWebhookToolDefinition: MCPToolDefinition = { name: 'linear_deleteWebhook', annotations: destructiveToolAnnotations(), description: 'Delete a webhook', input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' } } } };
 export const getAttachmentsToolDefinition: MCPToolDefinition = { name: 'linear_getAttachments', annotations: readOnlyToolAnnotations(), description: 'Get attachments for an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } }, required: ['issueId'] }, output_schema: { type: 'array', items: attachmentOutputSchema } };
 export const addAttachmentToolDefinition: MCPToolDefinition = { name: 'linear_addAttachment', annotations: additiveToolAnnotations(), description: 'Add an attachment to an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, title: { type: 'string' }, url: { type: 'string' }, subtitle: { type: 'string' }, iconUrl: { type: 'string' }, metadata: { type: 'object', additionalProperties: true }, commentBody: { type: 'string' }, groupBySource: { type: 'boolean' } }, required: ['issueId', 'title', 'url'] }, output_schema: attachmentOutputSchema };

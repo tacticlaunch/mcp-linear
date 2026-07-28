@@ -1,4 +1,4 @@
-import { getLinearApiToken } from '../utils/config.js';
+import { getExplicitLinearAuthConfig, getLinearApiToken } from '../utils/config.js';
 
 describe('getLinearApiToken', () => {
   const originalArgv = process.argv;
@@ -45,5 +45,28 @@ describe('getLinearApiToken', () => {
       'Environment variables:',
       expect.arrayContaining(['LINEAR_WEBHOOK_SECRET']),
     );
+  });
+
+  describe('getExplicitLinearAuthConfig', () => {
+    it('prefers an explicit --token CLI flag over environment variables', () => {
+      process.argv = ['node', 'mcp-linear', '--token', 'cli-token'];
+      process.env.LINEAR_API_TOKEN = 'env-token';
+
+      expect(getExplicitLinearAuthConfig()).toEqual({ type: 'apiKey', token: 'cli-token' });
+    });
+
+    it('accepts LINEAR_API_TOKEN and falls back to LINEAR_API_KEY', () => {
+      process.env.LINEAR_API_TOKEN = 'env-token';
+      expect(getExplicitLinearAuthConfig()).toEqual({ type: 'apiKey', token: 'env-token' });
+
+      delete process.env.LINEAR_API_TOKEN;
+      process.env.LINEAR_API_KEY = 'env-key';
+      expect(getExplicitLinearAuthConfig()).toEqual({ type: 'apiKey', token: 'env-key' });
+    });
+
+    it('returns undefined without logging when no explicit credential is configured, so callers can fall back to stored credentials', () => {
+      expect(getExplicitLinearAuthConfig()).toBeUndefined();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
   });
 });

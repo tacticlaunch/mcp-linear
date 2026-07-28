@@ -1,3 +1,16 @@
+import { isIP } from 'node:net';
+
+import {
+  APP_ACTOR_OAUTH_SCOPES,
+  APP_ONLY_OAUTH_SCOPES,
+  OAUTH_APPLICATION_GRANT_TYPES,
+  OAUTH_AUTHORIZATION_SCOPES,
+  WEBHOOK_RESOURCE_TYPES,
+  type OAuthApplicationGrantTypeValue,
+  type OAuthAuthorizationScopeValue,
+  type WebhookResourceTypeValue,
+} from './oauth-constants.js';
+
 type JSONGuardValue =
   | null
   | string
@@ -1883,20 +1896,339 @@ export function isCreateWebhookArgs(args: unknown): args is {
   secret?: string;
   allPublicTeams?: boolean;
 } {
-  return (
+  const hasValidFields = (
     isJsonObject(args) &&
-    'url' in args && typeof (args as { url: unknown }).url === 'string' &&
-    'resourceTypes' in args && isStringArray((args as { resourceTypes: unknown }).resourceTypes) &&
-    (!('teamId' in args) || typeof (args as { teamId: unknown }).teamId === 'string') &&
+    hasOnlyKeys(args, [
+      'url',
+      'resourceTypes',
+      'teamId',
+      'enabled',
+      'label',
+      'secret',
+      'allPublicTeams',
+    ]) &&
+    'url' in args &&
+    isPublicWebhookUrl((args as { url: unknown }).url) &&
+    (args as { url: string }).url.length <= 1000 &&
+    'resourceTypes' in args &&
+    isUniqueNonEmptyStringArray((args as { resourceTypes: unknown }).resourceTypes) &&
+    (!('teamId' in args) || isNonEmptyString((args as { teamId: unknown }).teamId)) &&
     (!('enabled' in args) || typeof (args as { enabled: unknown }).enabled === 'boolean') &&
-    (!('label' in args) || typeof (args as { label: unknown }).label === 'string') &&
-    (!('secret' in args) || typeof (args as { secret: unknown }).secret === 'string') &&
+    (!('label' in args) || isNonEmptyString((args as { label: unknown }).label)) &&
+    (!('secret' in args) || isNonEmptyString((args as { secret: unknown }).secret)) &&
     (!('allPublicTeams' in args) || typeof (args as { allPublicTeams: unknown }).allPublicTeams === 'boolean')
   );
+
+  if (!hasValidFields || !isJsonObject(args)) {
+    return false;
+  }
+
+  const hasTeam = 'teamId' in args;
+  const hasAllPublicTeams = args.allPublicTeams === true;
+  return hasTeam !== hasAllPublicTeams;
 }
 
 export function isDeleteWebhookArgs(args: unknown): args is { id: string } {
   return isGetCycleByIdArgs(args);
+}
+
+export function isGenerateOAuthApplicationSetupArgs(args: unknown): args is {
+  name: string;
+  developer: string;
+  developerUrl?: string;
+  description?: string;
+  imageUrl?: string;
+  distribution?: 'private' | 'public';
+  redirectUris: string[];
+  grantTypes?: OAuthApplicationGrantTypeValue[];
+  webhookEnabled?: boolean;
+  webhookUrl?: string;
+  webhookResourceTypes?: WebhookResourceTypeValue[];
+} {
+  if (
+    !isJsonObject(args) ||
+    !hasOnlyKeys(args, [
+      'name',
+      'developer',
+      'developerUrl',
+      'description',
+      'imageUrl',
+      'distribution',
+      'redirectUris',
+      'grantTypes',
+      'webhookEnabled',
+      'webhookUrl',
+      'webhookResourceTypes',
+    ]) ||
+    !isValidOAuthApplicationName(args.name) ||
+    !isBoundedNonEmptyString(args.developer, 2, 80) ||
+    !isUniqueHttpUrlArray(args.redirectUris, 32) ||
+    !isValidGrantTypes(args.grantTypes) ||
+    !hasPairedOAuthWebhookConfiguration(args, true)
+  ) {
+    return false;
+  }
+
+  return (
+    (!('developerUrl' in args) || isAbsoluteHttpUrl(args.developerUrl)) &&
+    ((args.distribution ?? 'private') !== 'public' || isAbsoluteHttpUrl(args.developerUrl)) &&
+    (!('description' in args) || isStringWithinLimit(args.description, 1000)) &&
+    (!('imageUrl' in args) || isAbsoluteHttpUrl(args.imageUrl)) &&
+    (!('distribution' in args) || args.distribution === 'private' || args.distribution === 'public') &&
+    (!('webhookEnabled' in args) || typeof args.webhookEnabled === 'boolean')
+  );
+}
+
+export function isGenerateOAuthAuthorizationUrlArgs(args: unknown): args is {
+  clientId: string;
+  redirectUri: string;
+  scopes: OAuthAuthorizationScopeValue[];
+  actor?: 'user' | 'app';
+  state?: string;
+  promptConsent?: boolean;
+  codeChallenge?: string;
+} {
+  if (
+    !isJsonObject(args) ||
+    !hasOnlyKeys(args, [
+      'clientId',
+      'redirectUri',
+      'scopes',
+      'actor',
+      'state',
+      'promptConsent',
+      'codeChallenge',
+    ]) ||
+    !isNonEmptyString(args.clientId) ||
+    !isAbsoluteHttpUrl(args.redirectUri) ||
+    !isAllowedUniqueStringArray(args.scopes, OAUTH_SCOPE_SET) ||
+    (!('actor' in args) || args.actor === 'user' || args.actor === 'app') === false ||
+    (!('state' in args) || isNonEmptyString(args.state)) === false ||
+    (!('promptConsent' in args) || typeof args.promptConsent === 'boolean') === false
+  ) {
+    return false;
+  }
+
+  if (args.codeChallenge !== undefined && !isValidPkceChallenge(args.codeChallenge)) {
+    return false;
+  }
+
+  const actor = args.actor ?? 'user';
+  if (actor === 'app' && args.scopes.includes('admin')) {
+    return false;
+  }
+
+  const hasAppOnlyScope = args.scopes.some((scope) => APP_ONLY_OAUTH_SCOPE_SET.has(scope));
+  return actor === 'app' || !hasAppOnlyScope;
+}
+
+export function isCreateOAuthClientCredentialsTokenArgs(args: unknown): args is {
+  clientId: string;
+  clientSecret: string;
+  scopes: OAuthAuthorizationScopeValue[];
+  confirmSecretExposure: true;
+  confirmScopeChangeRisk: true;
+} {
+  return (
+    isJsonObject(args) &&
+    hasOnlyKeys(args, [
+      'clientId',
+      'clientSecret',
+      'scopes',
+      'confirmSecretExposure',
+      'confirmScopeChangeRisk',
+    ]) &&
+    isNonEmptyString(args.clientId) &&
+    isNonEmptyString(args.clientSecret) &&
+    isAllowedUniqueStringArray(args.scopes, APP_ACTOR_OAUTH_SCOPE_SET) &&
+    args.confirmSecretExposure === true &&
+    args.confirmScopeChangeRisk === true
+  );
+}
+
+export function isGetManagedOAuthApplicationsArgs(
+  args: unknown,
+): args is Record<string, never> | null | undefined {
+  return args === null || args === undefined || (isJsonObject(args) && Object.keys(args).length === 0);
+}
+
+export function isGetManagedOAuthApplicationByIdArgs(
+  args: unknown,
+): args is { id: string } {
+  return isNonEmptyIdArgs(args);
+}
+
+export function isCreateManagedOAuthApplicationArgs(args: unknown): args is {
+  name: string;
+  developer: string;
+  developerUrl?: string;
+  description?: string;
+  imageUrl?: string;
+  redirectUris: string[];
+  grantTypes?: OAuthApplicationGrantTypeValue[];
+  idempotencyKey?: string;
+  webhookUrl?: string;
+  webhookResourceTypes?: WebhookResourceTypeValue[];
+  confirmSecretExposure: true;
+} {
+  if (
+    !isJsonObject(args) ||
+    !hasOnlyKeys(args, [
+      'name',
+      'developer',
+      'developerUrl',
+      'description',
+      'imageUrl',
+      'redirectUris',
+      'grantTypes',
+      'idempotencyKey',
+      'webhookUrl',
+      'webhookResourceTypes',
+      'confirmSecretExposure',
+    ]) ||
+    !isValidOAuthApplicationName(args.name) ||
+    !isBoundedNonEmptyString(args.developer, 2, 80) ||
+    !isUniqueHttpUrlArray(args.redirectUris, 32) ||
+    !isValidGrantTypes(args.grantTypes) ||
+    args.confirmSecretExposure !== true ||
+    !hasPairedOAuthWebhookConfiguration(args)
+  ) {
+    return false;
+  }
+
+  return (
+    (!('developerUrl' in args) || isAbsoluteHttpUrl(args.developerUrl)) &&
+    (!('description' in args) || isStringWithinLimit(args.description, 1000)) &&
+    (!('imageUrl' in args) || isAbsoluteHttpUrl(args.imageUrl)) &&
+    (!('idempotencyKey' in args) || isNonEmptyString(args.idempotencyKey))
+  );
+}
+
+export function isUpdateManagedOAuthApplicationArgs(args: unknown): args is {
+  id: string;
+  name?: string;
+  developer?: string;
+  developerUrl?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+  redirectUris?: string[];
+  grantTypes?: OAuthApplicationGrantTypeValue[];
+  webhookEnabled?: boolean;
+  webhookUrl?: string | null;
+  webhookResourceTypes?: WebhookResourceTypeValue[];
+} {
+  if (
+    !isJsonObject(args) ||
+    !hasOnlyKeys(args, [
+      'id',
+      'name',
+      'developer',
+      'developerUrl',
+      'description',
+      'imageUrl',
+      'redirectUris',
+      'grantTypes',
+      'webhookEnabled',
+      'webhookUrl',
+      'webhookResourceTypes',
+    ]) ||
+    !isNonEmptyString(args.id)
+  ) {
+    return false;
+  }
+
+  const mutableFields = [
+    'name',
+    'developer',
+    'developerUrl',
+    'description',
+    'imageUrl',
+    'redirectUris',
+    'grantTypes',
+    'webhookEnabled',
+    'webhookUrl',
+    'webhookResourceTypes',
+  ];
+  if (!mutableFields.some((field) => field in args && args[field] !== undefined)) {
+    return false;
+  }
+
+  return (
+    (!('name' in args) || isValidOAuthApplicationName(args.name)) &&
+    (!('developer' in args) || isBoundedNonEmptyString(args.developer, 2, 80)) &&
+    (!('developerUrl' in args) || args.developerUrl === null || isAbsoluteHttpUrl(args.developerUrl)) &&
+    (!('description' in args) ||
+      args.description === null ||
+      isStringWithinLimit(args.description, 1000)) &&
+    (!('imageUrl' in args) || args.imageUrl === null || isAbsoluteHttpUrl(args.imageUrl)) &&
+    (!('redirectUris' in args) || isUniqueHttpUrlArray(args.redirectUris, 32)) &&
+    (!('grantTypes' in args) || isValidGrantTypes(args.grantTypes)) &&
+    (!('webhookEnabled' in args) || typeof args.webhookEnabled === 'boolean') &&
+    (!('webhookUrl' in args) ||
+      args.webhookUrl === null ||
+      (isPublicWebhookUrl(args.webhookUrl) && args.webhookUrl.length <= 1000)) &&
+    (!('webhookResourceTypes' in args) ||
+      isAllowedUniqueStringArray(args.webhookResourceTypes, WEBHOOK_RESOURCE_TYPE_SET))
+  );
+}
+
+export function isArchiveManagedOAuthApplicationArgs(args: unknown): args is { id: string } {
+  return isNonEmptyIdArgs(args);
+}
+
+export function isRotateManagedOAuthApplicationSecretArgs(args: unknown): args is {
+  id: string;
+  confirmSecretExposure: true;
+} {
+  return isSecretRotationArgs(args);
+}
+
+export function isRotateManagedOAuthApplicationWebhookSecretArgs(args: unknown): args is {
+  id: string;
+  confirmSecretExposure: true;
+} {
+  return isSecretRotationArgs(args);
+}
+
+export function isGetWebhookByIdArgs(args: unknown): args is { id: string } {
+  return isNonEmptyIdArgs(args);
+}
+
+export function isUpdateWebhookArgs(args: unknown): args is {
+  id: string;
+  url?: string;
+  label?: string | null;
+  enabled?: boolean;
+  resourceTypes?: string[];
+  secret?: string;
+} {
+  if (
+    !isJsonObject(args) ||
+    !hasOnlyKeys(args, ['id', 'url', 'label', 'enabled', 'resourceTypes', 'secret']) ||
+    !isNonEmptyString(args.id)
+  ) {
+    return false;
+  }
+
+  const mutableFields = ['url', 'label', 'enabled', 'resourceTypes', 'secret'];
+  if (!mutableFields.some((field) => field in args && args[field] !== undefined)) {
+    return false;
+  }
+
+  return (
+    (!('url' in args) || (isPublicWebhookUrl(args.url) && args.url.length <= 1000)) &&
+    (!('label' in args) || args.label === null || isNonEmptyString(args.label)) &&
+    (!('enabled' in args) || typeof args.enabled === 'boolean') &&
+    (!('resourceTypes' in args) || isUniqueNonEmptyStringArray(args.resourceTypes)) &&
+    (!('secret' in args) || isNonEmptyString(args.secret))
+  );
+}
+
+export function isRotateWebhookSecretArgs(args: unknown): args is {
+  id: string;
+  confirmSecretExposure: true;
+} {
+  return isSecretRotationArgs(args);
 }
 
 export function isGetAttachmentsArgs(args: unknown): args is {
@@ -2701,6 +3033,208 @@ export function isCustomerMetadataListArgs(args: unknown): args is {
     (!('limit' in args) || isPositiveInteger((args as { limit: unknown }).limit)) &&
     (!('includeArchived' in args) || typeof (args as { includeArchived: unknown }).includeArchived === 'boolean') &&
     (!('orderBy' in args) || isPaginationOrderBy((args as { orderBy: unknown }).orderBy))
+  );
+}
+
+const OAUTH_APPLICATION_GRANT_TYPE_SET: ReadonlySet<OAuthApplicationGrantTypeValue> =
+  new Set(OAUTH_APPLICATION_GRANT_TYPES);
+
+const OAUTH_SCOPE_SET: ReadonlySet<OAuthAuthorizationScopeValue> =
+  new Set(OAUTH_AUTHORIZATION_SCOPES);
+
+const APP_ONLY_OAUTH_SCOPE_SET: ReadonlySet<OAuthAuthorizationScopeValue> =
+  new Set(APP_ONLY_OAUTH_SCOPES);
+
+const APP_ACTOR_OAUTH_SCOPE_SET: ReadonlySet<OAuthAuthorizationScopeValue> =
+  new Set(APP_ACTOR_OAUTH_SCOPES);
+
+const WEBHOOK_RESOURCE_TYPE_SET: ReadonlySet<WebhookResourceTypeValue> =
+  new Set(WEBHOOK_RESOURCE_TYPES);
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: readonly string[]): boolean {
+  const allowed = new Set(allowedKeys);
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function isBoundedNonEmptyString(
+  value: unknown,
+  minimumLength: number,
+  maximumLength: number,
+): value is string {
+  return (
+    isNonEmptyString(value) &&
+    value.trim().length >= minimumLength &&
+    value.length <= maximumLength
+  );
+}
+
+function isStringWithinLimit(value: unknown, maximumLength: number): value is string {
+  return typeof value === 'string' && value.length <= maximumLength;
+}
+
+function isValidOAuthApplicationName(value: unknown): value is string {
+  return (
+    isBoundedNonEmptyString(value, 2, 80) &&
+    !/linear/i.test(value) &&
+    !/https?:\/\//i.test(value)
+  );
+}
+
+function isAllowedUniqueStringArray<T extends string>(
+  value: unknown,
+  allowedValues: ReadonlySet<T>,
+): value is T[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => isNonEmptyString(item) && allowedValues.has(item as T)) &&
+    new Set(value).size === value.length
+  );
+}
+
+function isUniqueNonEmptyStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every((item) => isNonEmptyString(item)) &&
+    new Set(value).size === value.length
+  );
+}
+
+function isAbsoluteHttpUrl(value: unknown, httpsOnly = false): value is string {
+  if (!isNonEmptyString(value)) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return httpsOnly ? url.protocol === 'https:' : url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Linear delivers webhooks from its own infrastructure, so destinations must be
+ * publicly reachable HTTPS endpoints. This rejects obvious local and reserved
+ * destinations without pretending to replace Linear's delivery-time DNS checks.
+ */
+function isPublicWebhookUrl(value: unknown): value is string {
+  if (!isAbsoluteHttpUrl(value, true)) {
+    return false;
+  }
+
+  const url = new URL(value);
+  if (url.username || url.password) {
+    return false;
+  }
+
+  const hostname = url.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '');
+
+  if (
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal') ||
+    hostname.endsWith('.home.arpa')
+  ) {
+    return false;
+  }
+
+  const ipVersion = isIP(hostname);
+  if (ipVersion === 4) {
+    const [first, second, third] = hostname.split('.').map(Number);
+    return !(
+      first === 0 ||
+      first === 10 ||
+      first === 127 ||
+      (first === 100 && second >= 64 && second <= 127) ||
+      (first === 169 && second === 254) ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 0 && (third === 0 || third === 2)) ||
+      (first === 192 && second === 168) ||
+      (first === 198 && (second === 18 || second === 19)) ||
+      (first === 198 && second === 51 && third === 100) ||
+      (first === 203 && second === 0 && third === 113) ||
+      first >= 224
+    );
+  }
+
+  if (ipVersion === 6) {
+    return !(
+      hostname === '::' ||
+      hostname === '::1' ||
+      hostname.startsWith('::ffff:') ||
+      /^f[cd]/.test(hostname) ||
+      /^fe[89ab]/.test(hostname) ||
+      hostname.startsWith('ff')
+    );
+  }
+
+  return true;
+}
+
+function isUniqueHttpUrlArray(value: unknown, maxItems?: number): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    (maxItems === undefined || value.length <= maxItems) &&
+    value.every((item) => isAbsoluteHttpUrl(item)) &&
+    new Set(value).size === value.length
+  );
+}
+
+function isValidPkceChallenge(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value);
+}
+
+function isValidGrantTypes(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (isAllowedUniqueStringArray(value, OAUTH_APPLICATION_GRANT_TYPE_SET) &&
+      value.includes('authorization_code'))
+  );
+}
+
+function hasPairedOAuthWebhookConfiguration(
+  value: Record<string, unknown>,
+  includeEnabled = false,
+): boolean {
+  const hasUrl = value.webhookUrl !== undefined;
+  const hasResourceTypes = value.webhookResourceTypes !== undefined;
+  const hasEnabled = includeEnabled && value.webhookEnabled !== undefined;
+
+  if (!hasUrl && !hasResourceTypes && !hasEnabled) {
+    return true;
+  }
+
+  return (
+    isPublicWebhookUrl(value.webhookUrl) &&
+    value.webhookUrl.length <= 1000 &&
+    isAllowedUniqueStringArray(value.webhookResourceTypes, WEBHOOK_RESOURCE_TYPE_SET)
+  );
+}
+
+function isNonEmptyIdArgs(args: unknown): args is { id: string } {
+  return (
+    isJsonObject(args) &&
+    hasOnlyKeys(args, ['id']) &&
+    isNonEmptyString(args.id)
+  );
+}
+
+function isSecretRotationArgs(args: unknown): args is {
+  id: string;
+  confirmSecretExposure: true;
+} {
+  return (
+    isJsonObject(args) &&
+    hasOnlyKeys(args, ['id', 'confirmSecretExposure']) &&
+    isNonEmptyString(args.id) &&
+    args.confirmSecretExposure === true
   );
 }
 

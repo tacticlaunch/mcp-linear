@@ -83,8 +83,11 @@ import {
 } from './document-tools.js';
 import { getRateLimitStatusToolDefinition, getServerStatusToolDefinition } from './server-tools.js';
 import {
+  getWebhookByIdToolDefinition,
   getWebhooksToolDefinition,
   createWebhookToolDefinition,
+  updateWebhookToolDefinition,
+  rotateWebhookSecretToolDefinition,
   deleteWebhookToolDefinition,
   getAttachmentsToolDefinition,
   addAttachmentToolDefinition,
@@ -101,6 +104,19 @@ import {
   getUserAuditEventsToolDefinition,
   getIntegrationsToolDefinition,
 } from './ops-tools.js';
+import {
+  archiveManagedOAuthApplicationToolDefinition,
+  createManagedOAuthApplicationToolDefinition,
+  createOAuthClientCredentialsTokenToolDefinition,
+  generateOAuthApplicationSetupToolDefinition,
+  generateOAuthAuthorizationUrlToolDefinition,
+  getManagedOAuthApplicationByIdToolDefinition,
+  getManagedOAuthApplicationsToolDefinition,
+  oauthToolDefinitions,
+  rotateManagedOAuthApplicationSecretToolDefinition,
+  rotateManagedOAuthApplicationWebhookSecretToolDefinition,
+  updateManagedOAuthApplicationToolDefinition,
+} from './oauth-tools.js';
 import {
   addToFavoritesToolDefinition,
   createSavedViewToolDefinition,
@@ -235,9 +251,15 @@ export const allToolDefinitions: MCPToolDefinition[] = [
   getRateLimitStatusToolDefinition,
   getServerStatusToolDefinition,
 
+  // OAuth application tools
+  ...oauthToolDefinitions,
+
   // Ops tools
+  getWebhookByIdToolDefinition,
   getWebhooksToolDefinition,
   createWebhookToolDefinition,
+  updateWebhookToolDefinition,
+  rotateWebhookSecretToolDefinition,
   deleteWebhookToolDefinition,
   getAttachmentsToolDefinition,
   addAttachmentToolDefinition,
@@ -423,8 +445,21 @@ export {
   // Server tools
   getRateLimitStatusToolDefinition,
   getServerStatusToolDefinition,
+  generateOAuthApplicationSetupToolDefinition,
+  generateOAuthAuthorizationUrlToolDefinition,
+  createOAuthClientCredentialsTokenToolDefinition,
+  getManagedOAuthApplicationsToolDefinition,
+  getManagedOAuthApplicationByIdToolDefinition,
+  createManagedOAuthApplicationToolDefinition,
+  updateManagedOAuthApplicationToolDefinition,
+  archiveManagedOAuthApplicationToolDefinition,
+  rotateManagedOAuthApplicationSecretToolDefinition,
+  rotateManagedOAuthApplicationWebhookSecretToolDefinition,
+  getWebhookByIdToolDefinition,
   getWebhooksToolDefinition,
   createWebhookToolDefinition,
+  updateWebhookToolDefinition,
+  rotateWebhookSecretToolDefinition,
   deleteWebhookToolDefinition,
   getAttachmentsToolDefinition,
   addAttachmentToolDefinition,
