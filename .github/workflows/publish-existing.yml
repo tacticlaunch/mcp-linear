@@ -36,7 +36,7 @@ jobs:
         run: npm run build
 
       - name: Verify package version
-        run: test "$(node -p \"require('./package.json').version\")" = "${{ inputs.version }}"
+        run: test "$(node -p 'require(\"./package.json\").version')" = "${{ inputs.version }}"
 
       - name: Publish to npm
         run: npm publish --access public
