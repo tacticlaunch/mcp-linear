@@ -4,6 +4,8 @@
 
 # MCP Linear
 
+[![MCP Toplist](https://mcptoplist.com/badge/glama%2Ftacticlaunch%2Fmcp-linear.svg)](https://mcptoplist.com/server/glama%2Ftacticlaunch%2Fmcp-linear)
+
 A Model Context Protocol (MCP) server for the Linear GraphQL API, built for real project-management workflows — not just basic issue CRUD.
 
 ![MCP Linear](https://img.shields.io/badge/MCP-Linear-blue)
