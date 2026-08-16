@@ -31,7 +31,7 @@ const issueSummaryOutputSchema = {
         type: { type: ['string', 'null'] },
       },
     },
-    priority: { type: 'number' },
+    priority: { type: ['number', 'null'] },
     estimate: { type: ['number', 'null'] },
     dueDate: { type: ['string', 'null'] },
     team: {
@@ -69,14 +69,14 @@ const issueSummaryOutputSchema = {
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
-          color: { type: 'string' },
+          color: { type: ['string', 'null'] },
         },
       },
     },
-    sortOrder: { type: 'number' },
+    sortOrder: { type: ['number', 'null'] },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
-    url: { type: 'string' },
+    url: { type: ['string', 'null'] },
   },
 };
 
@@ -151,7 +151,7 @@ export const getActiveCycleToolDefinition: MCPToolDefinition = {
     ...cycleOutputSchema,
     properties: {
       ...cycleOutputSchema.properties,
-      progress: { type: 'number' },
+      progress: { type: ['number', 'null'] },
       issueCount: { type: 'number' },
       completedIssueCount: { type: 'number' },
     },
@@ -241,7 +241,7 @@ export const getCycleStatsToolDefinition: MCPToolDefinition = {
       id: { type: 'string' },
       number: { type: 'number' },
       name: { type: ['string', 'null'] },
-      progress: { type: 'number' },
+      progress: { type: ['number', 'null'] },
       issueCount: { type: 'number' },
       completedIssueCount: { type: 'number' },
       scopeHistory: { type: 'array', items: { type: 'number' } },

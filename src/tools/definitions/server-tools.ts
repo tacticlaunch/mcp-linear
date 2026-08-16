@@ -32,7 +32,7 @@ export const getServerStatusToolDefinition: MCPToolDefinition = {
   output_schema: {
     type: 'object',
     properties: {
-      version: { type: 'string' },
+      version: { type: ['string', 'null'] },
       pid: { type: 'number' },
       uptimeSeconds: { type: 'number' },
       toolCount: { type: 'number' },

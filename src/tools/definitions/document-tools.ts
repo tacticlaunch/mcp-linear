@@ -60,7 +60,7 @@ const documentUserSchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    email: { type: 'string' },
+    email: { type: ['string', 'null'] },
   },
 };
 
@@ -73,14 +73,14 @@ const documentOutputSchema = {
     color: nullableStringSchema,
     icon: nullableStringSchema,
     slugId: { type: 'string' },
-    sortOrder: { type: 'number' },
+    sortOrder: { type: ['number', 'null'] },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
     archivedAt: nullableStringSchema,
     hiddenAt: nullableStringSchema,
     trashed: { type: 'boolean' },
     documentContentId: nullableStringSchema,
-    url: { type: 'string' },
+    url: { type: ['string', 'null'] },
     creator: documentUserSchema,
     updatedBy: documentUserSchema,
     project: documentReferenceSchema,
@@ -344,7 +344,7 @@ const pinnedResourceSchema = {
   properties: {
     id: { type: 'string' },
     type: { type: 'string', enum: ['document', 'externalLink', 'unknown'] },
-    sortOrder: { type: 'number' },
+    sortOrder: { type: ['number', 'null'] },
     createdAt: nullableStringSchema,
     updatedAt: nullableStringSchema,
     section: {
@@ -371,8 +371,8 @@ const pinnedResourceSchema = {
       properties: {
         id: { type: 'string' },
         label: { type: 'string' },
-        url: { type: 'string' },
-        sortOrder: { type: 'number' },
+        url: { type: ['string', 'null'] },
+        sortOrder: { type: ['number', 'null'] },
         archivedAt: nullableStringSchema,
       },
     },
@@ -411,7 +411,7 @@ export const getTeamResourcesToolDefinition: MCPToolDefinition = {
           properties: {
             id: { type: 'string' },
             title: { type: 'string' },
-            sortOrder: { type: 'number' },
+            sortOrder: { type: ['number', 'null'] },
             createdAt: nullableStringSchema,
             updatedAt: nullableStringSchema,
             resources: {

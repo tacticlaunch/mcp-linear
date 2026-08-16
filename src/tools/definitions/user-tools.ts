@@ -17,9 +17,9 @@ export const getViewerToolDefinition: MCPToolDefinition = {
     properties: {
       id: { type: 'string' },
       name: { type: 'string' },
-      email: { type: 'string' },
+      email: { type: ['string', 'null'] },
       active: { type: 'boolean' },
-      displayName: { type: 'string' },
+      displayName: { type: ['string', 'null'] },
       organization: {
         type: 'object',
         properties: {
@@ -71,8 +71,8 @@ export const getUsersToolDefinition: MCPToolDefinition = {
       properties: {
         id: { type: 'string' },
         name: { type: 'string' },
-        email: { type: 'string' },
-        displayName: { type: 'string' },
+        email: { type: ['string', 'null'] },
+        displayName: { type: ['string', 'null'] },
         active: { type: 'boolean' },
       },
     },
@@ -97,8 +97,8 @@ export const getLabelsToolDefinition: MCPToolDefinition = {
       properties: {
         id: { type: 'string' },
         name: { type: 'string' },
-        description: { type: 'string' },
-        color: { type: 'string' },
+        description: { type: ['string', 'null'] },
+        color: { type: ['string', 'null'] },
         team: {
           type: 'object',
           properties: {

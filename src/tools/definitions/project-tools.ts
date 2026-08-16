@@ -32,7 +32,7 @@ const issueSummaryOutputSchema = {
         type: { type: ['string', 'null'] },
       },
     },
-    priority: { type: 'number' },
+    priority: { type: ['number', 'null'] },
     estimate: { type: ['number', 'null'] },
     dueDate: { type: ['string', 'null'] },
     team: {
@@ -70,14 +70,14 @@ const issueSummaryOutputSchema = {
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
-          color: { type: 'string' },
+          color: { type: ['string', 'null'] },
         },
       },
     },
-    sortOrder: { type: 'number' },
+    sortOrder: { type: ['number', 'null'] },
     createdAt: { type: 'string' },
     updatedAt: { type: 'string' },
-    url: { type: 'string' },
+    url: { type: ['string', 'null'] },
   },
 };
 
@@ -579,8 +579,8 @@ export const archiveProjectToolDefinition: MCPToolDefinition = {
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
-          state: { type: 'string' },
-          archivedAt: { type: 'string' },
+          state: { type: ['string', 'null'] },
+          archivedAt: { type: ['string', 'null'] },
         },
       },
     },
