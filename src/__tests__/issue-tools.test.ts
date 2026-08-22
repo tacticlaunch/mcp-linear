@@ -31,7 +31,7 @@ describe('issue MCP tools', () => {
     });
 
     expect(getIssueByIdTool?.output_schema.properties).toMatchObject({
-      projectMilestone: { type: 'object' },
+      projectMilestone: { type: ['object', 'null'] },
     });
   });
 
