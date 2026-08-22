@@ -40,7 +40,7 @@ const savedViewUserSchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    email: { type: 'string' },
+    email: { type: ['string', 'null'] },
   },
 };
 
@@ -261,7 +261,7 @@ export const getFavoriteViewsToolDefinition: MCPToolDefinition = {
       properties: {
         id: { type: 'string' },
         type: { type: 'string' },
-        sortOrder: { type: 'number' },
+        sortOrder: { type: ['number', 'null'] },
         customView: {
           type: ['object', 'null'],
           properties: {
@@ -281,7 +281,7 @@ export const getFavoriteViewsToolDefinition: MCPToolDefinition = {
         },
         createdAt: { type: 'string' },
         updatedAt: { type: 'string' },
-        url: { type: 'string' },
+        url: { type: ['string', 'null'] },
       },
     },
   },

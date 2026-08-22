@@ -22,7 +22,7 @@ const templateOutputSchema = {
     id: { type: 'string' },
     name: { type: 'string' },
     description: { type: ['string', 'null'] },
-    sortOrder: { type: 'number' },
+    sortOrder: { type: ['number', 'null'] },
     type: { type: 'string' },
     archivedAt: { type: ['string', 'null'] },
     createdAt: { type: 'string' },
@@ -101,7 +101,7 @@ export const updateIssueTemplateToolDefinition: MCPToolDefinition = {
       description: { type: ['string', 'null'] },
       teamId: { type: ['string', 'null'] },
       templateData: { type: 'object', additionalProperties: true },
-      sortOrder: { type: 'number' },
+      sortOrder: { type: ['number', 'null'] },
     },
     required: ['id'],
   },
@@ -131,7 +131,7 @@ export const createIssueFromTemplateToolDefinition: MCPToolDefinition = {
     properties: {
       id: { type: 'string' },
       title: { type: 'string' },
-      url: { type: 'string' },
+      url: { type: ['string', 'null'] },
     },
   },
 };

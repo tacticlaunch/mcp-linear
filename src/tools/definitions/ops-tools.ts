@@ -32,7 +32,7 @@ const attachmentOutputSchema = {
     id: { type: 'string' },
     title: { type: 'string' },
     subtitle: { type: ['string', 'null'] },
-    url: { type: 'string' },
+    url: { type: ['string', 'null'] },
     metadata: { type: 'object', additionalProperties: true },
     sourceType: { type: ['string', 'null'] },
     createdAt: { type: 'string' },
@@ -48,7 +48,7 @@ const notificationOutputSchema = {
     type: { type: 'string' },
     title: { type: 'string' },
     subtitle: { type: 'string' },
-    url: { type: 'string' },
+    url: { type: ['string', 'null'] },
     readAt: { type: ['string', 'null'] },
     snoozedUntilAt: { type: ['string', 'null'] },
     createdAt: { type: 'string' },
@@ -133,7 +133,7 @@ export const getWebhookByIdToolDefinition: MCPToolDefinition = {
   input_schema: { type: 'object', properties: { id: { type: 'string', minLength: 1 } }, required: ['id'] },
   output_schema: webhookOutputSchema,
 };
-export const createWebhookToolDefinition: MCPToolDefinition = { name: 'linear_createWebhook', annotations: additiveToolAnnotations(), description: 'Create a webhook for integration events', input_schema: { type: 'object', properties: { url: { type: 'string' }, resourceTypes: { type: 'array', items: { type: 'string' } }, teamId: { type: 'string' }, enabled: { type: 'boolean' }, label: { type: 'string' }, secret: { type: 'string' }, allPublicTeams: { type: 'boolean' } }, required: ['url', 'resourceTypes'] }, output_schema: webhookOutputSchema };
+export const createWebhookToolDefinition: MCPToolDefinition = { name: 'linear_createWebhook', annotations: additiveToolAnnotations(), description: 'Create a webhook for integration events', input_schema: { type: 'object', properties: { url: { type: ['string', 'null'] }, resourceTypes: { type: 'array', items: { type: 'string' } }, teamId: { type: 'string' }, enabled: { type: 'boolean' }, label: { type: 'string' }, secret: { type: 'string' }, allPublicTeams: { type: 'boolean' } }, required: ['url', 'resourceTypes'] }, output_schema: webhookOutputSchema };
 export const updateWebhookToolDefinition: MCPToolDefinition = {
   name: 'linear_updateWebhook',
   annotations: idempotentMutationToolAnnotations(),
@@ -159,7 +159,7 @@ export const rotateWebhookSecretToolDefinition: MCPToolDefinition = {
 };
 export const deleteWebhookToolDefinition: MCPToolDefinition = { name: 'linear_deleteWebhook', annotations: destructiveToolAnnotations(), description: 'Delete a webhook', input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' } } } };
 export const getAttachmentsToolDefinition: MCPToolDefinition = { name: 'linear_getAttachments', annotations: readOnlyToolAnnotations(), description: 'Get attachments for an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } }, required: ['issueId'] }, output_schema: { type: 'array', items: attachmentOutputSchema } };
-export const addAttachmentToolDefinition: MCPToolDefinition = { name: 'linear_addAttachment', annotations: additiveToolAnnotations(), description: 'Add an attachment to an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, title: { type: 'string' }, url: { type: 'string' }, subtitle: { type: 'string' }, iconUrl: { type: 'string' }, metadata: { type: 'object', additionalProperties: true }, commentBody: { type: 'string' }, groupBySource: { type: 'boolean' } }, required: ['issueId', 'title', 'url'] }, output_schema: attachmentOutputSchema };
+export const addAttachmentToolDefinition: MCPToolDefinition = { name: 'linear_addAttachment', annotations: additiveToolAnnotations(), description: 'Add an attachment to an issue', input_schema: { type: 'object', properties: { issueId: { type: 'string' }, title: { type: 'string' }, url: { type: ['string', 'null'] }, subtitle: { type: 'string' }, iconUrl: { type: 'string' }, metadata: { type: 'object', additionalProperties: true }, commentBody: { type: 'string' }, groupBySource: { type: 'boolean' } }, required: ['issueId', 'title', 'url'] }, output_schema: attachmentOutputSchema };
 export const getNotificationsToolDefinition: MCPToolDefinition = { name: 'linear_getNotifications', annotations: readOnlyToolAnnotations(), description: 'Get notifications for the current user', input_schema: { type: 'object', properties: { limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } } }, output_schema: { type: 'array', items: notificationOutputSchema } };
 export const markNotificationAsReadToolDefinition: MCPToolDefinition = { name: 'linear_markNotificationAsRead', annotations: idempotentMutationToolAnnotations(), description: 'Mark a notification as read', input_schema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, output_schema: { type: 'object', properties: { success: { type: 'boolean' }, id: { type: 'string' } } } };
 export const getSubscriptionsToolDefinition: MCPToolDefinition = { name: 'linear_getSubscriptions', annotations: readOnlyToolAnnotations(), description: 'Get subscriptions for the current user', input_schema: { type: 'object', properties: { limit: { ...positiveLimitSchema }, includeArchived: { type: 'boolean' }, orderBy: { ...paginationOrderBySchema } } }, output_schema: { type: 'array', items: subscriptionOutputSchema } };

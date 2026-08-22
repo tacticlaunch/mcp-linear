@@ -11,7 +11,7 @@ const roadmapUserSchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    email: { type: 'string' },
+    email: { type: ['string', 'null'] },
   },
 };
 
@@ -20,24 +20,24 @@ const roadmapProjectSchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    state: { type: 'string' },
-    url: { type: 'string' },
+    state: { type: ['string', 'null'] },
+    url: { type: ['string', 'null'] },
   },
 };
 
 const roadmapProperties = {
   id: { type: 'string' },
   name: { type: 'string' },
-  description: { type: 'string' },
-  color: { type: 'string' },
+  description: { type: ['string', 'null'] },
+  color: { type: ['string', 'null'] },
   slugId: { type: 'string' },
-  sortOrder: { type: 'number' },
+  sortOrder: { type: ['number', 'null'] },
   owner: roadmapUserSchema,
   creator: roadmapUserSchema,
   createdAt: { type: 'string' },
   updatedAt: { type: 'string' },
   archivedAt: { type: ['string', 'null'] },
-  url: { type: 'string' },
+  url: { type: ['string', 'null'] },
 };
 
 export const getRoadmapsToolDefinition: MCPToolDefinition = {
