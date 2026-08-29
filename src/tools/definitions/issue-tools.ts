@@ -612,7 +612,7 @@ export const createCommentToolDefinition: MCPToolDefinition = {
       createdAt: { type: 'string' },
       updatedAt: { type: 'string' },
       url: { type: ['string', 'null'] },
-      parentId: { type: 'string' },
+      parentId: { type: ['string', 'null'] },
       issue: { type: ['object', 'null'] },
       project: { type: ['object', 'null'] },
       initiative: { type: ['object', 'null'] },

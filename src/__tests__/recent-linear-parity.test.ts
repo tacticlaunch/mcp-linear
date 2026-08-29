@@ -75,6 +75,9 @@ describe('recent Linear API parity', () => {
       quotedText: { type: 'string' },
       subscriberIds: { type: 'array', items: { type: 'string' } },
     });
+    expect(createCommentTool?.output_schema.properties).toMatchObject({
+      parentId: { type: ['string', 'null'] },
+    });
     expect(createCommentTool?.input_schema.required).toEqual(['body']);
     expect(getCommentsTool?.input_schema.properties).toMatchObject({
       cursor: { type: 'string' },
