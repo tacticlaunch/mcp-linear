@@ -1,6 +1,10 @@
 import { logError, logInfo } from './utils/config.js';
 
 export function installRuntimeDiagnostics() {
+  // stderr only carries logs. Ignore its write errors: otherwise, once it breaks,
+  // every line the uncaughtException handler logs raises another uncaught exception.
+  process.stderr.on('error', () => {});
+
   process.on('uncaughtException', (error) => {
     logError('Uncaught exception in MCP Linear', error);
   });

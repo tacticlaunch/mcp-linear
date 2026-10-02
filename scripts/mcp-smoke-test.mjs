@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { serializeMessage } from '@modelcontextprotocol/sdk/shared/stdio.js';
 
 const disallowedTopLevelKeys = ['oneOf', 'anyOf', 'allOf', 'enum', 'not'];
 const criticalToolNames = [
@@ -16,17 +19,16 @@ const scriptDir = path.dirname(scriptPath);
 const repoRoot = path.resolve(scriptDir, '..');
 const serverEntryPath = path.join(repoRoot, 'dist/index.js');
 const definitionsEntryPath = path.join(repoRoot, 'dist/tools/definitions/index.js');
+const serverArgs = [serverEntryPath, '--token', 'mcp-smoke-test-token'];
+const serverEnv = { ...process.env, LINEAR_API_TOKEN: 'mcp-smoke-test-token' };
 
 async function main() {
   const { allToolDefinitions } = await import(pathToFileURL(definitionsEntryPath).href);
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [serverEntryPath, '--token', 'mcp-smoke-test-token'],
+    args: serverArgs,
     cwd: repoRoot,
-    env: {
-      ...process.env,
-      LINEAR_API_TOKEN: 'mcp-smoke-test-token',
-    },
+    env: serverEnv,
     stderr: 'inherit',
   });
   const client = new Client({
@@ -259,12 +261,37 @@ async function main() {
     });
     assert.ok(prompt.messages[0].content.text.includes('linear://project/project-1'));
 
+    await assertExitsWhenClientVanishes();
+
     console.log(
       `MCP smoke test passed for ${actualToolNames.length} tools, ${resources.length} resources, and ${prompts.length} prompts.`,
     );
   } finally {
     await transport.close().catch(() => {});
   }
+}
+
+// The server must exit when its client's pipes close while a request is in flight.
+async function assertExitsWhenClientVanishes() {
+  const child = spawn(process.execPath, serverArgs, {
+    cwd: repoRoot,
+    env: serverEnv,
+    timeout: 15_000,
+    killSignal: 'SIGKILL',
+  });
+  child.stdout.destroy();
+  child.stderr.destroy();
+  child.stdin.end(
+    serializeMessage({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'linear_toolThatDoesNotExist', arguments: {} },
+    }),
+  );
+
+  const [, signal] = await once(child, 'exit');
+  assert.equal(signal, null, 'Server kept running after its client disappeared mid-request.');
 }
 
 // Hard timeout so a stuck child process can never hang CI for hours.
