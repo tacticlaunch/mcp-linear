@@ -106,9 +106,10 @@ async function runServer() {
     });
 
     if (isDebugLoggingEnabled()) {
+      // unref: the heartbeat must not keep the server alive once its client has closed stdin.
       setInterval(() => {
         logInfo('MCP Linear is running...');
-      }, 60000);
+      }, 60000).unref();
     }
 
     return server;
