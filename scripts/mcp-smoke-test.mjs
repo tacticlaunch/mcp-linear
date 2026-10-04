@@ -20,7 +20,11 @@ const repoRoot = path.resolve(scriptDir, '..');
 const serverEntryPath = path.join(repoRoot, 'dist/index.js');
 const definitionsEntryPath = path.join(repoRoot, 'dist/tools/definitions/index.js');
 const serverArgs = [serverEntryPath, '--token', 'mcp-smoke-test-token'];
-const serverEnv = { ...process.env, LINEAR_API_TOKEN: 'mcp-smoke-test-token' };
+const serverEnv = {
+  ...process.env,
+  LINEAR_API_TOKEN: 'mcp-smoke-test-token',
+  MCP_LINEAR_DEBUG: '0',
+};
 
 async function main() {
   const { allToolDefinitions } = await import(pathToFileURL(definitionsEntryPath).href);
@@ -262,6 +266,7 @@ async function main() {
     assert.ok(prompt.messages[0].content.text.includes('linear://project/project-1'));
 
     await assertExitsWhenClientVanishes();
+    await assertExitsWhenStdinClosesInDebug();
 
     console.log(
       `MCP smoke test passed for ${actualToolNames.length} tools, ${resources.length} resources, and ${prompts.length} prompts.`,
@@ -290,8 +295,26 @@ async function assertExitsWhenClientVanishes() {
     }),
   );
 
-  const [, signal] = await once(child, 'exit');
+  const [code, signal] = await once(child, 'exit');
   assert.equal(signal, null, 'Server kept running after its client disappeared mid-request.');
+  assert.equal(code, 0, 'Server must exit cleanly after its client disappears mid-request.');
+}
+
+// Debug logging must not keep an idle server alive after stdin reaches EOF.
+async function assertExitsWhenStdinClosesInDebug() {
+  const child = spawn(process.execPath, serverArgs, {
+    cwd: repoRoot,
+    env: { ...serverEnv, MCP_LINEAR_DEBUG: '1' },
+    timeout: 15_000,
+    killSignal: 'SIGKILL',
+  });
+  child.stdout.resume();
+  child.stderr.resume();
+  child.stdin.end();
+
+  const [code, signal] = await once(child, 'exit');
+  assert.equal(signal, null, 'Debug heartbeat kept the server running after stdin closed.');
+  assert.equal(code, 0, 'Debug server must exit cleanly after stdin closes.');
 }
 
 // Hard timeout so a stuck child process can never hang CI for hours.
