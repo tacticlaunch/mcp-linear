@@ -11,6 +11,8 @@ import {
   User,
 } from '@linear/sdk';
 
+import { buildIssueDateFilter, type IssueDateFilters } from '../utils/date-filters.js';
+
 type JsonObject = Record<string, unknown>;
 
 type OAuthApplicationGrantType = 'authorization_code' | 'client_credentials';
@@ -6032,6 +6034,7 @@ export class LinearService {
     assigneeId?: string;
     projectId?: string;
     states?: string[];
+    dates?: IssueDateFilters;
     limit?: number;
   }) {
     try {
@@ -6048,6 +6051,10 @@ export class LinearService {
 
       if (args.projectId) {
         filter.project = { id: { eq: args.projectId } };
+      }
+
+      if (args.dates) {
+        Object.assign(filter, buildIssueDateFilter(args.dates));
       }
 
       // Handle state filtering

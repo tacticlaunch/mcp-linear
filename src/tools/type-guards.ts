@@ -10,6 +10,7 @@ import {
   type OAuthAuthorizationScopeValue,
   type WebhookResourceTypeValue,
 } from './oauth-constants.js';
+import { validateIssueDateFilters, type IssueDateFilters } from '../utils/date-filters.js';
 
 type JSONGuardValue =
   | null
@@ -125,6 +126,7 @@ export function isSearchIssuesArgs(args: unknown): args is {
   assigneeId?: string;
   projectId?: string;
   states?: string[];
+  dates?: IssueDateFilters;
   limit?: number;
 } {
   // Check if args is an object
@@ -178,6 +180,15 @@ export function isSearchIssuesArgs(args: unknown): args is {
   if ('limit' in args && typeof (args as { limit: unknown }).limit !== 'number') {
     console.error('searchIssues limit is not a number');
     return false;
+  }
+
+  // Check date filters
+  if ('dates' in args) {
+    const datesError = validateIssueDateFilters((args as { dates: unknown }).dates);
+    if (datesError) {
+      console.error(`searchIssues ${datesError}`);
+      return false;
+    }
   }
 
   return true;

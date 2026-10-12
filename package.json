@@ -1,7 +1,7 @@
 {
   "name": "@tacticlaunch/mcp-linear",
   "version": "1.4.4",
-  "description": "A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to interact with Linear project management systems.",
+  "description": "A Model Context Protocol (MCP) server implementation for the Linear GraphQL API that enables AI assistants to manage Linear projects and search issues by text, state, and date.",
   "main": "dist/index.js",
   "type": "module",
   "bin": {

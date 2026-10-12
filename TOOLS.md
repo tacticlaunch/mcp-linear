@@ -135,6 +135,29 @@ These are MCP-server observability helpers for tool-only clients.
 | `linear_addIssueLabel`    | Add a label to an issue                                  | ✅ Implemented |
 | `linear_removeIssueLabel` | Remove a label from an issue                             | ✅ Implemented |
 
+`linear_searchIssues` accepts an optional `dates` object with `due`, `created`,
+`updated`, `started`, `completed`, `autoClosed`, and `triaged` filters. Each takes
+`after` (inclusive), `before` (exclusive), or `on` (one calendar day).
+All supplied filters must match and are applied by Linear before `limit`.
+
+```json
+{
+  "dates": {
+    "updated": { "after": "-P1W" },
+    "completed": { "after": "2026-10-01", "before": "2026-10-06" },
+    "due": { "before": "2026-10-15" }
+  },
+  "limit": 25
+}
+```
+
+Bounds accept `YYYY-MM-DD`, ISO 8601 date-times with a timezone, or durations
+relative to now such as `-P2W`. `due` accepts dates and durations only.
+Date-only bounds on timestamp fields start at midnight UTC; `on` covers the
+whole UTC day and accepts only `YYYY-MM-DD`. For another timezone, use explicit
+date-times with offsets in `after` and `before`. `on` cannot be combined with
+`after` or `before`. Blank strings and `null` bounds are ignored.
+
 ### Issue Management Tools
 
 | Tool Name                      | Description                                                   | Status         |

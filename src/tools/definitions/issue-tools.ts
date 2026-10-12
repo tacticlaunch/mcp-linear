@@ -5,6 +5,7 @@ import {
   idempotentMutationToolAnnotations,
   readOnlyToolAnnotations,
 } from '../../tool-annotations.js';
+import { issueDateFiltersInputSchema } from '../../utils/date-filters.js';
 
 const jsonValueSchema = {
   anyOf: [
@@ -299,6 +300,7 @@ export const searchIssuesToolDefinition: MCPToolDefinition = {
         items: { type: 'string' },
         description: "Filter issues by state name (e.g., 'Todo', 'In Progress', 'Done')",
       },
+      dates: issueDateFiltersInputSchema(),
       limit: {
         type: 'number',
         description: 'Maximum number of issues to return (default: 10)',
