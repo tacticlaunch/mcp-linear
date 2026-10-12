@@ -22,9 +22,9 @@ const DURATION_PATTERN =
 export type DateFieldKind = 'dateTime' | 'timeless';
 
 export interface DateRangeArgs {
-  after?: string;
-  before?: string;
-  on?: string;
+  after?: string | null;
+  before?: string | null;
+  on?: string | null;
 }
 
 export interface DateComparatorFilter {
@@ -75,7 +75,11 @@ export function isDateOnly(value: string): boolean {
 }
 
 function isDateTime(value: string): boolean {
-  return DATE_TIME_PATTERN.test(value) && !Number.isNaN(Date.parse(value));
+  return (
+    DATE_TIME_PATTERN.test(value) &&
+    isDateOnly(value.slice(0, 10)) &&
+    !Number.isNaN(Date.parse(value))
+  );
 }
 
 function isDuration(value: string): boolean {
@@ -104,13 +108,14 @@ export function validateDateRange(value: unknown, kind: DateFieldKind): string |
     return 'must be an object with after, before, or on';
   }
 
-  const range = omitBlankBounds(value as Record<string, unknown>);
-  const unknownKeys = Object.keys(range).filter(
+  const unknownKeys = Object.keys(value).filter(
     (key) => !(DATE_RANGE_KEYS as readonly string[]).includes(key),
   );
   if (unknownKeys.length > 0) {
     return `has unknown key(s): ${unknownKeys.join(', ')}`;
   }
+
+  const range = omitBlankBounds(value as Record<string, unknown>);
 
   for (const key of ['after', 'before'] as const) {
     if (key in range && !isDateBoundValue(range[key], kind)) {
@@ -241,10 +246,13 @@ export function issueDateFiltersInputSchema() {
       type: 'object',
       description: `Filter by ${config.label}. 'after' is inclusive and 'before' is exclusive; 'on' cannot be combined with 'after' or 'before'`,
       properties: {
-        after: { type: 'string', description: `On or after (inclusive): ${boundFormats}` },
-        before: { type: 'string', description: `Before (exclusive): ${boundFormats}` },
+        after: {
+          type: ['string', 'null'],
+          description: `On or after (inclusive): ${boundFormats}`,
+        },
+        before: { type: ['string', 'null'], description: `Before (exclusive): ${boundFormats}` },
         on: {
-          type: 'string',
+          type: ['string', 'null'],
           description: timeless
             ? 'On this calendar day (YYYY-MM-DD)'
             : 'On this calendar day (YYYY-MM-DD, UTC)',

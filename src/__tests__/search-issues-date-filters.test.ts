@@ -1,5 +1,6 @@
 import { LinearService } from '../services/linear-service.js';
 import { allToolDefinitions } from '../tools/definitions/index.js';
+import { handleSearchIssues } from '../tools/handlers/issue-handlers.js';
 import { isSearchIssuesArgs } from '../tools/type-guards.js';
 import {
   ISSUE_DATE_FILTER_FIELDS,
@@ -33,6 +34,9 @@ describe('searchIssues date filters', () => {
     ]);
     for (const field of Object.values(dates.properties)) {
       expect(Object.keys(field.properties)).toEqual(['after', 'before', 'on']);
+      for (const bound of Object.values(field.properties)) {
+        expect(bound).toMatchObject({ type: ['string', 'null'] });
+      }
     }
   });
 
@@ -108,6 +112,17 @@ describe('searchIssues date filters', () => {
     expect(isSearchIssuesArgs({ dates: { updated: { since: '2026-10-01' } } })).toBe(false);
     expect(isSearchIssuesArgs({ dates: { updated: { after: 'yesterday' } } })).toBe(false);
     expect(isSearchIssuesArgs({ dates: { updated: { after: '2026-02-30' } } })).toBe(false);
+    expect(isSearchIssuesArgs({ dates: { updated: { after: '2026-02-30T10:00:00Z' } } })).toBe(
+      false,
+    );
+    expect(isSearchIssuesArgs({ dates: { updated: { after: '2025-02-29T10:00:00+02:00' } } })).toBe(
+      false,
+    );
+    expect(isSearchIssuesArgs({ dates: { updated: { after: '2024-02-29T23:00:00-02:00' } } })).toBe(
+      true,
+    );
+    expect(isSearchIssuesArgs({ dates: { updated: { since: '' } } })).toBe(false);
+    expect(isSearchIssuesArgs({ dates: { updated: { since: null } } })).toBe(false);
     expect(isSearchIssuesArgs({ dates: { updated: { before: '2026-10-01T10:00:00' } } })).toBe(
       false,
     );
@@ -144,7 +159,8 @@ describe('searchIssues date filters', () => {
     const issues = jest.fn().mockResolvedValue({ nodes: [] });
     const service = new LinearService({ issues } as never);
 
-    await service.searchIssues({
+    await handleSearchIssues(service)({
+      query: 'bug',
       teamId: 'team-1',
       dates: {
         updated: { after: '2026-09-30', before: '2026-10-07T12:00:00Z' },
@@ -159,8 +175,19 @@ describe('searchIssues date filters', () => {
         updatedAt: { gte: '2026-09-30T00:00:00.000Z', lt: '2026-10-07T12:00:00Z' },
         dueDate: { lt: '2026-10-15' },
         team: { id: { eq: 'team-1' } },
+        or: [{ title: { contains: 'bug' } }, { description: { contains: 'bug' } }],
       },
     });
+  });
+
+  it('rejects invalid dates before calling Linear', async () => {
+    const issues = jest.fn();
+    const service = new LinearService({ issues } as never);
+
+    await expect(
+      handleSearchIssues(service)({ dates: { updated: { after: '2026-02-30T10:00:00Z' } } }),
+    ).rejects.toThrow('Invalid arguments for searchIssues');
+    expect(issues).not.toHaveBeenCalled();
   });
 
   it('omits date fields when no date filters are provided', async () => {
