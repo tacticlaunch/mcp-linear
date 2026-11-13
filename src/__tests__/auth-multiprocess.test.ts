@@ -74,12 +74,13 @@ it.each(['logout', 'login'])('serializes %s behind a refresh in another process'
   void result.then(() => { finished = true; });
   await new Promise((resolve) => setTimeout(resolve, 250));
   expect(finished).toBe(false);
+  expect(readStoredCredentials()?.accessToken).toBe('old-access');
   const refreshed = message(refresh);
   refresh.send('continue');
   expect((await refreshed).token).toBe('rotated-access');
-  expect((await result).event).toBe('result');
+  expect(await result).toEqual({ event: 'result', code: 0 });
   if (action === 'logout') expect(readStoredCredentials()).toBeUndefined();
-  else expect(readStoredCredentials()?.accessToken).toBe('new-access');
+  else expect(readStoredCredentials()).toMatchObject({ clientId: 'new-client', accessToken: 'new-access', refreshToken: 'new-refresh', scopes: ['read'] });
 });
 
 it('shares one refresh between two separate server processes', async () => {
