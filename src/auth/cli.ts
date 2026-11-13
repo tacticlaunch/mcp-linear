@@ -4,6 +4,7 @@ import {
   deleteStoredCredentials,
   getCredentialsPath,
   readStoredCredentials,
+  withCredentialsLock,
   writeStoredCredentials,
 } from './credential-store.js';
 import { exchangeAuthorizationCode, revokeToken } from './oauth-http.js';
@@ -155,16 +156,20 @@ async function runLogin(
       codeVerifier: verifier,
     });
 
-    writeStoredCredentials({
-      clientId,
-      ...(clientSecret ? { clientSecret } : {}),
-      accessToken: tokens.accessToken,
-      ...(tokens.refreshToken ? { refreshToken: tokens.refreshToken } : {}),
-      ...(typeof tokens.expiresIn === 'number'
-        ? { expiresAt: Date.now() + tokens.expiresIn * 1000 }
-        : {}),
-      scopes: tokens.scopes.length > 0 ? tokens.scopes : scopes,
-    });
+    // Under the lock so a token refresh in a running server cannot overwrite
+    // the new login with tokens from the previous grant.
+    await withCredentialsLock(async () =>
+      writeStoredCredentials({
+        clientId,
+        ...(clientSecret ? { clientSecret } : {}),
+        accessToken: tokens.accessToken,
+        ...(tokens.refreshToken ? { refreshToken: tokens.refreshToken } : {}),
+        ...(typeof tokens.expiresIn === 'number'
+          ? { expiresAt: Date.now() + tokens.expiresIn * 1000 }
+          : {}),
+        scopes: tokens.scopes.length > 0 ? tokens.scopes : scopes,
+      }),
+    );
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'unknown error';
     print(`Login failed: ${reason}`);
@@ -201,6 +206,12 @@ function runStatus(print: (message: string) => void): number {
 }
 
 async function runLogout(print: (message: string) => void): Promise<number> {
+  // Under the lock so a token refresh in a running server cannot write the
+  // credentials back after they are deleted.
+  return withCredentialsLock(() => logoutUnderLock(print));
+}
+
+async function logoutUnderLock(print: (message: string) => void): Promise<number> {
   const credentials = readStoredCredentials();
   if (!credentials) {
     // A corrupt or partial file may still exist; remove it regardless.

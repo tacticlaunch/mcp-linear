@@ -5,8 +5,10 @@ import path from 'node:path';
 import {
   deleteStoredCredentials,
   getCredentialsPath,
+  getCredentialsLockPath,
   readStoredCredentials,
   writeStoredCredentials,
+  withCredentialsLock,
   type StoredCredentials,
 } from '../auth/credential-store.js';
 
@@ -120,5 +122,38 @@ describe('credential store', () => {
     expect(deleteStoredCredentials()).toBe(true);
     expect(fs.existsSync(getCredentialsPath())).toBe(false);
     expect(deleteStoredCredentials()).toBe(false);
+  });
+});
+
+describe('credentials lock', () => {
+  const originalEnv = process.env;
+  let tempDir: string;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-linear-lock-'));
+    process.env.MCP_LINEAR_CONFIG_DIR = tempDir;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it('does not take over a lock held by a live process just because it is old', async () => {
+    await withCredentialsLock(async () => {
+      const old = new Date(Date.now() - 120_000);
+      fs.utimesSync(getCredentialsLockPath(), old, old);
+      await expect(withCredentialsLock(async () => undefined, { retryMs: 5, timeoutMs: 50 }))
+        .rejects.toThrow(/Timed out/);
+    });
+  });
+
+  it('retains the lock file and releases it for the next holder', async () => {
+    await withCredentialsLock(async () => {
+      expect(fs.existsSync(getCredentialsLockPath())).toBe(true);
+    });
+    await expect(withCredentialsLock(async () => 'acquired')).resolves.toBe('acquired');
+    expect(fs.existsSync(getCredentialsLockPath())).toBe(true);
   });
 });

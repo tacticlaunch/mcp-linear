@@ -1,6 +1,7 @@
 import type { LinearAuthConfig } from '../utils/config.js';
 import {
   readStoredCredentials,
+  withCredentialsLock,
   writeStoredCredentials,
   type StoredCredentials,
 } from './credential-store.js';
@@ -20,6 +21,8 @@ export interface StoredCredentialAuth {
 
 export interface StoredCredentialAuthOptions {
   now?: () => number;
+  /** Poll interval while another process holds the refresh lock. */
+  lockRetryMs?: number;
 }
 
 function needsRefresh(credentials: StoredCredentials, nowMs: number): boolean {
@@ -29,9 +32,22 @@ function needsRefresh(credentials: StoredCredentials, nowMs: number): boolean {
   return credentials.expiresAt - EXPIRY_SKEW_MS <= nowMs;
 }
 
+function refreshFailure(error: unknown): Error {
+  const reason = error instanceof Error ? error.message : 'unknown error';
+  return new Error(
+    `Failed to refresh the stored Linear access token (${reason}). Run \`mcp-linear auth login\` again.`,
+  );
+}
+
 /**
  * Create an auth provider over credentials saved by `mcp-linear auth login`.
  * Returns undefined when no usable credentials are stored.
+ *
+ * Several server processes (one per MCP client session) may share one
+ * credentials file. Linear rotates the refresh token on every refresh, so a
+ * refresh by one process revokes the refresh token the others hold in memory.
+ * Refreshes therefore run under a cross-process lock and always start from the
+ * file, not from memory.
  */
 export function createStoredCredentialAuth(
   options: StoredCredentialAuthOptions = {},
@@ -43,45 +59,84 @@ export function createStoredCredentialAuth(
 
   const now = options.now ?? Date.now;
   let credentials = initial;
-  // Serialize refreshes so concurrent requests never race a token rotation.
+  // Serialize refreshes within this process; the file lock serializes them
+  // across processes.
   let pendingRefresh: Promise<void> | undefined;
 
-  async function refresh(): Promise<void> {
-    if (!credentials.refreshToken) {
+  async function requestRefresh(from: StoredCredentials): Promise<StoredCredentials> {
+    const tokens = await refreshAccessToken({
+      refreshToken: from.refreshToken!,
+      clientId: from.clientId,
+      ...(from.clientSecret ? { clientSecret: from.clientSecret } : {}),
+    });
+
+    const updated: StoredCredentials = {
+      clientId: from.clientId,
+      ...(from.clientSecret ? { clientSecret: from.clientSecret } : {}),
+      accessToken: tokens.accessToken,
+      // Linear rotates refresh tokens; fall back to the previous one only if
+      // the response omitted a replacement.
+      refreshToken: tokens.refreshToken ?? from.refreshToken,
+      scopes: tokens.scopes.length > 0 ? tokens.scopes : from.scopes,
+    };
+    if (typeof tokens.expiresIn === 'number') {
+      updated.expiresAt = now() + tokens.expiresIn * 1000;
+    }
+    return updated;
+  }
+
+  async function refreshUnderLock(): Promise<void> {
+    // Another process may have refreshed while we waited for the lock (or
+    // since we started); its rotation revoked the refresh token in memory.
+    const latest = readStoredCredentials();
+    if (!latest) {
+      // `auth logout` removed the file; refreshing from memory would bring
+      // the credentials back.
+      throw new Error(
+        'Stored Linear credentials were removed (logged out). Run `mcp-linear auth login` again.',
+      );
+    }
+    if (!needsRefresh(latest, now())) {
+      credentials = latest;
+      return;
+    }
+    if (!latest.refreshToken) {
       throw new Error(
         'Stored Linear access token has expired and no refresh token is available. Run `mcp-linear auth login` again.',
       );
     }
 
-    let tokens;
+    let updated: StoredCredentials;
     try {
-      tokens = await refreshAccessToken({
-        refreshToken: credentials.refreshToken,
-        clientId: credentials.clientId,
-        ...(credentials.clientSecret ? { clientSecret: credentials.clientSecret } : {}),
-      });
+      updated = await requestRefresh(latest);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : 'unknown error';
-      throw new Error(
-        `Failed to refresh the stored Linear access token (${reason}). Run \`mcp-linear auth login\` again.`,
-      );
-    }
-
-    const updated: StoredCredentials = {
-      clientId: credentials.clientId,
-      ...(credentials.clientSecret ? { clientSecret: credentials.clientSecret } : {}),
-      accessToken: tokens.accessToken,
-      // Linear rotates refresh tokens; fall back to the previous one only if
-      // the response omitted a replacement.
-      refreshToken: tokens.refreshToken ?? credentials.refreshToken,
-      scopes: tokens.scopes.length > 0 ? tokens.scopes : credentials.scopes,
-    };
-    if (typeof tokens.expiresIn === 'number') {
-      updated.expiresAt = now() + tokens.expiresIn * 1000;
+      // A process that does not take the lock (an older build still running)
+      // may have rotated the token while our request was in flight. Pick up
+      // its result, retrying at most once.
+      const reread = readStoredCredentials();
+      if (!reread?.refreshToken || reread.refreshToken === latest.refreshToken) {
+        throw refreshFailure(error);
+      }
+      if (!needsRefresh(reread, now())) {
+        credentials = reread;
+        return;
+      }
+      try {
+        updated = await requestRefresh(reread);
+      } catch (retryError) {
+        throw refreshFailure(retryError);
+      }
     }
 
     writeStoredCredentials(updated);
     credentials = updated;
+  }
+
+  function refresh(): Promise<void> {
+    return withCredentialsLock(
+      refreshUnderLock,
+      options.lockRetryMs === undefined ? {} : { retryMs: options.lockRetryMs },
+    );
   }
 
   return {

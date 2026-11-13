@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import nativeFs from 'fs-native-extensions';
 
 /**
  * Credentials persisted by `mcp-linear auth login`.
@@ -130,6 +131,49 @@ export function writeStoredCredentials(credentials: StoredCredentials): void {
       // Best effort cleanup; surface the original failure.
     }
     throw error;
+  }
+}
+
+const LOCK_FILE_NAME = `${CREDENTIALS_FILE_NAME}.lock`;
+const CREDENTIALS_LOCK_TIMEOUT_MS = 75_000;
+const CREDENTIALS_LOCK_RETRY_MS = 100;
+
+export interface CredentialsLockOptions {
+  retryMs?: number;
+  timeoutMs?: number;
+}
+
+export function getCredentialsLockPath(): string {
+  return path.join(getConfigDir(), LOCK_FILE_NAME);
+}
+
+/** Hold an OS lock on a permanent file; the OS releases it if the process exits. */
+export async function withCredentialsLock<T>(
+  fn: () => Promise<T>,
+  options: CredentialsLockOptions = {},
+): Promise<T> {
+  fs.mkdirSync(getConfigDir(), { recursive: true, mode: 0o700 });
+  const fd = fs.openSync(
+    getCredentialsLockPath(),
+    fs.constants.O_CREAT | fs.constants.O_RDWR | (fs.constants.O_NOFOLLOW ?? 0),
+    0o600,
+  );
+  const deadline = Date.now() + (options.timeoutMs ?? CREDENTIALS_LOCK_TIMEOUT_MS);
+  let locked = false;
+  try {
+    while (!(locked = nativeFs.tryLock(fd))) {
+      if (Date.now() >= deadline) {
+        throw new Error('Timed out waiting for another mcp-linear process to finish using the stored Linear credentials.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, options.retryMs ?? CREDENTIALS_LOCK_RETRY_MS));
+    }
+    return await fn();
+  } finally {
+    try {
+      if (locked) nativeFs.unlock(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
   }
 }
 

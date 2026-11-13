@@ -50,6 +50,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "fs-native-extensions": "^1.5.3",
     "graphql": "^16.10.0",
     "graphql-request": "^7.1.2",
     "helmet": "^8.0.0",

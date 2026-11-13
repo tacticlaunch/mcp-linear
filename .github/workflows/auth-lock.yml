@@ -1,0 +1,68 @@
+name: Auth lock portability
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'scripts/mcp-smoke-test.mjs'
+      - 'src/auth/**'
+      - 'src/__tests__/auth-*'
+      - 'src/__tests__/fixtures/auth-worker.mjs'
+      - 'src/fs-native-extensions.d.ts'
+      - 'package*.json'
+      - '.github/workflows/auth-lock.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'scripts/mcp-smoke-test.mjs'
+      - 'src/auth/**'
+      - 'src/__tests__/auth-*'
+      - 'src/__tests__/fixtures/auth-worker.mjs'
+      - 'src/fs-native-extensions.d.ts'
+      - 'package*.json'
+      - '.github/workflows/auth-lock.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  auth-lock:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npx jest src/__tests__/auth-multiprocess.test.ts --runInBand
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: docker build -t mcp-linear:auth-lock .
+      - name: Verify native credential lock in the production image
+        run: >-
+          docker run --rm mcp-linear:auth-lock node --input-type=module -e
+          "import { withCredentialsLock } from './dist/auth/credential-store.js';
+          await withCredentialsLock(async () => {});"
+      - name: Verify MCP server in the production image
+        run: >-
+          docker run --rm -v "$PWD/scripts:/app/scripts:ro"
+          mcp-linear:auth-lock node scripts/mcp-smoke-test.mjs
