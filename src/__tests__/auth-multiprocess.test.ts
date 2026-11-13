@@ -50,6 +50,7 @@ it('does not steal an old lock held by a live process and recovers after it dies
   const old = new Date(Date.now() - 120_000);
   fs.utimesSync(lock, old, old);
   const contender = start('acquire');
+  expect((await message(contender)).event).toBe('started');
   const acquired = message(contender);
   let finished = false;
   void acquired.then(() => { finished = true; });

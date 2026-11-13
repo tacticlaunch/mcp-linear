@@ -31,6 +31,7 @@ try {
     await withCredentialsLock(async () => writeStoredCredentials({ clientId: 'new-client', accessToken: 'new-access', refreshToken: 'new-refresh', expiresAt: Date.now() + 3600000, scopes: [] }), { retryMs: 10 });
     send({ event: 'result' });
   } else if (action === 'acquire') {
+    send({ event: 'started' });
     await withCredentialsLock(async () => send({ event: 'result' }), { retryMs: 10, timeoutMs: 3000 });
   }
   process.disconnect();
