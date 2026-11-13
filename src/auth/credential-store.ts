@@ -133,6 +133,149 @@ export function writeStoredCredentials(credentials: StoredCredentials): void {
   }
 }
 
+const LOCK_FILE_NAME = `${CREDENTIALS_FILE_NAME}.lock`;
+
+/** A lock older than this is treated as left behind by a dead process. */
+export const CREDENTIALS_LOCK_STALE_MS = 60_000;
+/** Give up waiting after this long; longer than the stale window so a dead holder is reclaimed first. */
+export const CREDENTIALS_LOCK_TIMEOUT_MS = 75_000;
+const CREDENTIALS_LOCK_RETRY_MS = 100;
+
+export interface CredentialsLockOptions {
+  retryMs?: number;
+  staleMs?: number;
+  timeoutMs?: number;
+}
+
+export function getCredentialsLockPath(): string {
+  return path.join(getConfigDir(), LOCK_FILE_NAME);
+}
+
+function errorCode(error: unknown): string | undefined {
+  return typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code: unknown }).code)
+    : undefined;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Remove a lock whose holder is presumed dead. Returns true when the caller
+ * should try to create the lock again right away.
+ *
+ * Renaming first means only one waiter wins the removal. A narrow race remains
+ * (a waiter can rename away a lock that another waiter created a moment
+ * earlier). The refresh path mostly absorbs it by re-reading the file and
+ * retrying once when Linear rejects a refresh token that was rotated
+ * meanwhile; if the rejection arrives before the winner has written the file,
+ * that one request fails and the next request picks up the winner's tokens.
+ */
+function reclaimIfStale(lockPath: string, staleMs: number): boolean {
+  let mtimeMs: number;
+  try {
+    // lstat: a dangling symlink makes O_EXCL report EEXIST while stat reports
+    // ENOENT, which would spin this loop forever.
+    mtimeMs = fs.lstatSync(lockPath).mtimeMs;
+  } catch (error) {
+    if (errorCode(error) === 'ENOENT') return true;
+    throw error;
+  }
+  if (Date.now() - mtimeMs < staleMs) {
+    return false;
+  }
+
+  const reclaimedPath = `${lockPath}.${randomBytes(6).toString('hex')}.stale`;
+  try {
+    fs.renameSync(lockPath, reclaimedPath);
+  } catch (error) {
+    if (errorCode(error) === 'ENOENT') return true;
+    throw error;
+  }
+  try {
+    fs.unlinkSync(reclaimedPath);
+  } catch {
+    // Best effort; the lock path itself is already free.
+  }
+  return true;
+}
+
+/** Create the lock file exclusively. Returns false when it already exists. */
+function tryCreateLock(lockPath: string, owner: string): boolean {
+  let fd: number;
+  try {
+    fd = fs.openSync(lockPath, 'wx', 0o600);
+  } catch (error) {
+    if (errorCode(error) === 'EEXIST') return false;
+    throw error;
+  }
+  try {
+    fs.writeSync(fd, owner);
+  } catch (error) {
+    // Do not leave an empty lock that blocks every refresh for the stale window.
+    fs.closeSync(fd);
+    fs.unlinkSync(lockPath);
+    throw error;
+  }
+  fs.closeSync(fd);
+  return true;
+}
+
+function releaseLock(lockPath: string, owner: string): void {
+  try {
+    // Only remove our own lock: if ours was reclaimed as stale, another
+    // process may hold the lock now.
+    if (fs.readFileSync(lockPath, 'utf8') === owner) {
+      fs.unlinkSync(lockPath);
+    }
+  } catch {
+    // Already gone or unreadable; nothing to release.
+  }
+}
+
+/**
+ * Run `fn` while holding an exclusive lock shared by every process that uses
+ * this config directory. The lock is a file created with O_EXCL; a lock older
+ * than the stale window is reclaimed so a crashed process cannot block
+ * refreshes forever.
+ */
+export async function withCredentialsLock<T>(
+  fn: () => Promise<T>,
+  options: CredentialsLockOptions = {},
+): Promise<T> {
+  const retryMs = options.retryMs ?? CREDENTIALS_LOCK_RETRY_MS;
+  const staleMs = options.staleMs ?? CREDENTIALS_LOCK_STALE_MS;
+  const timeoutMs = options.timeoutMs ?? CREDENTIALS_LOCK_TIMEOUT_MS;
+
+  fs.mkdirSync(getConfigDir(), { recursive: true, mode: 0o700 });
+  const lockPath = getCredentialsLockPath();
+  const owner = `${process.pid}.${randomBytes(8).toString('hex')}`;
+  const deadline = Date.now() + timeoutMs;
+
+  for (;;) {
+    if (tryCreateLock(lockPath, owner)) {
+      break;
+    }
+    const reclaimed = reclaimIfStale(lockPath, staleMs);
+    if (reclaimed && Date.now() < deadline) {
+      continue;
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(
+        'Timed out waiting for another mcp-linear process to finish refreshing the stored Linear access token.',
+      );
+    }
+    await sleep(retryMs);
+  }
+
+  try {
+    return await fn();
+  } finally {
+    releaseLock(lockPath, owner);
+  }
+}
+
 /**
  * Delete stored credentials. Returns true when a file was removed.
  */
