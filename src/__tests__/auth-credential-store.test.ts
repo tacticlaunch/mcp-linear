@@ -140,51 +140,20 @@ describe('credentials lock', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('runs the callback while holding the lock file and removes it afterwards', async () => {
-    let heldDuringCallback = false;
+  it('does not take over a lock held by a live process just because it is old', async () => {
     await withCredentialsLock(async () => {
-      heldDuringCallback = fs.existsSync(getCredentialsLockPath());
+      const old = new Date(Date.now() - 120_000);
+      fs.utimesSync(getCredentialsLockPath(), old, old);
+      await expect(withCredentialsLock(async () => undefined, { retryMs: 5, timeoutMs: 50 }))
+        .rejects.toThrow(/Timed out/);
     });
-
-    expect(heldDuringCallback).toBe(true);
-    expect(fs.existsSync(getCredentialsLockPath())).toBe(false);
   });
 
-  it('leaves a lock alone that another process took over meanwhile', async () => {
+  it('retains the lock file and releases it for the next holder', async () => {
     await withCredentialsLock(async () => {
-      // Our lock was reclaimed as stale and another process now holds it.
-      fs.writeFileSync(getCredentialsLockPath(), 'other-process-owner');
+      expect(fs.existsSync(getCredentialsLockPath())).toBe(true);
     });
-
-    expect(fs.readFileSync(getCredentialsLockPath(), 'utf8')).toBe('other-process-owner');
-  });
-
-  it('times out with a clear message while another process keeps a fresh lock', async () => {
-    fs.writeFileSync(getCredentialsLockPath(), 'other-process-owner');
-    const callback = jest.fn(async () => undefined);
-
-    await expect(
-      withCredentialsLock(callback, { retryMs: 5, timeoutMs: 50 }),
-    ).rejects.toThrow(/Timed out waiting for another mcp-linear process/);
-    expect(callback).not.toHaveBeenCalled();
-    expect(fs.readFileSync(getCredentialsLockPath(), 'utf8')).toBe('other-process-owner');
-  });
-
-  it('reclaims a stale lock and cleans up the reclaimed file', async () => {
-    fs.writeFileSync(getCredentialsLockPath(), 'dead-process-owner');
-    const longAgo = new Date(Date.now() - 10 * 60_000);
-    fs.utimesSync(getCredentialsLockPath(), longAgo, longAgo);
-
-    await withCredentialsLock(async () => undefined, { retryMs: 5 });
-
-    expect(fs.readdirSync(tempDir)).toEqual([]);
-  });
-
-  it('waits instead of spinning when the lock path is a dangling symlink', async () => {
-    fs.symlinkSync(path.join(tempDir, 'missing-target'), getCredentialsLockPath());
-
-    await expect(
-      withCredentialsLock(async () => undefined, { retryMs: 5, timeoutMs: 50 }),
-    ).rejects.toThrow(/Timed out/);
+    await expect(withCredentialsLock(async () => 'acquired')).resolves.toBe('acquired');
+    expect(fs.existsSync(getCredentialsLockPath())).toBe(true);
   });
 });

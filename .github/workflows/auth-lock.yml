@@ -1,0 +1,40 @@
+name: Auth lock portability
+
+on:
+  pull_request:
+    paths:
+      - 'src/auth/**'
+      - 'src/__tests__/auth-*'
+      - 'src/__tests__/fixtures/auth-worker.mjs'
+      - 'src/fs-native-extensions.d.ts'
+      - 'package*.json'
+      - '.github/workflows/auth-lock.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/auth/**'
+      - 'src/__tests__/auth-*'
+      - 'src/__tests__/fixtures/auth-worker.mjs'
+      - 'src/fs-native-extensions.d.ts'
+      - 'package*.json'
+      - '.github/workflows/auth-lock.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  auth-lock:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npx jest src/__tests__/auth-multiprocess.test.ts --runInBand

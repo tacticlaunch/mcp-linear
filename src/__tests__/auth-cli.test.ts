@@ -250,22 +250,6 @@ describe('auth CLI', () => {
       expect(fs.existsSync(getCredentialsPath())).toBe(false);
     });
 
-    it('waits for a running token refresh to finish before deleting the credentials', async () => {
-      writeStoredCredentials(storedCredentials);
-      fetchSpy.mockResolvedValueOnce(jsonResponse(200, {}));
-      const lockPath = path.join(tempDir, 'credentials.json.lock');
-      fs.writeFileSync(lockPath, 'refreshing-process');
-
-      const logout = runAuthCli(['logout'], { print });
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      const presentWhileLocked = fs.existsSync(getCredentialsPath());
-      fs.unlinkSync(lockPath);
-
-      await expect(logout).resolves.toBe(0);
-      expect(presentWhileLocked).toBe(true);
-      expect(fs.existsSync(getCredentialsPath())).toBe(false);
-    });
-
     it('still deletes local credentials when revocation fails offline', async () => {
       writeStoredCredentials(storedCredentials);
       fetchSpy.mockRejectedValueOnce(new TypeError('fetch failed'));

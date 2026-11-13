@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   readStoredCredentials,
   writeStoredCredentials,
+  withCredentialsLock,
   type StoredCredentials,
 } from '../auth/credential-store.js';
 import { createStoredCredentialAuth } from '../auth/managed-auth.js';
@@ -217,7 +218,6 @@ describe('stored credential auth shared across processes', () => {
     });
   }
 
-  const lockPath = () => path.join(tempDir, 'credentials.json.lock');
 
   beforeEach(() => {
     process.env = { ...originalEnv };
@@ -390,56 +390,12 @@ describe('stored credential auth shared across processes', () => {
     expect(readStoredCredentials()?.clientId).toBe('client-id-2');
   });
 
-  it('releases the refresh lock after refreshing', async () => {
-    seedCredentials({ expiresAt: NOW - 1_000 });
-    fakeTokenEndpoint('stored-refresh-token');
-
-    const auth = createStoredCredentialAuth({ now });
-    await auth!.getConfig();
-
-    expect(fs.existsSync(lockPath())).toBe(false);
-  });
-
   it('releases the refresh lock when the refresh fails', async () => {
     seedCredentials({ expiresAt: NOW - 1_000 });
     fetchSpy.mockResolvedValue(jsonResponse(400, { error: 'invalid_grant' }));
-
     const auth = createStoredCredentialAuth({ now });
     await expect(auth!.getConfig()).rejects.toThrow(/mcp-linear auth login/);
-
-    expect(fs.existsSync(lockPath())).toBe(false);
-  });
-
-  it('waits for a lock held by another process and then uses the token that process wrote', async () => {
-    seedCredentials({ expiresAt: NOW - 1_000 });
-    fakeTokenEndpoint('stored-refresh-token');
-    fs.writeFileSync(lockPath(), 'other-process');
-
-    setTimeout(() => {
-      writeRotatedByOtherProcess('other-access-token', 'other-refresh-token', NOW + 3_600_000);
-      fs.unlinkSync(lockPath());
-    }, 150);
-
-    const auth = createStoredCredentialAuth({ now, lockRetryMs: 10 });
-    await expect(auth!.getConfig()).resolves.toEqual({
-      type: 'oauth',
-      token: 'other-access-token',
-    });
-    expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  it('reclaims a lock left behind by a process that died while refreshing', async () => {
-    seedCredentials({ expiresAt: NOW - 1_000 });
-    fakeTokenEndpoint('stored-refresh-token');
-    fs.writeFileSync(lockPath(), 'dead-process');
-    const longAgo = new Date(Date.now() - 10 * 60_000);
-    fs.utimesSync(lockPath(), longAgo, longAgo);
-
-    const auth = createStoredCredentialAuth({ now, lockRetryMs: 10 });
-    await expect(auth!.getConfig()).resolves.toEqual({
-      type: 'oauth',
-      token: 'refreshed-access-token-1',
-    });
-    expect(fs.existsSync(lockPath())).toBe(false);
+    fetchSpy.mockRestore();
+    await expect(withCredentialsLock(async () => 'acquired', { timeoutMs: 100 })).resolves.toBe('acquired');
   });
 });
